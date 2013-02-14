@@ -1,0 +1,7 @@
+How to use (As of Feb. 14)
+
+1. Start main function in ServerMain class (this is intended to be the start of the login server)
+
+2. Start main function in ClientMain class (this is intended to be the start of all the client's networking code)
+
+3. Follow directions on prompt to create a new username/pw pair (unable to look up users yet)
