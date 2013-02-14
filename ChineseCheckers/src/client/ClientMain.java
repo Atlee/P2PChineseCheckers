@@ -18,11 +18,11 @@ public class ClientMain {
 	private static final int PORT_NUM = 4321;
 	
 	public static void main(String[] args) {
-		readLoginConsole();
-		//listenSocket();
+		ClientProtocol p = createProtocol();
+		listenSocket(p);
 	}
 	
-	public static void listenSocket() {
+	public static void listenSocket(ClientProtocol p) {
 		//Create socket connection
 		Socket socket = null;
 		PrintWriter out;
@@ -43,12 +43,11 @@ public class ClientMain {
 		    System.out.println("Please enter message to be sent");
 		    while ((fromServer = in.readLine()) != null) {
 		    	System.out.println("Server: " + fromServer);
-		    	if (fromServer.equals("Bye")) {
+		    	if (fromServer.equals("End")) {
 		    		break;
 		    	}
 		    	
-		    	System.out.println("Please enter next message to be sent");
-		    	userInput = console.readLine();
+		    	userInput = p.processInput(fromServer);
 		    	if (userInput != null) {
 		    		System.out.println("Client: " + userInput);
 		    		out.println(userInput);
@@ -68,16 +67,26 @@ public class ClientMain {
 		}
 	}
 	
-	private static String readLoginConsole() {
-		Console cons;
-		char[] password;
-		String output = null;
-		if ((cons = System.console()) != null) {
-			
-		} else {
-			System.out.println("Console null");
+	private static ClientProtocol createProtocol() {
+		BufferedReader stdin = new BufferedReader(
+				new InputStreamReader(System.in));
+		String userInput = null;
+		ClientProtocol p;
+		
+		System.out.println("Please enter username or \"create\" to create a new account");
+		
+		try {
+			userInput = stdin.readLine();
+		} catch (IOException e) {
+			System.out.println("Error reading user input.");
 		}
 		
-		return "";
+		if (userInput.equals("create")) {
+			p = new CreateUserProtocol();
+		} else {
+			p = new ClientProtocol();
+		}
+		
+		return p;
 	}
 }
