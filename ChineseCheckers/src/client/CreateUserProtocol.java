@@ -13,7 +13,7 @@ public class CreateUserProtocol extends ClientProtocol {
 		String output = null;
 		
 		try {
-			if (input.equals("")) {
+			if (input.equals("Start")) {
 				output = "create";
 			} else if (input.equals("username:password")) {
 				System.out.println("Please enter new username");

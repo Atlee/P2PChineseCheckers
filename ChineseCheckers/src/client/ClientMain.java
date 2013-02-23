@@ -3,11 +3,18 @@ package client;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.net.Socket;
+import java.nio.CharBuffer;
+import java.io.ByteArrayOutputStream;
 import java.io.Console;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
+import utils.EncryptUtils;
 
 public class ClientMain {
 
@@ -16,6 +23,7 @@ public class ClientMain {
 	 */
 	
 	private static final int PORT_NUM = 4321;
+	private static final int BUFFER_SIZE = 1024;
 	
 	public static void main(String[] args) {
 		ClientProtocol p = createProtocol();
@@ -25,32 +33,35 @@ public class ClientMain {
 	public static void listenSocket(ClientProtocol p) {
 		//Create socket connection
 		Socket socket = null;
-		PrintWriter out;
-		BufferedReader in, console;
+		BufferedReader console;
+		DataInputStream in;
+		DataOutputStream out;
 		InetAddress host = null;
-		String userInput, fromServer;
+		String userInput, frmServerString;
+		byte[] fromServer;
 		
 		try{
 			host = InetAddress.getLocalHost();
 			
 			socket = new Socket(host, PORT_NUM);
-		    out = new PrintWriter(socket.getOutputStream(), true);
-		    in = new BufferedReader(
-		    		new InputStreamReader(socket.getInputStream()));
+		    out = new DataOutputStream(socket.getOutputStream());
+		    in = new DataInputStream(socket.getInputStream());
 		    
 		    console = new BufferedReader(new InputStreamReader(System.in));
 		    
-		    System.out.println("Please enter message to be sent");
-		    while ((fromServer = in.readLine()) != null) {
-		    	System.out.println("Server: " + fromServer);
-		    	if (fromServer.equals("End")) {
+		    while ((fromServer = readMessage(in)) != null) {
+		    	frmServerString = EncryptUtils.getKeyDecrypt(fromServer);
+		    	System.out.println("Server: " + frmServerString);
+		    	
+		    	if (frmServerString.equals("End")) {
 		    		break;
 		    	}
 		    	
-		    	userInput = p.processInput(fromServer);
+		    	userInput = p.processInput(frmServerString);
 		    	if (userInput != null) {
 		    		System.out.println("Client: " + userInput);
-		    		out.println(userInput);
+		    		byte[] cipherText = EncryptUtils.getKeyEncrypt(userInput);
+		    		sendMessage(out, cipherText);
 		    	}
 		    }
 		    
@@ -64,6 +75,29 @@ public class ClientMain {
 		} catch  (IOException e) {
 		    System.out.println("No I/O");
 		    System.exit(1);
+		}
+	}
+	
+	private static byte[] readMessage(DataInputStream in) {
+		byte[] buffer = null;
+		try {
+			int length = in.readInt();
+			buffer = new byte[length];
+			in.read(buffer, 0, length);
+		} catch (IOException e) {
+			System.out.println("Error processing input from Socket");
+			System.exit(1);
+		}
+		return buffer;
+	}
+	
+	private static void sendMessage(DataOutputStream out, byte[] message) {
+		try {
+			out.writeInt(message.length);
+			out.write(message);
+		} catch (IOException e) {
+			System.out.println("Error writing to socket");
+			System.exit(1);
 		}
 	}
 	

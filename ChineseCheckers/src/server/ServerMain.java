@@ -1,10 +1,17 @@
 package server;
 
 import server.HelloWorldProtocol;
+import utils.EncryptUtils;
+
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.InputStreamReader;
 
@@ -13,6 +20,8 @@ public class ServerMain {
 	private static final int PORT_NUM = 4321;
 	
 	public static final boolean DEBUG = true;
+	
+	public static final int BUFFER_SIZE = 1024;
 
 	/**
 	 * @param args
@@ -47,22 +56,27 @@ public class ServerMain {
 			FakeDatabase db = new FakeDatabase();
 			db.init();
 			ServerProtocol p = null;
-			PrintWriter out = new PrintWriter(client.getOutputStream(), true);			
-			BufferedReader in = new BufferedReader(
-					new InputStreamReader(client.getInputStream()));
-			String outputLine, inputLine;
+			DataOutputStream out = new DataOutputStream(client.getOutputStream());			
+			DataInputStream in = new DataInputStream(client.getInputStream());
+			String outputLine = "Start", inputLine = null;
+			byte[] fromServer;
 			
 			//initiate communication between the server and the client
-			out.println("");
+			fromServer = EncryptUtils.getKeyEncrypt(outputLine);
+			sendMessage(out, fromServer);
 			
 			//read the first input to determine what protocol to use
-			inputLine = in.readLine();
+			inputLine = EncryptUtils.getKeyDecrypt(readMessage(in));
+			System.out.println("Client Protocol Request: " + inputLine);
 			p = chooseProtocol(inputLine);
-			out.println(p.processInput(inputLine, db));
+			fromServer = EncryptUtils.getKeyEncrypt(p.processInput(inputLine, db));
+			sendMessage(out, fromServer);
 			
-			while((inputLine = in.readLine()) != null) {
+			while(!outputLine.equals("End")) {
+				inputLine = EncryptUtils.getKeyDecrypt(readMessage(in));
 				outputLine = p.processInput(inputLine, db);
-				out.println(outputLine);
+				fromServer = EncryptUtils.getKeyEncrypt(outputLine);
+				sendMessage(out, fromServer);
 			}
 			
 			out.close();
@@ -72,6 +86,29 @@ public class ServerMain {
 		} catch (IOException e) {
 			System.out.println("Read Failed");
 			System.exit(-1);
+		}
+	}
+	
+	private static byte[] readMessage(DataInputStream in) {
+		byte[] buffer = null;
+		try {
+			int length = in.readInt();
+			buffer = new byte[length];
+			in.read(buffer, 0, length);
+		} catch (IOException e) {
+			System.out.println("Error processing input from Socket");
+			System.exit(1);
+		}
+		return buffer;
+	}
+	
+	private static void sendMessage(DataOutputStream out, byte[] message) {
+		try {
+			out.writeInt(message.length);
+			out.write(message);
+		} catch (IOException e) {
+			System.out.println("Error writing to socket");
+			System.exit(1);
 		}
 	}
 	
