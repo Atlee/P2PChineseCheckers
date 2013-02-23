@@ -49,14 +49,16 @@ public class FakeDatabase {
 	}
 	
 	public void setValue(String key, String value) {
-		KVPairs.put(key,  value);
-		try {
-			PrintWriter out = new PrintWriter(
-					new BufferedWriter(new FileWriter(DATABASE_FILE, true)));
-			out.println(key + ":" + value);
-			out.close();
-		} catch (IOException e) {
-			System.out.println("Database write failed");
+		if (!KVPairs.containsKey(key)) {
+			KVPairs.put(key,  value);
+			try {
+				PrintWriter out = new PrintWriter(
+						new BufferedWriter(new FileWriter(DATABASE_FILE, true)));
+				out.println(key + ":" + value);
+				out.close();
+			} catch (IOException e) {
+				System.out.println("Database write failed");
+			}
 		}
 	}
 	

@@ -62,20 +62,20 @@ public class ServerMain {
 			byte[] fromServer;
 			
 			//initiate communication between the server and the client
-			fromServer = EncryptUtils.getKeyEncrypt(outputLine);
+			fromServer = EncryptUtils.encrypt(outputLine);
 			sendMessage(out, fromServer);
 			
 			//read the first input to determine what protocol to use
-			inputLine = EncryptUtils.getKeyDecrypt(readMessage(in));
+			inputLine = EncryptUtils.decrypt(readMessage(in));
 			System.out.println("Client Protocol Request: " + inputLine);
 			p = chooseProtocol(inputLine);
-			fromServer = EncryptUtils.getKeyEncrypt(p.processInput(inputLine, db));
+			fromServer = EncryptUtils.encrypt(p.processInput(inputLine, db));
 			sendMessage(out, fromServer);
 			
 			while(!outputLine.equals("End")) {
-				inputLine = EncryptUtils.getKeyDecrypt(readMessage(in));
+				inputLine = EncryptUtils.decrypt(readMessage(in));
 				outputLine = p.processInput(inputLine, db);
-				fromServer = EncryptUtils.getKeyEncrypt(outputLine);
+				fromServer = EncryptUtils.encrypt(outputLine);
 				sendMessage(out, fromServer);
 			}
 			

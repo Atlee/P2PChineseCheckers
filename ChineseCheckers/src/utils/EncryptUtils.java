@@ -69,6 +69,10 @@ public class EncryptUtils {
           new FileOutputStream(publicKeyFile));
       publicKeyOS.writeObject(key.getPublic());
       publicKeyOS.close();
+      
+      FileOutputStream fos = new FileOutputStream("public");
+      fos.write(key.getPublic().getEncoded());
+      fos.close();
 
       // Saving the Private key in a file
       ObjectOutputStream privateKeyOS = new ObjectOutputStream(
@@ -97,7 +101,7 @@ public class EncryptUtils {
     return false;
   }
   
-  	public static byte[] getKeyEncrypt(String text) {
+  	public static byte[] encrypt(String text) {
 		byte[] cipherText = null;
 		PublicKey key = null;
 		try {
@@ -133,7 +137,7 @@ public class EncryptUtils {
    * @return Encrypted text
    * @throws java.lang.Exception
    */
-    public static byte[] encrypt(String text, PublicKey key) {
+    public static byte[] encryptWithKey(String text, PublicKey key) {
 	    byte[] cipherText = null;
 	    try {
 	      // get an RSA cipher object and print the provider
@@ -147,7 +151,7 @@ public class EncryptUtils {
 	    return cipherText;
     }
   
-    public static String getKeyDecrypt(byte[] text) {
+    public static String decrypt(byte[] text) {
 		byte[] dectyptedText = null;
 		PrivateKey key = null;
 		try {
@@ -184,7 +188,7 @@ public class EncryptUtils {
    * @return plain text
    * @throws java.lang.Exception
    */
-  public static String decrypt(byte[] text, PrivateKey key) {
+  public static String decryptWithKey(byte[] text, PrivateKey key) {
     byte[] dectyptedText = null;
     try {
       // get an RSA cipher object and print the provider
@@ -221,12 +225,13 @@ public class EncryptUtils {
       // Encrypt the string using the public key
       inputStream = new ObjectInputStream(new FileInputStream(PUBLIC_KEY_FILE));
       final PublicKey publicKey = (PublicKey) inputStream.readObject();
-      final byte[] cipherText = encrypt(originalText, publicKey);
+      final byte[] cipherText = encryptWithKey(originalText, publicKey);
+      inputStream.close();
 
       // Decrypt the cipher text using the private key.
       inputStream = new ObjectInputStream(new FileInputStream(PRIVATE_KEY_FILE));
       final PrivateKey privateKey = (PrivateKey) inputStream.readObject();
-      final String plainText = decrypt(cipherText, privateKey);
+      final String plainText = decryptWithKey(cipherText, privateKey);
 
       // Printing the Original, Encrypted and Decrypted Text
       System.out.println("Original Text: " + originalText);
