@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPairGenerator;
@@ -17,7 +18,10 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
 public class KeyPairScript {
 
@@ -57,10 +61,7 @@ public class KeyPairScript {
 			
 			key = gen.genKeyPair();
 			
-			System.out.println(key.getPublic().getFormat());
-			System.out.println(key.getPrivate().getFormat());
 			byte[] publicBytes = key.getPublic().getEncoded();
-			System.out.println(publicBytes[0] + " " + publicBytes[1]);
 			byte[] privateBytes = key.getPrivate().getEncoded();
 			
 			try {
@@ -76,11 +77,15 @@ public class KeyPairScript {
 				System.out.println("Error writing key to file");
 			}
 		}
+		test();
 	}
 	
 	private static void test() {
 		PrivateKey privKey = null;
 		PublicKey pubKey = null;
+		String message = "Text to be encrypted ";
+		byte[] cipherText = null;
+		byte[] messageBytes = null;
 		try {
 			FileInputStream fs = new FileInputStream("private");
 			byte[] privKeyBytes = new byte[fs.available()];
@@ -116,9 +121,60 @@ public class KeyPairScript {
 		} catch (InvalidKeySpecException e) {
 			System.out.println("invalid public key");
 		}
-	}
-	
-	String message = "This is a message";
-	
-	
+		
+		try {
+			Cipher cipher = Cipher.getInstance("RSA");
+			cipher.init(Cipher.ENCRYPT_MODE, pubKey);
+			
+			cipherText = cipher.doFinal(message.getBytes());
+			
+		} catch (NoSuchAlgorithmException e) {
+			System.out.println("Error with encrypt");
+		} catch (InvalidKeyException e) {
+			// TODO Auto-generated catch block
+			System.out.println("Error with encrypt");
+			e.printStackTrace();
+		} catch (NoSuchPaddingException e) {
+			// TODO Auto-generated catch block
+			System.out.println("Error with encrypt");
+			e.printStackTrace();
+		} catch (IllegalBlockSizeException e) {
+			// TODO Auto-generated catch block
+			System.out.println("Error with encrypt");
+			e.printStackTrace();
+		} catch (BadPaddingException e) {
+			// TODO Auto-generated catch block
+			System.out.println("Error with encrypt");
+			e.printStackTrace();
+		}
+		
+		try {
+			Cipher decrypt = Cipher.getInstance("RSA");
+			decrypt.init(Cipher.DECRYPT_MODE, privKey);
+			
+			messageBytes = decrypt.doFinal(cipherText);
+		} catch (NoSuchAlgorithmException e) {
+			System.out.println("Error with decrypt");
+		} catch (NoSuchPaddingException e) {
+			// TODO Auto-generated catch block
+			System.out.println("Error with decrypt");
+			e.printStackTrace();
+		} catch (InvalidKeyException e) {
+			// TODO Auto-generated catch block
+			System.out.println("Error with decrypt");
+			e.printStackTrace();
+		} catch (IllegalBlockSizeException e) {
+			// TODO Auto-generated catch block
+			System.out.println("Error with decrypt");
+			e.printStackTrace();
+		} catch (BadPaddingException e) {
+			// TODO Auto-generated catch block
+			System.out.println("Error with decrypt");
+			e.printStackTrace();
+		}
+		
+		String decryptMessage = new String(messageBytes);
+		
+		System.out.println(message + " " + decryptMessage);
+	}	
 }
