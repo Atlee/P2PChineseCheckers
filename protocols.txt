@@ -3,7 +3,7 @@ C = game client
 H = hub
 
 Note: C always trusts H and knows H's public key, K_H
-Note: H knows each the public key, K_user, of each registered user
+Note: H knows the public key, K_user, of each registered user
 
 --------------------------------------------------------------------------------
 
@@ -36,7 +36,7 @@ Protocol for user login & establishing a client-to-hub connection...
 [2]  U -> C:	user:pass
 [3]  C:		if user:pass exists, retrieve K_user/k_user; else goto [1]
 [4]  C -> H:	Sign({ LOGIN, user, n }, k_user)	**[n is fresh at C]**
-[5]  H:		Ver({ LOGIN, user, n }, K_user) and generate K_shared
+[5]  H:		Ver({ LOGIN, user, n }, K_user)
 [6]  H -> C:	Sign({ WELCOME, user, n }, k_H)
 [7]  C:		Ver({ WELCOME, user, n }, K_H)
 [8]  C -> U:    success!
@@ -56,8 +56,8 @@ Note: If C2 does not know <user1, K_user1>, it can ask H
 
 [1]  C1 -> C2:	Sign({ HI, user1, n }, k_user1)		**[n is fresh at C1]**
 [2]  C2:	Ver({ HI, user1, n }, K_user1)
-[3]  C2 -> C1:	Sign({ HI, user2, n }, k_user2)
-[4]  C1:	Ver({ HI, user2, n }, K_user2)
+[3]  C2 -> C1:	Sign({ HI BACK, user2, n }, k_user2)
+[4]  C1:	Ver({ HI BACK, user2, n }, K_user2)
 
 The session ID, n, must be included in all subsequent messages between C1 and
 C2 until the connection is closed.
