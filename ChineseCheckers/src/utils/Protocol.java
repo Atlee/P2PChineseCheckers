@@ -8,9 +8,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 
 
-public class Protocol {
-	
-	public static final int CREATE = 0;
+public abstract class Protocol {
 	
 	protected void sendSignedMessage(Socket s, byte[] message, PrivateKey key) throws IOException {
 		byte[] signature = SignUtils.signData(key, message);
@@ -52,4 +50,6 @@ public class Protocol {
 		in.read(output, 0, len);
 		return output;
 	}
+	
+	
 }
