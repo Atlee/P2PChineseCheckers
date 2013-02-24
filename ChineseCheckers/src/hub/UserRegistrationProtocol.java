@@ -1,4 +1,4 @@
-package protocols;
+package hub;
 
 
 import java.io.IOException;
@@ -7,7 +7,8 @@ import java.net.Socket;
 import java.security.PublicKey;
 
 
-public class ServerCreateUserProtocol extends ServerProtocol {
+
+public class UserRegistrationProtocol extends HubProtocol {
 	
 	private String newUser = null;
 	private PublicKey clientPublicKey = null;

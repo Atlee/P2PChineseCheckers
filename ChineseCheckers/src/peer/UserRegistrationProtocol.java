@@ -1,4 +1,4 @@
-package protocols;
+package peer;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -9,9 +9,11 @@ import java.net.Socket;
 import java.security.PublicKey;
 
 
+
+import utils.Protocol;
 import utils.SignUtils;
 
-public class CreateUserProtocol extends ClientProtocol {
+public class UserRegistrationProtocol extends PeerProtocol {
 	
 	private String userName = null;
 	private String password = null;

@@ -6,8 +6,6 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.Socket;
 
-import protocols.ClientProtocol;
-import protocols.CreateUserProtocol;
 
 public class Peer {
 
@@ -20,7 +18,7 @@ public class Peer {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		while (true) {
-			ClientProtocol p = createProtocol();
+			PeerProtocol p = createProtocol();
 			
 			Socket hub = handleCreateSocket();
 			
@@ -42,11 +40,11 @@ public class Peer {
 		return s;
 	}
 	
-	private static ClientProtocol createProtocol() {
+	private static PeerProtocol createProtocol() {
 		BufferedReader stdin = new BufferedReader(
 				new InputStreamReader(System.in));
 		String userInput = null;
-		ClientProtocol p;
+		PeerProtocol p;
 		
 		System.out.println("Please enter username or \"create\" to create a new account");
 		
@@ -58,10 +56,10 @@ public class Peer {
 		}
 		
 		if (userInput.equals("create")) {
-			p = new CreateUserProtocol();
+			p = new UserRegistrationProtocol();
 		} else {
 			//TODO: create ClientSigningProtocol(String username)
-			p = new ClientProtocol();
+			p = new PeerProtocol();
 		}
 		
 		return p;
