@@ -4,16 +4,15 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 
 public class Protocol {
 	
 	public static final int CREATE = 0;
-	public static final String ALGORITHM = "RSA";
-	public static final String SIGN_ALG = "SHA512withRSA";
 	
-	protected void sendSignedMessage(Socket s, byte[] message) throws IOException {
-		byte[] signature = SignUtils.signData(SignUtils.getPrivate(), message);
+	protected void sendSignedMessage(Socket s, byte[] message, PrivateKey key) throws IOException {
+		byte[] signature = SignUtils.signData(key, message);
 		sendMessage(s, signature);
 		sendMessage(s, message);
 	}
