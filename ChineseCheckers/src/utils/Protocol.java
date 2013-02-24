@@ -1,4 +1,4 @@
-package protocols;
+package utils;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -7,7 +7,6 @@ import java.net.Socket;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 
-import utils.SignUtils;
 
 public class Protocol {
 	

@@ -1,19 +1,17 @@
 package hub;
 
-
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import protocols.Protocol;
-import protocols.ServerCreateUserProtocol;
-import protocols.ServerProtocol;
+
+import utils.Constants;
+
 
 public class Hub {
 	
-	//TODO: move to a constants class in utility?
-	private static final int PORT_NUM = 4321;
+	private static final int PORT_NUM = Constants.PORT_NUM;
 
 	/**
 	 * @param args
@@ -26,7 +24,7 @@ public class Hub {
 		while (true) {
 			//waits for a client to connect before proceeding
 			Socket client = handleCreateSocket(server);
-			ServerProtocol p = getProtocol(client);
+			HubProtocol p = getProtocol(client);
 			p.processInput(client);
 			closeSocket(client);
 		}
@@ -37,32 +35,33 @@ public class Hub {
 			s.getOutputStream().close();
 			s.close();
 		} catch (IOException e) {
+			System.out.println("Error closing socket");
 			e.printStackTrace();
 			System.exit(1);
 		}
 	}
 	
-	private static ServerProtocol getProtocol(Socket s) {
+	private static HubProtocol getProtocol(Socket s) {
 		DataInputStream in = null;
-		int id = -1;	
-		ServerProtocol p = null;
+		int id = -1;
+		HubProtocol p = null;
 		
 		try {
 			in = new DataInputStream(s.getInputStream());
 			id = in.readInt();
 		} catch (IOException e) {
-			System.out.println("Error Reading protocol");
+			System.out.println("Error determining protocol ID");
 			e.printStackTrace();
 			System.exit(1);
 		}
 		
 		//TODO: add login protocol
 		switch (id) {
-		case Protocol.CREATE:
-			p = new ServerCreateUserProtocol();
+		case Constants.REGISTER:
+			p = new UserRegistrationProtocol();
 			break;
 		default:
-			p = new ServerProtocol();
+			p = new HubProtocol();
 		}
 		return p;
 	}
