@@ -1,11 +1,14 @@
-package server;
+package hub;
 
-import utils.Protocol;
 
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+
+import protocols.Protocol;
+import protocols.ServerCreateUserProtocol;
+import protocols.ServerProtocol;
 
 public class Hub {
 	
@@ -17,14 +20,14 @@ public class Hub {
 	 */
 	public static void main(String[] args) {
 		ServerSocket server = handleCreateServerSocket();
-		FakeDatabase db = new FakeDatabase();
+		//FakeDatabase db = new FakeDatabase();
 		//db.init();
 		
 		while (true) {
 			//waits for a client to connect before proceeding
 			Socket client = handleCreateSocket(server);
 			ServerProtocol p = getProtocol(client);
-			p.processInput(client, db);
+			p.processInput(client);
 			closeSocket(client);
 		}
 	}

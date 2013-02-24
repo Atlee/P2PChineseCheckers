@@ -1,4 +1,4 @@
-package client;
+package protocols;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -8,7 +8,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.security.PublicKey;
 
-import utils.Protocol;
+
 import utils.SignUtils;
 
 public class CreateUserProtocol extends ClientProtocol {
@@ -64,8 +64,8 @@ public class CreateUserProtocol extends ClientProtocol {
 			//TODO: add key generation/recovery code here
 			//for now assume keys in public/private.key files
 			//NOTE: I think the above happens automatically in SignUtils.init()
-			sendKey(s, SignUtils.getPublic());
-			sendSignedMessage(s, userName.getBytes());
+			//sendKey(s, SignUtils.getPublic());
+			sendMessage(s, userName.getBytes());
 			
 			fromServerBytes = readSignedMessage(s, getHubKey());
 			fromServer = new String(fromServerBytes);

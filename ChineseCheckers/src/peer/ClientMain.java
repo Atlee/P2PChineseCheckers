@@ -1,4 +1,4 @@
-package client;
+package peer;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -28,7 +28,9 @@ import java.io.PrintWriter;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
-import utils.EncryptUtils;
+
+import protocols.ClientProtocol;
+import protocols.CreateUserProtocol;
 
 public class ClientMain {
 
@@ -75,7 +77,8 @@ public class ClientMain {
 			console = new BufferedReader(new InputStreamReader(System.in));
 
 			while ((fromServer = readMessage(in)) != null) {
-				frmServerString = EncryptUtils.decrypt(fromServer);
+				//frmServerString = fromServer;
+				frmServerString = "";
 				System.out.println("Server: " + frmServerString);
 
 				if (frmServerString.equals("End")) {
@@ -85,7 +88,8 @@ public class ClientMain {
 				userInput = p.processInput(frmServerString);
 				if (userInput != null) {
 					System.out.println("Client: " + userInput);
-					byte[] cipherText = EncryptUtils.encryptWithKey(userInput, key);
+					//byte[] cipherText = EncryptUtils.encryptWithKey(userInput, key);
+					byte[] cipherText = null;
 					sendMessage(out, cipherText);
 				}
 			}

@@ -1,166 +1,78 @@
 package utils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 
 public class SignUtils {
 	
-	private static final String PUBLIC_KEY_FILE = "public.key";
-	private static final String PRIVATE_KEY_FILE = "private.key";
-	private static final String ALGORITHM = "RSA";
-	private static final String SIGN_ALGORITHM = "SHA512withRSA";
+	public static final String KEYGEN_ALGORITHM = "RSA";
+	public static final String SIGN_ALGORITHM = "SHA512withRSA";
 	
-	private static boolean isInit = false;
-	private static PublicKey publicKey = null;
-	private static PrivateKey privateKey = null;
-
-	private static void generateKeys() {
-		generateKeys(PUBLIC_KEY_FILE, PRIVATE_KEY_FILE);
-	}
-	
-	private static void generateKeys(String publicFileName, String privateFileName) {
-		System.out.println("Generating keys");
+	/** 
+	 * Generate a new RSA key pair to be used in the digital signature scheme.
+	 */
+	public static KeyPair newSignKeyPair() {
+		KeyPair keys = null;
 		try {
-			final KeyPairGenerator keyGen = KeyPairGenerator.getInstance(ALGORITHM);
+			KeyPairGenerator keyGen = KeyPairGenerator.getInstance(KEYGEN_ALGORITHM);
 			keyGen.initialize(1024);
-			final KeyPair key = keyGen.generateKeyPair();
-				
-			File privateKeyFile = new File(privateFileName);
-			File publicKeyFile = new File(publicFileName);
-				
-			// Create files to store public and private key
-			if (privateKeyFile.getParentFile() != null) {
-				privateKeyFile.getParentFile().mkdirs();
-			}
-			privateKeyFile.createNewFile();
-		
-			if (publicKeyFile.getParentFile() != null) {
-			    publicKeyFile.getParentFile().mkdirs();
-			}
-			publicKeyFile.createNewFile();
-		
-			// Saving the Public key in a file
-			ObjectOutputStream publicKeyOOS = new ObjectOutputStream(
-					new FileOutputStream(publicKeyFile));
-		 	publicKeyOOS.writeObject(key.getPublic());
-		 	publicKeyOOS.close();
-			  
-		 	FileOutputStream fos = new FileOutputStream("public");
-		 	fos.write(key.getPublic().getEncoded());
-		 	fos.close();
-			
-		 	// Saving the Private key in a file
-		 	ObjectOutputStream privateKeyOOS = new ObjectOutputStream(
-		 			new FileOutputStream(privateKeyFile));
-		 	privateKeyOOS.writeObject(key.getPrivate());
-		 	privateKeyOOS.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-	private static boolean keysExist() {
-		return keysExist(PUBLIC_KEY_FILE, PRIVATE_KEY_FILE);
-	}
-	
-	private static boolean keysExist(String publicFileName, String privateFileName) {
-		File publicFile = new File(publicFileName);
-		File privateFile = new File(privateFileName);
-		boolean output = false;
-		if (publicFile.exists() && privateFile.exists()) {
-			output = true;
-		}
-		return output;
-	}
-	
-	private static void init() {
-		if (!keysExist()) {
-			generateKeys();
-		}
-		try {
-			ObjectInputStream pubOIS = new ObjectInputStream(new FileInputStream(PUBLIC_KEY_FILE));
-			ObjectInputStream privOIS = new ObjectInputStream(new FileInputStream(PRIVATE_KEY_FILE));
-			publicKey = (PublicKey) pubOIS.readObject();
-			privateKey = (PrivateKey) privOIS.readObject();
-			pubOIS.close();
-			privOIS.close();
-			isInit = true;
-		} catch (IOException | ClassNotFoundException e) {
+			keys = keyGen.generateKeyPair();
+		} catch (NoSuchAlgorithmException e) {
+			System.out.println("Error generating key pair");
 			e.printStackTrace();
 			System.exit(1);
 		}
-	}
-
-	public static PublicKey getPublic() {
-		if (!isInit) {
-			init();
-		}
-		return publicKey;
+		return keys;
 	}
 	
-	public static PrivateKey getPrivate() {
-		if (!isInit) {
-			init();
-		}
-		return privateKey;
-	}
-	
-	public static byte[] signData(byte[] data) {
-		PrivateKey key = getPrivate();
-		return signData(key, data);
-	}
-	
+	/** 
+	 * Produce a signature for the input data using the given private key.
+	 * 
+	 * @param key
+	 * @param data
+	 */
 	public static byte[] signData(PrivateKey key, byte[] data) {
-		byte[] output = null;
+		byte[] sign = null;
 		try {
-			Signature dsa = Signature.getInstance(SIGN_ALGORITHM);
-			dsa.initSign(key);
-			
-			dsa.update(data);
-			output = dsa.sign();
+			Signature rsa = Signature.getInstance(SIGN_ALGORITHM);
+			rsa.initSign(key);
+			rsa.update(data);
+			sign = rsa.sign();
 		} catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
-			// TODO Auto-generated catch block
+			System.out.println("Error signing data");
 			e.printStackTrace();
 			System.exit(1);
 		}
-		return output;
+		return sign;
 	}
 	
-	public static boolean verifyData(PublicKey key, byte[] sigToVerify, byte[] data) {
+	/** 
+	 * Verify that the signature on this data was produced using the private key that
+	 * corresponds to the given public key.
+	 * 
+	 * @param key
+	 * @param sign
+	 * @param data
+	 */
+	public static boolean verifyData(PublicKey key, byte[] sign, byte[] data) {
 		try {
-			Signature sig = Signature.getInstance("SHA512withRSA");
-			sig.initVerify(key);
-			
-			sig.update(data);
-			
-			return sig.verify(sigToVerify);
+			Signature rsa = Signature.getInstance(SIGN_ALGORITHM);
+			rsa.initVerify(key);
+			rsa.update(data);
+			return rsa.verify(sign);
 		} catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
-			// TODO Auto-generated catch block
+			System.out.println("Error verifying signature");
 			e.printStackTrace();
 			System.exit(1);
 		}
 		return false;
 	}
-	
-	
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
 
-	}
-
+	
 }
