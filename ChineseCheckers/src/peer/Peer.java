@@ -1,28 +1,33 @@
 package peer;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.IOException;
+
 import java.net.InetAddress;
 import java.net.Socket;
+
+import java.security.KeyStore;
+
+import utils.KeyStoreUtils;
+import utils.Constants;
 
 
 public class Peer {
 
-	private static final int PORT_NUM = 4321;
-	private static InetAddress host = null;
+	private static final int PORT_NUM = Constants.PORT_NUM;
+	private static InetAddress host;
+	private static KeyStore keyStore;
 	
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+	public static void main(String[] args) throws IOException {
+		if(keyStore == null) {
+			keyStore = KeyStoreUtils.loadKeyStore(Constants.KEYSTORE_FILE);
+		}
+		
 		while (true) {
-			PeerProtocol p = createProtocol();
-			
+			PeerProtocol p = selectProtocol();
 			Socket hub = handleCreateSocket();
-			
-			p.execute(hub);
+			p.execute(hub, keyStore);
 		}
 	}
 	
@@ -32,37 +37,35 @@ public class Peer {
 			host = InetAddress.getLocalHost();
 			s = new Socket(host, PORT_NUM);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			System.out.println("Error creating socket");
 			e.printStackTrace();
 			System.exit(1);
 		}
-		
 		return s;
 	}
 	
-	private static PeerProtocol createProtocol() {
-		BufferedReader stdin = new BufferedReader(
-				new InputStreamReader(System.in));
+	private static PeerProtocol selectProtocol() {
+		BufferedReader stdin = new BufferedReader( new InputStreamReader(System.in) );
 		String userInput = null;
-		PeerProtocol p;
 		
-		System.out.println("Please enter username or \"create\" to create a new account");
-		
-		try {
-			userInput = stdin.readLine();
-		} catch (IOException e) {
-			System.out.println("Error reading user input.");
-			System.exit(1);
+		while(true) {
+			System.out.println("Type \"login\" for existing user account or \"register\" for new user account");
+
+			try {
+				userInput = stdin.readLine();
+			} catch (IOException e) {
+				System.out.println("Error reading user input");
+				System.exit(1);
+			}
+
+			if (userInput.equals("register")) {
+				return new UserRegistrationProtocol();
+			} 
+			if(userInput.equals("login")){
+				return new UserLoginProtocol();
+			}
 		}
-		
-		if (userInput.equals("create")) {
-			p = new UserRegistrationProtocol();
-		} else {
-			//TODO: create ClientSigningProtocol(String username)
-			p = new PeerProtocol();
-		}
-		
-		return p;
 	}
+		
 
 }
