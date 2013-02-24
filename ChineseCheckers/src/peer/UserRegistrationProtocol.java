@@ -1,5 +1,10 @@
 package peer;
 
+import java.awt.Button;
+import java.awt.Dimension;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -8,8 +13,14 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.security.PublicKey;
 
+import javax.swing.BoxLayout;
+import javax.swing.JFrame;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
 
 
+
+import utils.KeyStoreUtils;
 import utils.Protocol;
 import utils.SignUtils;
 
@@ -42,8 +53,12 @@ public class UserRegistrationProtocol extends PeerProtocol {
 		return output;
 	}
 	
-	public void execute(Socket s) {		
-		getNewCredentials();
+	public void execute(Socket s) {
+		CreateUserGui createUser = new CreateUserGui(this, s);
+	}
+	
+	void sendNewCredentials(String username, String password, Socket s) {
+		setCredentials(username, password);
 		
 		byte[] message = userName.getBytes();
 		try {
@@ -58,6 +73,11 @@ public class UserRegistrationProtocol extends PeerProtocol {
 		}
 	}
 	
+	private void setCredentials(String username, String password) {
+		this.userName = username;
+		this.password = password;
+	}
+	
 	private void handleNameResponse(Socket s) throws IOException {
 		byte[] fromServerBytes = readSignedMessage(s, getHubKey());
 		String fromServer = new String(fromServerBytes);
@@ -66,7 +86,7 @@ public class UserRegistrationProtocol extends PeerProtocol {
 			//TODO: add key generation/recovery code here
 			//for now assume keys in public/private.key files
 			//NOTE: I think the above happens automatically in SignUtils.init()
-			//sendKey(s, SignUtils.getPublic());
+			sendKey(s, KeyStoreUtils.getPublicKey(null, this.userName));
 			sendMessage(s, userName.getBytes());
 			
 			fromServerBytes = readSignedMessage(s, getHubKey());
@@ -108,6 +128,59 @@ public class UserRegistrationProtocol extends PeerProtocol {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			System.exit(1);
+		}
+	}
+}
+
+class CreateUserGui extends JFrame implements ActionListener {
+	
+	private JTextField userName;
+	private JPasswordField password;
+	private Button createUsrBtn;
+	private static final String createUsrString = "Create User";
+	private UserRegistrationProtocol p = null;
+	private Socket s;
+
+	public CreateUserGui(UserRegistrationProtocol p, Socket s) {
+		this.p = p;
+		this.s = s;
+		
+		getContentPane().setLayout(
+				new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
+		setTitle("Chinese Checkers 0.1");
+		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		
+		//set size
+		int windowWidth = 300;
+		int windowHeight = 100;
+		setSize(windowWidth, windowHeight);
+		
+		//set location
+		Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+		int centerX = (screen.width / 2) - (windowWidth / 2);
+		int centerY = (screen.height / 2) - (windowHeight / 2);
+		setLocation(centerX, centerY);
+		
+		userName = new JTextField("Username");
+		userName.setSize(new Dimension(100, 50));
+		password = new JPasswordField("Password");
+		createUsrBtn = new Button(createUsrString);
+	
+		getContentPane().add(userName);
+		getContentPane().add(password);
+		getContentPane().add(createUsrBtn);
+		createUsrBtn.addActionListener(this);
+		this.setVisible(true);
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent arg0) {
+		// TODO Auto-generated method stub
+		if (arg0.getActionCommand().equals(createUsrString)) {
+			//Create new window for loggin
+			String userNameString = userName.getText();
+			String passwordString = new String(password.getPassword());
+			p.sendNewCredentials(userNameString, passwordString, this.s);
 		}
 	}
 }

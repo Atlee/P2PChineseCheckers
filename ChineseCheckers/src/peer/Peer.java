@@ -12,16 +12,22 @@ public class Peer {
 	private static final int PORT_NUM = 4321;
 	private static InetAddress host = null;
 	
+	private static PeerProtocol p = null;
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-		while (true) {
-			PeerProtocol p = createProtocol();
-			
+		MyGui g = new MyGui();
+		
+	}
+	
+	public static void setPeerProtocol(String protocolID) {
+		p = createProtocol(protocolID);
+	}
+	
+	public static void executeProtocol() {
+		if (p != null) {
 			Socket hub = handleCreateSocket();
-			
 			p.execute(hub);
 		}
 	}
@@ -40,22 +46,8 @@ public class Peer {
 		return s;
 	}
 	
-	private static PeerProtocol createProtocol() {
-		BufferedReader stdin = new BufferedReader(
-				new InputStreamReader(System.in));
-		String userInput = null;
-		PeerProtocol p;
-		
-		System.out.println("Please enter username or \"create\" to create a new account");
-		
-		try {
-			userInput = stdin.readLine();
-		} catch (IOException e) {
-			System.out.println("Error reading user input.");
-			System.exit(1);
-		}
-		
-		if (userInput.equals("create")) {
+	private static PeerProtocol createProtocol(String protocolID) {
+		if (protocolID.equals("create")) {
 			p = new UserRegistrationProtocol();
 		} else {
 			//TODO: create ClientSigningProtocol(String username)
