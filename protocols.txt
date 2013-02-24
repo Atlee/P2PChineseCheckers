@@ -1,0 +1,63 @@
+U = human user
+C = game client
+H = hub
+
+Note: C always trusts H and knows H's public key, K_H
+Note: H knows each the public key, K_user, of each registered user
+
+--------------------------------------------------------------------------------
+
+Protocol for new user registration...
+
+[1]  C -> U:  new user:pass ?
+[2]  U -> C:	user:pass
+[3]  C -> H:	CREATE, user
+			
+if "user" already in use:
+[4]  H -> C:	{ IN USE, user }k_H
+[5]  C:		Dec({ IN USE, user }k_H, K_H)
+[6]  C -> U:	"user" already in use; goto [1]
+			
+else:
+[4]  H -> C:	{ AVAILABLE, user }k_H
+[5]  C:		Dec({ AVAILABLE, user }k_H, K_H), generate K_user/k_user and
+                  associate this key pair with user:pass on local machine
+[6]  C -> H:	user, K_user, { user }k_user
+[7]  H:		if Dec({ user }k_user, K_user) == user, then bind <user, K_user>
+[8]  H -> C:	{ OK, user }k_H
+[9]  C:		Dec({ OK, user }k_H, K_H)
+[10] C -> U:    success!
+
+--------------------------------------------------------------------------------
+
+Protocol for user login & establishing a client-to-hub connection...
+
+[1]  C -> U:	user:pass ?
+[2]  U -> C:	user:pass
+[3]  C:		if user:pass exists, retrieve K_user/k_user; else goto [1]
+[4]  C -> H:	LOGIN, user, { r }k_user	**[r is fresh at C]**
+[5]  H:		Dec({ r }k_user, K_user) and generate K_shared
+[6]  H -> C:	{ r, K_shared }k_H
+[7]  C:		Dec({ r, K_shared }k_H, K_H)...
+                  if r == r, K_shared is shared key with H for this session;
+                  else goto [4]
+[8]  C -> U:    success!
+
+--------------------------------------------------------------------------------
+
+Protocol for establishing a client-to-client (P2P) connection...
+
+C1 = game client, user1 logged in
+C2 = game client, user2 logged in
+
+Note: If C1 does not know <user2, K_user2>, it can ask H
+Note: If C2 does not know <user1, K_user1>, it can ask H
+
+[1]  C1 -> C2:	user1, { r }k_user1		**[r is fresh at C1]**
+[2]  C2:	Dec({ r }k_user1, K_user1)
+[3]  C2 -> C1:	{ r , K_shared }k_user2
+[4]  C1:	Dec({ r, K_shared }k_user2, K_user2)...
+                  if r == r, K_shared is shared key with C2 for this session;
+                  else goto [1]
+
+--------------------------------------------------------------------------------
