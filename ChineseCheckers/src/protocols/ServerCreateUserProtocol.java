@@ -1,27 +1,27 @@
-package server;
+package protocols;
 
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
 import java.security.PublicKey;
-import server.FakeDatabase;
+
 
 public class ServerCreateUserProtocol extends ServerProtocol {
 	
 	private String newUser = null;
 	private PublicKey clientPublicKey = null;
 	
-	public void processInput(Socket s, FakeDatabase db) {
+	public void processInput(Socket s) {
 		try {
-			boolean success = handleGetUser(s, db);
+			boolean success = handleGetUser(s);
 			if (!success) {
 				//close the socket -- the user opens a new line of communication
 				//to try again
 				return;
 			}
 		
-			handleGetKey(s, db);
+			handleGetKey(s);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -29,7 +29,7 @@ public class ServerCreateUserProtocol extends ServerProtocol {
 		}
 	}
 	
-	private void handleGetKey(Socket s, FakeDatabase db) throws IOException {
+	private void handleGetKey(Socket s) throws IOException {
 		try {
 			ObjectInputStream in = new ObjectInputStream(s.getInputStream());
 			clientPublicKey = (PublicKey) in.readObject();
@@ -44,11 +44,12 @@ public class ServerCreateUserProtocol extends ServerProtocol {
 		if (message != null && messageString.equals(newUser)) {
 			//db.setValue(newUser, clientPublicKey);
 			byte[] toClient = ("OK,"+newUser).getBytes();
-			sendSignedMessage(s, toClient);
+			//sendSignedMessage(s, toClient);
+			sendMessage(s, toClient);
 		}
 	}
 	
-	private boolean handleGetUser(Socket s, FakeDatabase db) throws IOException {
+	private boolean handleGetUser(Socket s) throws IOException {
 		//this read should be the prospective username
 		byte[] fromClientBytes = readMessage(s);
 		newUser = new String(fromClientBytes);
@@ -56,11 +57,13 @@ public class ServerCreateUserProtocol extends ServerProtocol {
 		if (false) {
 			//if the key is already in use
 			byte[] response = ("IN_USE," + newUser).getBytes();
-			sendSignedMessage(s, response);
+			//sendSignedMessage(s, response);
+			sendMessage(s, response);
 			return false;
 		} else {
 			byte[] response = ("AVAILABLE,"+newUser).getBytes();
-			sendSignedMessage(s, response);
+			//sendSignedMessage(s, response);
+			sendMessage(s, response);
 			return true;
 		}
 	}

@@ -11,8 +11,8 @@ import java.security.NoSuchAlgorithmException;
 
 public class SignUtils {
 	
-	private static final String KEYGEN_ALGORITHM = "RSA";
-	private static final String SIGN_ALGORITHM = "SHA512withRSA";
+	public static final String KEYGEN_ALGORITHM = "RSA";
+	public static final String SIGN_ALGORITHM = "SHA512withRSA";
 	
 	/** 
 	 * Generate a new RSA key pair to be used in the digital signature scheme.

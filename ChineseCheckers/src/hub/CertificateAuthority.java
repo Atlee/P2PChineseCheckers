@@ -1,4 +1,4 @@
-package server;
+package hub;
 
 import java.security.PublicKey;
 import java.security.cert.Certificate;

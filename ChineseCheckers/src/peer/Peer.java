@@ -1,10 +1,13 @@
-package client;
+package peer;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.Socket;
+
+import protocols.ClientProtocol;
+import protocols.CreateUserProtocol;
 
 public class Peer {
 

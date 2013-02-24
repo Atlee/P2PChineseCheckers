@@ -1,4 +1,4 @@
-package client;
+package protocols;
 
 import java.net.Socket;
 import java.security.KeyFactory;
@@ -6,7 +6,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
-import utils.Protocol;
+
+import utils.SignUtils;
 
 /** A ClientProtocol is a sequence of responses to a server
  * 
@@ -24,7 +25,7 @@ public class ClientProtocol extends Protocol {
 	
 	public static void init() {
 		try {
-			KeyFactory kf = KeyFactory.getInstance(Protocol.ALGORITHM);
+			KeyFactory kf = KeyFactory.getInstance(SignUtils.KEYGEN_ALGORITHM);
 			X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(PUBLIC_KEY_HUB);
 			
 			publicKeyHub = kf.generatePublic(pubKeySpec);

@@ -1,7 +1,6 @@
-package server;
+package protocols;
 
-public class HelloWorldProtocol {
-	
+public class HelloWorldProtocol extends Protocol {
 	
 	public String processInput(String s) {
 		String message;
@@ -13,4 +12,5 @@ public class HelloWorldProtocol {
 		return message;
 	}
 
+	
 }
