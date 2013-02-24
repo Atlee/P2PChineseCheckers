@@ -2,25 +2,25 @@ package server;
 
 import server.HelloWorldProtocol;
 import utils.EncryptUtils;
-
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.PublicKey;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.InputStreamReader;
 
 public class ServerMain {
 	
-	private static final int PORT_NUM = 4321;
-	
-	public static final boolean DEBUG = true;
-	
+	private static final int PORT_NUM = 4321;	
+	public static final boolean DEBUG = true;	
 	public static final int BUFFER_SIZE = 1024;
 
 	/**
@@ -32,7 +32,7 @@ public class ServerMain {
 	}
 	
 	private static void listenSocketSingle() {
-		ServerSocket server = null;
+		/*ServerSocket server = null;
 		Socket client = null;
 		
 		//establish port for server
@@ -58,12 +58,15 @@ public class ServerMain {
 			ServerProtocol p = null;
 			DataOutputStream out = new DataOutputStream(client.getOutputStream());			
 			DataInputStream in = new DataInputStream(client.getInputStream());
+			PublicKey clientKey = getClientKey(in, out);
 			String outputLine = "Start", inputLine = null;
 			byte[] fromServer;
 			
 			//initiate communication between the server and the client
-			fromServer = EncryptUtils.encrypt(outputLine);
+			fromServer = EncryptUtils.encryptWithKey(outputLine, clientKey);
 			sendMessage(out, fromServer);
+			
+			System.exit(1);
 			
 			//read the first input to determine what protocol to use
 			inputLine = EncryptUtils.decrypt(readMessage(in));
@@ -87,6 +90,7 @@ public class ServerMain {
 			System.out.println("Read Failed");
 			System.exit(-1);
 		}
+		*/
 	}
 	
 	private static byte[] readMessage(DataInputStream in) {
@@ -120,5 +124,23 @@ public class ServerMain {
 			p = new ServerProtocol();
 		}
 		return p;
+	}
+	
+	public static PublicKey getClientKey(DataInputStream in, DataOutputStream out) {
+		PublicKey clientKey = null;
+		String toClient = "Public", fromClient = null;
+		byte[] toClientBytes = toClient.getBytes();
+		sendMessage(out, toClientBytes);
+		
+		fromClient = EncryptUtils.decrypt(readMessage(in));
+		try {
+			ObjectInputStream readObj = new ObjectInputStream(
+					new ByteArrayInputStream(fromClient.getBytes()));
+			clientKey = (PublicKey) readObj.readObject();
+		} catch (IOException | ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return clientKey;
 	}
 }

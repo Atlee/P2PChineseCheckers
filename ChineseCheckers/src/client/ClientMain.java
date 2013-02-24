@@ -12,12 +12,21 @@ import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Scanner;
 import java.io.ByteArrayOutputStream;
 import java.io.Console;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+<<<<<<< HEAD
 import java.io.FileNotFoundException;
+=======
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+>>>>>>> Hub and Peer communication with signed messages
 import java.io.InputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.BufferedReader;
@@ -57,12 +66,14 @@ public class ClientMain {
 		InetAddress host = null;
 		String userInput, frmServerString;
 		byte[] fromServer;
+
 		PublicKey key = getHubPublicKey();
 
 		try{
 			host = InetAddress.getLocalHost();
 
 			socket = new Socket(host, PORT_NUM);
+<<<<<<< HEAD
 			out = new DataOutputStream(socket.getOutputStream());
 			in = new DataInputStream(socket.getInputStream());
 
@@ -187,5 +198,4 @@ public class ClientMain {
 			System.exit(1);
 		}
 	}
-
 }

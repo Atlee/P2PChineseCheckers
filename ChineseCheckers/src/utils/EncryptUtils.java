@@ -44,61 +44,103 @@ public class EncryptUtils {
    * @throws IOException
    * @throws FileNotFoundException
    */
-  public static void generateKey() {
-    try {
-      final KeyPairGenerator keyGen = KeyPairGenerator.getInstance(ALGORITHM);
-      keyGen.initialize(1024);
-      final KeyPair key = keyGen.generateKeyPair();
-
-      File privateKeyFile = new File(PRIVATE_KEY_FILE);
-      File publicKeyFile = new File(PUBLIC_KEY_FILE);
-
-      // Create files to store public and private key
-      if (privateKeyFile.getParentFile() != null) {
-        privateKeyFile.getParentFile().mkdirs();
-      }
-      privateKeyFile.createNewFile();
-
-      if (publicKeyFile.getParentFile() != null) {
-        publicKeyFile.getParentFile().mkdirs();
-      }
-      publicKeyFile.createNewFile();
-
-      // Saving the Public key in a file
-      ObjectOutputStream publicKeyOS = new ObjectOutputStream(
-          new FileOutputStream(publicKeyFile));
-      publicKeyOS.writeObject(key.getPublic());
-      publicKeyOS.close();
-      
-      FileOutputStream fos = new FileOutputStream("public");
-      fos.write(key.getPublic().getEncoded());
-      fos.close();
-
-      // Saving the Private key in a file
-      ObjectOutputStream privateKeyOS = new ObjectOutputStream(
-          new FileOutputStream(privateKeyFile));
-      privateKeyOS.writeObject(key.getPrivate());
-      privateKeyOS.close();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
+	public static void generateKey(String publicFileName, String privateFileName) {
+		System.out.println("Generating keys");
+		try {
+			final KeyPairGenerator keyGen = KeyPairGenerator.getInstance(ALGORITHM);
+			keyGen.initialize(1024);
+			final KeyPair key = keyGen.generateKeyPair();
+				
+			File privateKeyFile = new File(privateFileName);
+			File publicKeyFile = new File(publicFileName);
+				
+			// Create files to store public and private key
+			if (privateKeyFile.getParentFile() != null) {
+				privateKeyFile.getParentFile().mkdirs();
+			}
+			privateKeyFile.createNewFile();
+		
+			if (publicKeyFile.getParentFile() != null) {
+			    publicKeyFile.getParentFile().mkdirs();
+			}
+			publicKeyFile.createNewFile();
+		
+			// Saving the Public key in a file
+			ObjectOutputStream publicKeyOS = new ObjectOutputStream(
+					new FileOutputStream(publicKeyFile));
+		 	publicKeyOS.writeObject(key.getPublic());
+		 	publicKeyOS.close();
+			  
+		 	FileOutputStream fos = new FileOutputStream("public");
+		 	fos.write(key.getPublic().getEncoded());
+		 	fos.close();
+			
+		 	// Saving the Private key in a file
+		 	ObjectOutputStream privateKeyOS = new ObjectOutputStream(
+		 			new FileOutputStream(privateKeyFile));
+		 	privateKeyOS.writeObject(key.getPrivate());
+		 	privateKeyOS.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	
+	}
+	
+	public static PublicKey getPublicKey() {
+		return getPublicKey("public.key");
+	}
+  
+  public static PublicKey getPublicKey(String filename) {
+	  PublicKey key = null;
+	  try {
+		  ObjectInputStream fin = new ObjectInputStream(
+				  new FileInputStream(filename));
+		  key = (PublicKey) fin.readObject();
+		  fin.close();
+	  } catch (IOException | ClassNotFoundException e) {
+		  System.out.println("Error reading key from file");
+		  System.exit(1);
+	  }
+	  return key;
   }
+  
+  public static PrivateKey getPrivateKey() {
+	  return getPrivateKey("private.key");
+  }
+  
+  public static PrivateKey getPrivateKey(String filename) {
+	  PrivateKey key = null;
+	  try {
+		  ObjectInputStream fin = new ObjectInputStream(
+				  new FileInputStream(filename));
+		  key = (PrivateKey) fin.readObject();
+		  fin.close();
+	  } catch (IOException | ClassNotFoundException e) {
+		  System.out.println("Error reading key from file");
+		  e.printStackTrace();
+		  System.exit(1);
+	  }
+	  return key;
+  }
+  
+  private static boolean isKeyPresent(String filename) {
+	  File f = new File(filename);
+	  boolean output = false;
+	  if (f.exists()) {
+		  output = true;
+	  }
+	  return output;
+  }
+
 
   /**
    * The method checks if the pair of public and private key has been generated.
    * 
    * @return flag indicating if the pair of keys were generated.
    */
-  public static boolean areKeysPresent() {
+  public static boolean areKeysPresent(String publicFileName, String privateFileName) {
 
-    File privateKey = new File(PRIVATE_KEY_FILE);
-    File publicKey = new File(PUBLIC_KEY_FILE);
-
-    if (privateKey.exists() && publicKey.exists()) {
-      return true;
-    }
-    return false;
+    return isKeyPresent(publicFileName) && isKeyPresent(privateFileName);
   }
   
   	public static byte[] encrypt(String text) {
@@ -213,10 +255,10 @@ public class EncryptUtils {
     try {
 
       // Check if the pair of keys are present else generate those.
-      if (!areKeysPresent()) {
+      if (!areKeysPresent(PUBLIC_KEY_FILE, PRIVATE_KEY_FILE)) {
         // Method generates a pair of keys using the RSA algorithm and stores it
         // in their respective files
-        generateKey();
+        generateKey(PUBLIC_KEY_FILE, PRIVATE_KEY_FILE);
       }
 
       final String originalText = "Text to be encrypted ";
