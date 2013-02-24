@@ -90,10 +90,8 @@ public class FakeDatabase {
 			this.init();
 		}
 		
-		if (ServerMain.DEBUG) {
-			File f = new File(DATABASE_FILE);
-			f.delete();
-		}
+		File f = new File(DATABASE_FILE);
+		f.delete();
 	}
 	
 	public boolean containsKey(String key) {

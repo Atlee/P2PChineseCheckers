@@ -1,14 +1,11 @@
 package client;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.net.Socket;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Scanner;
 import utils.Protocol;
 
 /** A ClientProtocol is a sequence of responses to a server

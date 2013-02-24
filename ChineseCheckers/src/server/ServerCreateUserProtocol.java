@@ -1,16 +1,11 @@
 package server;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
 import java.security.PublicKey;
-import java.util.Scanner;
 import server.FakeDatabase;
-import utils.EncryptUtils;
-import utils.SignUtils;
 
 public class ServerCreateUserProtocol extends ServerProtocol {
 	
@@ -23,8 +18,6 @@ public class ServerCreateUserProtocol extends ServerProtocol {
 			if (!success) {
 				//close the socket -- the user opens a new line of communication
 				//to try again
-				s.getOutputStream().close();
-				s.close();
 				return;
 			}
 		
@@ -59,6 +52,7 @@ public class ServerCreateUserProtocol extends ServerProtocol {
 		//this read should be the prospective username
 		byte[] fromClientBytes = readMessage(s);
 		newUser = new String(fromClientBytes);
+		//TODO:check if newUser is in the database in the if condition
 		if (false) {
 			//if the key is already in use
 			byte[] response = ("IN_USE," + newUser).getBytes();
