@@ -17,14 +17,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.Console;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-<<<<<<< HEAD
-import java.io.FileNotFoundException;
-=======
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
->>>>>>> Hub and Peer communication with signed messages
 import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
@@ -73,7 +69,6 @@ public class ClientMain {
 			host = InetAddress.getLocalHost();
 
 			socket = new Socket(host, PORT_NUM);
-<<<<<<< HEAD
 			out = new DataOutputStream(socket.getOutputStream());
 			in = new DataInputStream(socket.getInputStream());
 
