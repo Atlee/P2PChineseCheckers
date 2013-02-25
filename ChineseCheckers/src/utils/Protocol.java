@@ -21,8 +21,7 @@ public abstract class Protocol {
 		out.writeInt(message.length);
 		out.write(message);
 	}
-	
-	//TODO: make this return a String
+
 	protected byte[] readSignedMessage(Socket s, PublicKey key) throws IOException {
 		DataInputStream in = new DataInputStream(s.getInputStream());
 		

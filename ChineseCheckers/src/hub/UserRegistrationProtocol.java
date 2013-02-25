@@ -1,104 +1,74 @@
 package hub;
 
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.security.KeyStore;
 import java.security.PublicKey;
 
+import utils.KeyStoreUtils;
 
 
 public class UserRegistrationProtocol extends HubProtocol {
 	
-	private String newUser = null;
-	private PublicKey clientPublicKey = null;
+	private String username = null;
 	
-	public void processInput(Socket s) {
+	public void execute(Socket s, KeyStore ks) {
 		try {
-			boolean success = handleGetUser(s);
-			if (!success) {
-				//close the socket -- the user opens a new line of communication
-				//to try again
-				return;
+			
+			byte[] message;
+			byte[] response;
+			
+			boolean usernameAvailable = false;
+			while(!usernameAvailable) {
+				response = readMessage(s);
+				username = new String(response);
+				
+				// TODO: check whether the desired username is actually available
+				
+				usernameAvailable = true;
+				message = ("AVAILABLE,"+username).getBytes();
+				sendSignedMessage(s, message, KeyStoreUtils.getHubPrivateKey());
 			}
 		
-			handleGetKey(s);
+			PublicKey key = readPublicKey(s);
+			response = readSignedMessage(s, key);
+			
+			// TODO: make sure that the key hash in response actually equals key.hashCode()
+			
+			HubCertificate cert = new HubCertificate(username, key);
+			KeyStoreUtils.addPublicKeyCertificate(ks, cert, username);
+			
+			message = ByteBuffer.allocate(4).putInt(cert.hashCode()).array();
+			sendSignedMessage(s, message, KeyStoreUtils.getHubPrivateKey());
+			sendCertificate(s, cert);
+			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			System.out.println("Error executing UserRegistrationProtocol");
 			e.printStackTrace();
 			System.exit(1);
 		}
 	}
 	
-	private void handleGetKey(Socket s) throws IOException {
+	private PublicKey readPublicKey(Socket s) throws IOException {
+		ObjectInputStream in = new ObjectInputStream(s.getInputStream());
+		PublicKey key = null;
 		try {
-			ObjectInputStream in = new ObjectInputStream(s.getInputStream());
-			clientPublicKey = (PublicKey) in.readObject();
+			key = (PublicKey) in.readObject();
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
+			System.out.println("Error reading public key received from peer");
 			e.printStackTrace();
 			System.exit(1);
 		}
-		
-		byte[] message = readSignedMessage(s, clientPublicKey);
-		String messageString = new String(message);
-		if (message != null && messageString.equals(newUser)) {
-			//db.setValue(newUser, clientPublicKey);
-			byte[] toClient = ("OK,"+newUser).getBytes();
-			//sendSignedMessage(s, toClient);
-			sendMessage(s, toClient);
-		}
+		return key;
 	}
 	
-	private boolean handleGetUser(Socket s) throws IOException {
-		//this read should be the prospective username
-		byte[] fromClientBytes = readMessage(s);
-		newUser = new String(fromClientBytes);
-		//TODO:check if newUser is in the database in the if condition
-		if (false) {
-			//if the key is already in use
-			byte[] response = ("IN_USE," + newUser).getBytes();
-			//sendSignedMessage(s, response);
-			sendMessage(s, response);
-			return false;
-		} else {
-			byte[] response = ("AVAILABLE,"+newUser).getBytes();
-			//sendSignedMessage(s, response);
-			sendMessage(s, response);
-			return true;
-		}
+	private void sendCertificate(Socket s, HubCertificate cert) throws IOException {
+		ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+		out.writeObject(cert);
 	}
+
+	
 }
-
-
-/*
- * @Override
-	public String processInput(String s, FakeDatabase db) {
-		String message;
-		if (s == null) {
-			message = "";
-		} else if (s.equals("create")) {
-			message = "username:password";
-		} else {
-			Scanner scn = new Scanner(s);
-			String op;
-			String username = null;
-			String password = null;
-			message = "Retry";
-			scn.useDelimiter("\t");
-			op = scn.next();
-			if (op.equals("username")) {
-				username = scn.next();
-				op = scn.next();
-				if (op.equals("password")) {
-					password = scn.next();
-					db.setValue(username, password);
-				}
-				message = "End";
-			}
-			System.out.println(username + ":" + password);
-			scn.close();
-		}
-		return message;
-	}
-*/

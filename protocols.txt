@@ -11,7 +11,7 @@ Protocol for new user registration...
 
 [1]  C -> U:  new user:pass ?
 [2]  U -> C:	user:pass
-[3]  C -> H:	CREATE, user
+[3]  C -> H:	REGISTER, user
 			
 if "user" already in use:
 [4]  H -> C:	Sign({ IN USE, user }, k_H)
@@ -20,12 +20,12 @@ if "user" already in use:
 			
 else:
 [4]  H -> C:	Sign({ AVAILABLE, user }, k_H)
-[5]  C:		Ver({ AVAILABLE, user }, K_H), generate K_user/k_user and
-                  associate this key pair with user:pass on local machine
+[5]  C:		Ver({ AVAILABLE, user }, K_H), generate K_user/k_user
 [6]  C -> H:	Sign({ user, K_user }, k_user)
-[7]  H:		if Ver({ user, K_user }, K_user), then bind <user, K_user>
-[8]  H -> C:	Sign({ OK, user }, k_H)
-[9]  C:		Ver({ OK, user }, K_H)
+[7]  H:		if Ver({ user, K_user }, K_user), then bind <<user, K_user>>K_H
+[8]  H -> C:	Sign({ <<user, K_user>>K_H }, k_H)
+[9]  C:		Ver({ <<user, K_user>>K_H }, K_H) and associate this certificate
+                  with user:pass in local KeyStore
 [10] C -> U:    success!
 
 --------------------------------------------------------------------------------

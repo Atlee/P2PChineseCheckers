@@ -4,29 +4,32 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-
+import java.security.KeyStore;
 
 import utils.Constants;
+import utils.KeyStoreUtils;
 
 
 public class Hub {
 	
 	private static final int PORT_NUM = Constants.PORT_NUM;
+	private static KeyStore keyStore;
 
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		ServerSocket server = handleCreateServerSocket();
-		//FakeDatabase db = new FakeDatabase();
-		//db.init();
+	public static void main(String[] args) throws IOException {
+		if(keyStore == null) {
+			keyStore = KeyStoreUtils.loadKeyStore(Constants.KEYSTORE_FILE);
+		}
+		
+		ServerSocket hub = handleCreateServerSocket();
 		
 		while (true) {
-			//waits for a client to connect before proceeding
-			Socket client = handleCreateSocket(server);
-			HubProtocol p = getProtocol(client);
-			p.processInput(client);
-			closeSocket(client);
+			// wait for a peer to connect
+			Socket peer = handleCreateSocket(hub);
+			HubProtocol p = selectProtocol(peer);
+			if(p != null) {
+				p.execute(peer, keyStore);
+			}
+			closeSocket(peer);
 		}
 	}
 	
@@ -41,7 +44,7 @@ public class Hub {
 		}
 	}
 	
-	private static HubProtocol getProtocol(Socket s) {
+	private static HubProtocol selectProtocol(Socket s) {
 		DataInputStream in = null;
 		int id = -1;
 		HubProtocol p = null;
@@ -54,41 +57,43 @@ public class Hub {
 			e.printStackTrace();
 			System.exit(1);
 		}
-		
-		//TODO: add login protocol
+
 		switch (id) {
 		case Constants.REGISTER:
 			p = new UserRegistrationProtocol();
 			break;
+		case Constants.LOGIN:
+			p = new UserLoginProtocol();
 		default:
-			p = new HubProtocol();
+			System.out.println("Unrecognized protocol ID");
+			return null;
 		}
 		return p;
 	}
 	
 	private static ServerSocket handleCreateServerSocket() {
-		//establish port for server
-		ServerSocket server = null;
+		// start Hub listening on port 4321
+		ServerSocket hub = null;
 		try {
-			server = new ServerSocket(PORT_NUM);
+			hub = new ServerSocket(PORT_NUM);
 		} catch (IOException e) {
 			System.out.println("Could not listen on port " + PORT_NUM);
 			e.printStackTrace();
 			System.exit(-1);
 		}
-		return server;
+		return hub;
 	}
 	
 	private static Socket handleCreateSocket(ServerSocket server) {
-		Socket client = null;
-		//accept a connecting client
+		Socket peer = null;
+		// accept a peer connection
 		try {
-			client = server.accept();
+			peer = server.accept();
 		} catch (IOException e) {
-			System.out.println("Accept failed: " + PORT_NUM);
+			System.out.println("Accept failed:" + PORT_NUM);
 			e.printStackTrace();
 			System.exit(-1);
 		}
-		return client;
+		return peer;
 	}
 }

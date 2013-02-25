@@ -5,12 +5,20 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+import hub.HubCertificate;
+
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.security.KeyPair;
+import java.security.KeyStore;
 import java.security.PublicKey;
 
 import javax.swing.BoxLayout;
@@ -18,34 +26,64 @@ import javax.swing.JFrame;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
+import java.security.cert.Certificate;
 
 import utils.KeyStoreUtils;
 import utils.Constants;
-import utils.Protocol;
+import utils.KeyStoreUtils;
 import utils.SignUtils;
+
 
 public class UserRegistrationProtocol extends PeerProtocol {
 	
-	private String userName = null;
-	private String password = null;
+	private String username;
+	private String password;
 	
-	@Override
-	public String processInput(String input) {
-		String output = "default";
-		BufferedReader stdin = new BufferedReader(
-				new InputStreamReader(System.in));
-		
+	public void execute(Socket s, KeyStore ks) {
 		try {
-			if (input.equals("Start")) {
-				output = "create";
-			} else if (input.equals("username:password")) {
-				System.out.println("Please enter new username");
-				output = "username\t" + stdin.readLine();
-				
-				System.out.println("Please enter new password");
-				output += "\tpassword\t" + stdin.readLine();
+			sendProtocolID(s);
+			
+			byte[] message;
+			byte[] response;
+			
+			boolean usernameAvailable = false;
+			
+			while(!usernameAvailable) {
+				getDesiredCredentials();
+				message = (username).getBytes();
+				sendMessage(s, message);
+				response = readSignedMessage(s, KeyStoreUtils.getHubPublicKey());
+				String responseStr = new String(response);
+				if(responseStr.equals("AVAILABLE,"+username)){
+					usernameAvailable = true;
+				} else if(responseStr.equals("IN USE,"+username)) {
+					System.out.println("The username you have selected is already in use. Please try again.");
+				} else {
+					System.out.println("lolwat");
+					System.exit(1);
+				}
+			}
+			
+			KeyPair keys = SignUtils.newSignKeyPair();
+			
+			byte[] pubKeyHash = ByteBuffer.allocate(4).putInt(keys.getPublic().hashCode()).array();
+			
+			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+			outputStream.write((username+",").getBytes());
+			outputStream.write(pubKeyHash);
+			message = outputStream.toByteArray();
+			
+			sendKey(s, keys.getPublic());
+			sendSignedMessage(s, message, keys.getPrivate());
+			
+			response = readSignedMessage(s, KeyStoreUtils.getHubPublicKey());
+			HubCertificate cert = readCertificate(s);
+			
+			if(cert.hashCode() == ByteBuffer.wrap(response).getInt()){
+				KeyStoreUtils.addPrivateKey(ks, keys.getPrivate(), cert, username, password);
+				System.out.println("Registration successful! Welcome, "+username+".");
 			} else {
-				output = "default";
+				System.out.println("Registration failed. Please try again.");
 			}
 		} catch (IOException e) {
 			System.out.println("Error reading user input");
@@ -60,49 +98,52 @@ public class UserRegistrationProtocol extends PeerProtocol {
 	void sendNewCredentials(String username, String password, Socket s) {
 		setCredentials(username, password);
 		
-		byte[] message = userName.getBytes();
+		byte[] message = username.getBytes();
 		try {
-			sendProtocol(s);
+			sendProtocolID(s);
 			sendMessage(s, message);
-			
-			handleNameResponse(s);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			System.out.println("Error executing UserRegistrationProtocol");
 			e.printStackTrace();
 			System.exit(1);
 		}
 	}
 	
 	private void setCredentials(String username, String password) {
-		this.userName = username;
+		this.username = username;
 		this.password = password;
 	}
 	
-	private void handleNameResponse(Socket s) throws IOException {
-		byte[] fromServerBytes = readSignedMessage(s, getHubKey());
+	void handleNameResponse(Socket s) throws IOException {
+		byte[] fromServerBytes = readSignedMessage(s, KeyStoreUtils.getHubPublicKey());
 		String fromServer = new String(fromServerBytes);
 		
-		if (fromServer.equals("AVAILABLE,"+userName)) {
+		if (fromServer.equals("AVAILABLE,"+username)) {
 			//TODO: add key generation/recovery code here
 			//for now assume keys in public/private.key files
 			//NOTE: I think the above happens automatically in SignUtils.init()
-			sendKey(s, KeyStoreUtils.getPublicKey(null, this.userName));
-			sendMessage(s, userName.getBytes());
+			sendKey(s, KeyStoreUtils.getPublicKey(null, this.username));
+			sendMessage(s, username.getBytes());
 			
-			fromServerBytes = readSignedMessage(s, getHubKey());
+			fromServerBytes = readSignedMessage(s, KeyStoreUtils.getHubPublicKey());
 			fromServer = new String(fromServerBytes);
-			if (fromServer.equals("OK,"+userName)) {
-				//TODO:Save password and Username locally
-				System.out.println("Username " + userName + " successfully created");
+			if (fromServer.equals("OK,"+username)) {
+				//TODO:Save password and username locally
+				System.out.println("username " + username + " successfully created");
 			} else {
 				System.out.println("Unknown message from server");
 			}			
-		} else if (fromServer.equals("IN_USE,"+userName)) {
-			System.out.println("Username " + userName + " is not " +
+		} else if (fromServer.equals("IN_USE,"+username)) {
+			System.out.println("username " + username + " is not " +
 					"available, please pick another");
 		} else {
 			System.out.println("Unknown message from server");
 		}
+	}
+
+	private void sendProtocolID(Socket s) throws IOException {
+		DataOutputStream out = new DataOutputStream(s.getOutputStream());
+		out.writeInt(Constants.REGISTER);
 	}
 	
 	private void sendKey(Socket s, PublicKey key) throws IOException {
@@ -110,31 +151,40 @@ public class UserRegistrationProtocol extends PeerProtocol {
 		out.writeObject(key);
 	}
 	
-	private void sendProtocol(Socket s) throws IOException {
-		DataOutputStream out = new DataOutputStream(s.getOutputStream());
-		out.writeInt(Constants.REGISTER);
+	private HubCertificate readCertificate(Socket s) throws IOException {
+		ObjectInputStream in = new ObjectInputStream(s.getInputStream());
+		HubCertificate cert = null;
+		try {
+			cert = (HubCertificate) in.readObject();
+		} catch (ClassNotFoundException e) {
+			System.out.println("Error reading certificate received from Hub");
+			e.printStackTrace();
+			System.exit(1);
+		}
+		return cert;
 	}
 	
- 	private void getNewCredentials() {
+ 	private void getDesiredCredentials() {
 		BufferedReader stdin = new BufferedReader(
 				new InputStreamReader(System.in));
 		try {
-			System.out.println("Please enter new username");
-			userName = stdin.readLine();
-		
-			System.out.println("Please enter new password");
+			System.out.println("Desired username...");
+			username = stdin.readLine();
+			System.out.println("Password...");
 			password = stdin.readLine();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			System.out.println("Error reading username and password");
 			e.printStackTrace();
 			System.exit(1);
 		}
 	}
+ 	
+ 	
 }
 
 class CreateUserGui extends JFrame implements ActionListener {
 	
-	private JTextField userName;
+	private JTextField username;
 	private JPasswordField password;
 	private Button createUsrBtn;
 	private static final String createUsrString = "Create User";
@@ -161,12 +211,12 @@ class CreateUserGui extends JFrame implements ActionListener {
 		int centerY = (screen.height / 2) - (windowHeight / 2);
 		setLocation(centerX, centerY);
 		
-		userName = new JTextField("Username");
-		userName.setSize(new Dimension(100, 50));
+		username = new JTextField("username");
+		username.setSize(new Dimension(100, 50));
 		password = new JPasswordField("Password");
 		createUsrBtn = new Button(createUsrString);
 	
-		getContentPane().add(userName);
+		getContentPane().add(username);
 		getContentPane().add(password);
 		getContentPane().add(createUsrBtn);
 		createUsrBtn.addActionListener(this);
@@ -178,9 +228,16 @@ class CreateUserGui extends JFrame implements ActionListener {
 		// TODO Auto-generated method stub
 		if (arg0.getActionCommand().equals(createUsrString)) {
 			//Create new window for loggin
-			String userNameString = userName.getText();
+			String usernameString = username.getText();
 			String passwordString = new String(password.getPassword());
-			p.sendNewCredentials(userNameString, passwordString, this.s);
+			p.sendNewCredentials(usernameString, passwordString, this.s);
+			try {
+				p.handleNameResponse(this.s);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				System.exit(1);
+			}
 		}
 	}
 }

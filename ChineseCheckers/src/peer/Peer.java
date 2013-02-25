@@ -1,22 +1,32 @@
 package peer;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.IOException;
+
 import java.net.InetAddress;
 import java.net.Socket;
+
+import java.security.KeyStore;
+
+import utils.KeyStoreUtils;
+import utils.Constants;
 
 
 public class Peer {
 
-	private static final int PORT_NUM = 4321;
-	private static InetAddress host = null;
+	private static final int PORT_NUM = Constants.PORT_NUM;
+	private static InetAddress host;
+	private static KeyStore keyStore;
 	
 	private static PeerProtocol p = null;
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
+    	if(keyStore == null) {
+			keyStore = KeyStoreUtils.loadKeyStore(Constants.KEYSTORE_FILE);
+		}
 		MyGui g = new MyGui();
 		
 	}
@@ -38,23 +48,22 @@ public class Peer {
 			host = InetAddress.getLocalHost();
 			s = new Socket(host, PORT_NUM);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			System.out.println("Error creating socket");
 			e.printStackTrace();
 			System.exit(1);
 		}
-		
 		return s;
 	}
 	
 	private static PeerProtocol createProtocol(String protocolID) {
-		if (protocolID.equals("create")) {
+		if (protocolID.equals("register")) {
 			p = new UserRegistrationProtocol();
-		} else {
-			//TODO: create ClientSigningProtocol(String username)
+		} else if (protocolID.equals("login"){
+            p = new UserLoginProtocol();
+        } else {
 			p = new PeerProtocol();
 		}
-		
-		return p;
 	}
+		
 
 }

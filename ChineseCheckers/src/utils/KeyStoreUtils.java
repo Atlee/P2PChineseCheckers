@@ -5,6 +5,8 @@ import java.io.FileOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import java.security.KeyFactory;
+import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.PublicKey;
 import java.security.PrivateKey;
@@ -12,8 +14,13 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 
 public class KeyStoreUtils {
+	
+	private static PublicKey hubPublicKey;
+	private static PrivateKey hubPrivateKey;
 
 	/** 
 	 * Load the KeyStore from a file. 
@@ -22,6 +29,9 @@ public class KeyStoreUtils {
 	 * @param filename 
 	 */
 	public static KeyStore loadKeyStore(String filename) throws IOException {
+		//if(hubPublicKey == null) initHubPublicKey();
+		if(hubPrivateKey == null) initHubPublicPrivateKeys();
+		
 		KeyStore ks = null;
 		try {
 			ks = KeyStore.getInstance(KeyStore.getDefaultType());
@@ -81,6 +91,20 @@ public class KeyStoreUtils {
 	}
 	
 	/** 
+	 * Retrieve the Hub's public key.
+	 */
+	public static PublicKey getHubPublicKey() {
+		return hubPublicKey;
+	}
+	
+	/** 
+	 * Retrieve the Hub's public key.
+	 */
+	public static PrivateKey getHubPrivateKey() {
+		return hubPrivateKey;
+	}
+	
+	/** 
 	 * Retrieve the private key stored under the given alias in the KeyStore. Use the
 	 * given password to access this KeyStore entry. Return null if no such key exists.
 	 * 
@@ -94,7 +118,7 @@ public class KeyStoreUtils {
 	}
 	
 	/** 
-	 * Add the public key certificate to the KeyStore under the given alias .
+	 * Add the public key certificate to the KeyStore under the given alias.
 	 * 
 	 * @param ks
 	 * @param cert
@@ -116,5 +140,24 @@ public class KeyStoreUtils {
 		// TODO
 	}
 
+	private static void initHubPublicKey() {
+		try {
+			KeyFactory kf = KeyFactory.getInstance(Constants.KEYGEN_ALGORITHM);
+			X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(Constants.HUB_PUBLIC_KEY);
+			
+			hubPublicKey = kf.generatePublic(pubKeySpec);
+		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+			System.out.println("Error loading the Hub's public key");
+			e.printStackTrace();
+			System.exit(1);
+		}
+	}
+	
+	private static void initHubPublicPrivateKeys() {
+		KeyPair keys = SignUtils.newSignKeyPair();
+		hubPublicKey = keys.getPublic();
+		hubPrivateKey = keys.getPrivate();
+	}
+	
 
 }
