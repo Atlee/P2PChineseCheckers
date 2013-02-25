@@ -8,10 +8,12 @@ import java.io.IOException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyStore;
+import java.security.KeyStore.PasswordProtection;
 import java.security.PublicKey;
 import java.security.PrivateKey;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableEntryException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
@@ -20,7 +22,7 @@ import java.security.spec.X509EncodedKeySpec;
 public class KeyStoreUtils {
 	
 	private static PublicKey hubPublicKey;
-	private static PrivateKey hubPrivateKey;
+	private static PrivateKey hubPrivateKey; // Don't forget to get rid of this later!
 
 	/** 
 	 * Load the KeyStore from a file. 
@@ -30,7 +32,7 @@ public class KeyStoreUtils {
 	 */
 	public static KeyStore loadKeyStore(String filename) throws IOException {
 		//if(hubPublicKey == null) initHubPublicKey();
-		if(hubPrivateKey == null) initHubPublicPrivateKeys();
+		if(hubPrivateKey == null) initHubPublicPrivateKeys(); // and to delete this...
 		
 		KeyStore ks = null;
 		try {
@@ -86,8 +88,15 @@ public class KeyStoreUtils {
 	 * @param alias
 	 */
 	public static PublicKey getPublicKey(KeyStore ks, String alias) {
-		// TODO
-		return null;
+		PublicKey key = null;
+		try {
+			Certificate cert = ks.getCertificate(alias);
+			key = cert.getPublicKey();
+		} catch (KeyStoreException e) {
+			System.out.println("Error retrieving public key for "+alias);
+			e.printStackTrace();
+		}
+		return key;
 	}
 	
 	/** 
@@ -113,8 +122,17 @@ public class KeyStoreUtils {
 	 * @param password
 	 */
 	public static PrivateKey getPrivateKey(KeyStore ks, String alias, String password) {
-		// TODO
-		return null;
+		PrivateKey key = null;
+		char[] passwordChars = null;
+		password.getChars(0, password.length()-1, passwordChars, 0);
+		try {
+			key = (PrivateKey) ks.getKey(alias, passwordChars);
+		} catch (NoSuchAlgorithmException | UnrecoverableEntryException | KeyStoreException e) {
+			System.out.println("Error retrieving private key for "+alias);
+			e.printStackTrace();
+		}
+		
+		return key;
 	}
 	
 	/** 
@@ -125,7 +143,13 @@ public class KeyStoreUtils {
 	 * @param alias
 	 */
 	public static void addPublicKeyCertificate(KeyStore ks, Certificate cert, String alias) {
-		// TODO
+		try {
+			ks.setCertificateEntry(alias, cert);
+		} catch (KeyStoreException e) {
+			System.out.println("Error storing public key certificate for "+alias);
+			e.printStackTrace();
+			System.exit(1);
+		}
 	}
 	
 	/** 
@@ -136,8 +160,17 @@ public class KeyStoreUtils {
 	 * @param alias
 	 * @param password
 	 */
-	public static void addPrivateKey(KeyStore ks, PrivateKey priv, Certificate cert, String alias, String password) {
-		// TODO
+	public static void addPrivateKey(KeyStore ks, PrivateKey key, Certificate cert, String alias, String password) {
+		char[] passwordChars = null;
+		password.getChars(0, password.length()-1, passwordChars, 0);
+		Certificate[] chain = {cert};
+		try {
+			ks.setKeyEntry(alias, key, passwordChars, chain);
+		} catch (KeyStoreException e) {
+			System.out.println("Error storing private key for "+alias);
+			e.printStackTrace();
+			System.exit(1);
+		}
 	}
 
 	private static void initHubPublicKey() {

@@ -1,0 +1,24 @@
+TEAM.txt
+
+Team members: Atlee Lyden (agl53) and Emma Kilfoyle (efk23)
+
+Atlee's contributions...
+
+1. Implemented the framework for network communications between Peer and 
+   Hub applications.
+2. Implemented SignUtils.java, which includes routines for producing and
+   verifying digital signatures using SHA512 with RSA. Digital signatures
+   are used to ensure proper sourcing and integrity of P2P messages.
+3. Implemented the demo GUI.
+
+Total hours: 20-25?
+
+Emma's contributions...
+
+1. Designed the communication protocols described in FUNCTIONALITY.txt.
+2. Implemented KeyStoreUtils.java, which includes routines for loading,
+   accessing, and saving Java KeyStores. These KeyStores are used by
+   both the Hub and Peer applications to store private keys and public
+   key trusted certificates.
+
+Total hours: 16
