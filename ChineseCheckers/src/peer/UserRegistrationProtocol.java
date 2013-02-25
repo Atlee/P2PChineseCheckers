@@ -19,8 +19,8 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
 
-
 import utils.KeyStoreUtils;
+import utils.Constants;
 import utils.Protocol;
 import utils.SignUtils;
 
@@ -112,7 +112,7 @@ public class UserRegistrationProtocol extends PeerProtocol {
 	
 	private void sendProtocol(Socket s) throws IOException {
 		DataOutputStream out = new DataOutputStream(s.getOutputStream());
-		out.writeInt(Protocol.CREATE);
+		out.writeInt(Constants.REGISTER);
 	}
 	
  	private void getNewCredentials() {
