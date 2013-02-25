@@ -1,6 +1,14 @@
+FUNCTIONALITY.txt
+
+Our system currently implements only the new user registration protocol 
+described below. However, all aspects of the cryptographic substrate -- 
+the digital signature scheme, certificate granting, and maintenance of the
+KeyStores -- are exercised in its implementation.
+
+
 U = human user
-C = game client
-H = hub
+C = game client application
+H = hub application
 
 Note: C always trusts H and knows H's public key, K_H
 Note: H knows the public key, K_user, of each registered user
@@ -23,8 +31,8 @@ else:
 [5]  C:		Ver({ AVAILABLE, user }, K_H), generate K_user/k_user
 [6]  C -> H:	Sign({ user, K_user }, k_user)
 [7]  H:		if Ver({ user, K_user }, K_user), then bind <<user, K_user>>K_H
-[8]  H -> C:	Sign({ <<user, K_user>>K_H }, k_H)
-[9]  C:		Ver({ <<user, K_user>>K_H }, K_H) and associate this certificate
+[8]  H -> C:	<<user, K_user>>k_H
+[9]  C:		Ver({ <<user, K_user>>k_H }, K_H) and associate this certificate
                   with user:pass in local KeyStore
 [10] C -> U:    success!
 
@@ -61,5 +69,14 @@ Note: If C2 does not know <user1, K_user1>, it can ask H
 
 The session ID, n, must be included in all subsequent messages between C1 and
 C2 until the connection is closed.
+
+--------------------------------------------------------------------------------
+
+Protocol for requesting a user's public key certificate from the hub...
+
+[1]  C -> H:	CERT, user
+[2]  H -> C:	<<user, K_user>>K_H
+[3]  C:		Ver(<<user, K_user>>k_H, K_H) and add <<user, K_user>> to the
+                  local KeyStore
 
 --------------------------------------------------------------------------------

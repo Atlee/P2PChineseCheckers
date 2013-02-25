@@ -22,7 +22,7 @@ import java.security.spec.X509EncodedKeySpec;
 public class KeyStoreUtils {
 	
 	private static PublicKey hubPublicKey;
-	private static PrivateKey hubPrivateKey;
+	private static PrivateKey hubPrivateKey; // Don't forget to get rid of this later!
 
 	/** 
 	 * Load the KeyStore from a file. 
@@ -32,7 +32,7 @@ public class KeyStoreUtils {
 	 */
 	public static KeyStore loadKeyStore(String filename) throws IOException {
 		//if(hubPublicKey == null) initHubPublicKey();
-		if(hubPrivateKey == null) initHubPublicPrivateKeys();
+		if(hubPrivateKey == null) initHubPublicPrivateKeys(); // and to delete this...
 		
 		KeyStore ks = null;
 		try {
