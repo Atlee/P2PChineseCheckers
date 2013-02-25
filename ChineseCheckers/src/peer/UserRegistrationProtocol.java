@@ -5,8 +5,10 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
-import hub.HubCertificate;
+import javax.swing.BoxLayout;
+import javax.swing.JFrame;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -21,20 +23,17 @@ import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.PublicKey;
 
-import javax.swing.BoxLayout;
-import javax.swing.JFrame;
-import javax.swing.JPasswordField;
-import javax.swing.JTextField;
-
-import java.security.cert.Certificate;
+import hub.HubCertificate;
 
 import utils.KeyStoreUtils;
 import utils.Constants;
-import utils.KeyStoreUtils;
+import utils.Protocol;
 import utils.SignUtils;
 
 
-public class UserRegistrationProtocol extends PeerProtocol {
+public class UserRegistrationProtocol extends Protocol {
+	
+	private KeyStore keyStore;
 	
 	private String username;
 	private String password;
@@ -66,14 +65,8 @@ public class UserRegistrationProtocol extends PeerProtocol {
 			
 			KeyPair keys = SignUtils.newSignKeyPair();
 			
-			byte[] pubKeyHash = ByteBuffer.allocate(4).putInt(keys.getPublic().hashCode()).array();
-			
-			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-			outputStream.write((username+",").getBytes());
-			outputStream.write(pubKeyHash);
-			message = outputStream.toByteArray();
-			
 			sendKey(s, keys.getPublic());
+			message = username.getBytes();
 			sendSignedMessage(s, message, keys.getPrivate());
 			
 			response = readSignedMessage(s, KeyStoreUtils.getHubPublicKey());
@@ -88,12 +81,12 @@ public class UserRegistrationProtocol extends PeerProtocol {
 		} catch (IOException e) {
 			System.out.println("Error reading user input");
 		}
-		return output;
 	}
 	
-	public void execute(Socket s) {
-		CreateUserGui createUser = new CreateUserGui(this, s);
-	}
+//	public void execute(Socket s, KeyStore ks) {
+//		keyStore = ks;
+//		CreateUserGui gui = new CreateUserGui(this, s);
+//	}
 	
 	void sendNewCredentials(String username, String password, Socket s) {
 		setCredentials(username, password);
@@ -122,7 +115,7 @@ public class UserRegistrationProtocol extends PeerProtocol {
 			//TODO: add key generation/recovery code here
 			//for now assume keys in public/private.key files
 			//NOTE: I think the above happens automatically in SignUtils.init()
-			sendKey(s, KeyStoreUtils.getPublicKey(null, this.username));
+			sendKey(s, KeyStoreUtils.getPublicKey(keyStore, this.username));
 			sendMessage(s, username.getBytes());
 			
 			fromServerBytes = readSignedMessage(s, KeyStoreUtils.getHubPublicKey());
@@ -227,7 +220,7 @@ class CreateUserGui extends JFrame implements ActionListener {
 	public void actionPerformed(ActionEvent arg0) {
 		// TODO Auto-generated method stub
 		if (arg0.getActionCommand().equals(createUsrString)) {
-			//Create new window for loggin
+			//Create new window for login
 			String usernameString = username.getText();
 			String passwordString = new String(password.getPassword());
 			p.sendNewCredentials(usernameString, passwordString, this.s);

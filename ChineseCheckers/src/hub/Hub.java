@@ -1,23 +1,41 @@
 package hub;
 
 import java.io.DataInputStream;
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.KeyStore;
+import java.security.PrivateKey;
 
 import utils.Constants;
 import utils.KeyStoreUtils;
+import utils.Protocol;
 
 
 public class Hub {
-	
-	private static final int PORT_NUM = Constants.PORT_NUM;
+
 	private static KeyStore keyStore;
 
 	public static void main(String[] args) throws IOException {
 		if(keyStore == null) {
 			keyStore = KeyStoreUtils.loadKeyStore(Constants.KEYSTORE_FILE);
+
+			ObjectInputStream in = new ObjectInputStream((new FileInputStream("private.key")));
+			try {
+				PrivateKey key = (PrivateKey) in.readObject();
+				in.close();
+				KeyStoreUtils.addPrivateKey(keyStore, key, null, "hub", "password");
+			} catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			
 		}
 		
 		ServerSocket hub = handleCreateServerSocket();
@@ -25,7 +43,7 @@ public class Hub {
 		while (true) {
 			// wait for a peer to connect
 			Socket peer = handleCreateSocket(hub);
-			HubProtocol p = selectProtocol(peer);
+			Protocol p = selectProtocol(peer);
 			if(p != null) {
 				p.execute(peer, keyStore);
 			}
@@ -44,10 +62,10 @@ public class Hub {
 		}
 	}
 	
-	private static HubProtocol selectProtocol(Socket s) {
+	private static Protocol selectProtocol(Socket s) {
 		DataInputStream in = null;
 		int id = -1;
-		HubProtocol p = null;
+		Protocol p = null;
 		
 		try {
 			in = new DataInputStream(s.getInputStream());
@@ -75,9 +93,9 @@ public class Hub {
 		// start Hub listening on port 4321
 		ServerSocket hub = null;
 		try {
-			hub = new ServerSocket(PORT_NUM);
+			hub = new ServerSocket(Constants.PORT_NUM);
 		} catch (IOException e) {
-			System.out.println("Could not listen on port " + PORT_NUM);
+			System.out.println("Could not listen on port " + Constants.PORT_NUM);
 			e.printStackTrace();
 			System.exit(-1);
 		}
@@ -90,7 +108,7 @@ public class Hub {
 		try {
 			peer = server.accept();
 		} catch (IOException e) {
-			System.out.println("Accept failed:" + PORT_NUM);
+			System.out.println("Accept failed:" + Constants.PORT_NUM);
 			e.printStackTrace();
 			System.exit(-1);
 		}

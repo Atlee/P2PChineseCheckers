@@ -9,9 +9,10 @@ import java.security.KeyStore;
 import java.security.PublicKey;
 
 import utils.KeyStoreUtils;
+import utils.Protocol;
 
 
-public class UserRegistrationProtocol extends HubProtocol {
+public class UserRegistrationProtocol extends Protocol {
 	
 	private String username = null;
 	
@@ -30,20 +31,22 @@ public class UserRegistrationProtocol extends HubProtocol {
 				
 				usernameAvailable = true;
 				message = ("AVAILABLE,"+username).getBytes();
-				sendSignedMessage(s, message, KeyStoreUtils.getHubPrivateKey());
+				sendSignedMessage(s, message, KeyStoreUtils.getPrivateKey(ks, "hub", "password"));
 			}
 		
 			PublicKey key = readPublicKey(s);
 			response = readSignedMessage(s, key);
 			
-			// TODO: make sure that the key hash in response actually equals key.hashCode()
-			
-			HubCertificate cert = new HubCertificate(username, key);
-			KeyStoreUtils.addPublicKeyCertificate(ks, cert, username);
-			
-			message = ByteBuffer.allocate(4).putInt(cert.hashCode()).array();
-			sendSignedMessage(s, message, KeyStoreUtils.getHubPrivateKey());
-			sendCertificate(s, cert);
+			if ((new String(response)).equals(username)) {
+				HubCertificate cert = new HubCertificate(username, key);
+				KeyStoreUtils.addPublicKeyCertificate(ks, cert, username);
+				
+				message = ByteBuffer.allocate(4).putInt(cert.hashCode()).array();
+				sendSignedMessage(s, message, KeyStoreUtils.getPrivateKey(ks, "hub", "password"));
+				sendCertificate(s, cert);
+			} else {
+				return;
+			}
 			
 		} catch (IOException e) {
 			System.out.println("Error executing UserRegistrationProtocol");

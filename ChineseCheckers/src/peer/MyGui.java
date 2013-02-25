@@ -57,8 +57,8 @@ public class MyGui extends JFrame implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		// TODO Auto-generated method stub
 		if (e.getActionCommand().equals(createUsrString)) {
-			//Create new window for loggin
-			Peer.setPeerProtocol("create");
+			//Create new window for login
+			Peer.setProtocol("register");
 			Peer.executeProtocol();
 		}
 		

@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -22,7 +23,6 @@ import java.security.spec.X509EncodedKeySpec;
 public class KeyStoreUtils {
 	
 	private static PublicKey hubPublicKey;
-	private static PrivateKey hubPrivateKey; // Don't forget to get rid of this later!
 
 	/** 
 	 * Load the KeyStore from a file. 
@@ -31,8 +31,7 @@ public class KeyStoreUtils {
 	 * @param filename 
 	 */
 	public static KeyStore loadKeyStore(String filename) throws IOException {
-		//if(hubPublicKey == null) initHubPublicKey();
-		if(hubPrivateKey == null) initHubPublicPrivateKeys(); // and to delete this...
+		if(hubPublicKey == null) initHubPublicKey();
 		
 		KeyStore ks = null;
 		try {
@@ -107,13 +106,6 @@ public class KeyStoreUtils {
 	}
 	
 	/** 
-	 * Retrieve the Hub's public key.
-	 */
-	public static PrivateKey getHubPrivateKey() {
-		return hubPrivateKey;
-	}
-	
-	/** 
 	 * Retrieve the private key stored under the given alias in the KeyStore. Use the
 	 * given password to access this KeyStore entry. Return null if no such key exists.
 	 * 
@@ -123,7 +115,7 @@ public class KeyStoreUtils {
 	 */
 	public static PrivateKey getPrivateKey(KeyStore ks, String alias, String password) {
 		PrivateKey key = null;
-		char[] passwordChars = null;
+		char[] passwordChars = new char[password.length()];
 		password.getChars(0, password.length()-1, passwordChars, 0);
 		try {
 			key = (PrivateKey) ks.getKey(alias, passwordChars);
@@ -161,7 +153,7 @@ public class KeyStoreUtils {
 	 * @param password
 	 */
 	public static void addPrivateKey(KeyStore ks, PrivateKey key, Certificate cert, String alias, String password) {
-		char[] passwordChars = null;
+		char[] passwordChars = new char[password.length()];
 		password.getChars(0, password.length()-1, passwordChars, 0);
 		Certificate[] chain = {cert};
 		try {
@@ -173,23 +165,30 @@ public class KeyStoreUtils {
 		}
 	}
 
+//	private static void initHubPublicKey() {
+//		try {
+//			KeyFactory kf = KeyFactory.getInstance(Constants.KEYGEN_ALGORITHM);
+//			X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(Constants.HUB_PUBLIC_KEY);
+//			
+//			hubPublicKey = kf.generatePublic(pubKeySpec);
+//		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+//			System.out.println("Error loading the Hub's public key");
+//			e.printStackTrace();
+//			System.exit(1);
+//		}
+//	}
+	
 	private static void initHubPublicKey() {
 		try {
-			KeyFactory kf = KeyFactory.getInstance(Constants.KEYGEN_ALGORITHM);
-			X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(Constants.HUB_PUBLIC_KEY);
-			
-			hubPublicKey = kf.generatePublic(pubKeySpec);
-		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-			System.out.println("Error loading the Hub's public key");
+			ObjectInputStream in = new ObjectInputStream((new FileInputStream("public.key")));
+			PublicKey key = (PublicKey) in.readObject();
+			in.close();
+			hubPublicKey = key;
+		} catch (IOException | ClassNotFoundException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
-			System.exit(1);
 		}
-	}
-	
-	private static void initHubPublicPrivateKeys() {
-		KeyPair keys = SignUtils.newSignKeyPair();
-		hubPublicKey = keys.getPublic();
-		hubPrivateKey = keys.getPrivate();
+		
 	}
 	
 

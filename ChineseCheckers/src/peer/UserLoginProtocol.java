@@ -3,7 +3,9 @@ package peer;
 import java.net.Socket;
 import java.security.KeyStore;
 
-public class UserLoginProtocol extends PeerProtocol {
+import utils.Protocol;
+
+public class UserLoginProtocol extends Protocol {
 
 	@Override
 	public void execute(Socket s, KeyStore keyStore) {
