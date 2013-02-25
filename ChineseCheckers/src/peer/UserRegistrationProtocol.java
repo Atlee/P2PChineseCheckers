@@ -68,12 +68,10 @@ public class UserRegistrationProtocol extends Protocol {
 			sendKey(s, keys.getPublic());
 			message = username.getBytes();
 			sendSignedMessage(s, message, keys.getPrivate());
-			
-			response = readSignedMessage(s, KeyStoreUtils.getHubPublicKey());
-			HubCertificate cert = readCertificate(s);
-			
-			if(cert.hashCode() == ByteBuffer.wrap(response).getInt()){
-				KeyStoreUtils.addPrivateKey(ks, keys.getPrivate(), cert, username, password);
+
+			//HubCertificate cert = readCertificate(s);
+			if(true){ //FIXME
+				KeyStoreUtils.addPrivateKey(ks, keys.getPrivate(), null, username, password);
 				System.out.println("Registration successful! Welcome, "+username+".");
 			} else {
 				System.out.println("Registration failed. Please try again.");

@@ -40,10 +40,7 @@ public class UserRegistrationProtocol extends Protocol {
 			if ((new String(response)).equals(username)) {
 				HubCertificate cert = new HubCertificate(username, key);
 				KeyStoreUtils.addPublicKeyCertificate(ks, cert, username);
-				
-				message = ByteBuffer.allocate(4).putInt(cert.hashCode()).array();
-				sendSignedMessage(s, message, KeyStoreUtils.getPrivateKey(ks, "hub", "password"));
-				sendCertificate(s, cert);
+				//sendCertificate(s, cert);
 			} else {
 				return;
 			}
