@@ -53,7 +53,7 @@ public class Hub {
 			in = new DataInputStream(s.getInputStream());
 			id = in.readInt();
 		} catch (IOException e) {
-			System.out.println("Error determining protocol ID\n");
+			System.out.println("Error determining protocol ID");
 			e.printStackTrace();
 			System.exit(1);
 		}
@@ -65,7 +65,7 @@ public class Hub {
 		case Constants.LOGIN:
 			p = new UserLoginProtocol();
 		default:
-			System.out.println("Unrecognized protocol ID\n");
+			System.out.println("Unrecognized protocol ID");
 			return null;
 		}
 		return p;
@@ -77,7 +77,7 @@ public class Hub {
 		try {
 			hub = new ServerSocket(PORT_NUM);
 		} catch (IOException e) {
-			System.out.println("Could not listen on port " + PORT_NUM + "\n");
+			System.out.println("Could not listen on port " + PORT_NUM);
 			e.printStackTrace();
 			System.exit(-1);
 		}
@@ -90,7 +90,7 @@ public class Hub {
 		try {
 			peer = server.accept();
 		} catch (IOException e) {
-			System.out.println("Accept failed:" + PORT_NUM + "\n");
+			System.out.println("Accept failed:" + PORT_NUM);
 			e.printStackTrace();
 			System.exit(-1);
 		}

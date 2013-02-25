@@ -1,5 +1,7 @@
 package peer;
 
+import hub.HubCertificate;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -42,9 +44,9 @@ public class UserRegistrationProtocol extends PeerProtocol {
 				if(responseStr.equals("AVAILABLE,"+username)){
 					usernameAvailable = true;
 				} else if(responseStr.equals("IN USE,"+username)) {
-					System.out.println("The username you have selected is already in use. Please try again.\n");
+					System.out.println("The username you have selected is already in use. Please try again.");
 				} else {
-					System.out.println("lolwat\n");
+					System.out.println("lolwat");
 					System.exit(1);
 				}
 			}
@@ -62,17 +64,17 @@ public class UserRegistrationProtocol extends PeerProtocol {
 			sendSignedMessage(s, message, keys.getPrivate());
 			
 			response = readSignedMessage(s, KeyStoreUtils.getHubPublicKey());
-			Certificate cert = readCertificate(s);
+			HubCertificate cert = readCertificate(s);
 			
 			if(cert.hashCode() == ByteBuffer.wrap(response).getInt()){
 				KeyStoreUtils.addPrivateKey(ks, keys.getPrivate(), cert, username, password);
-				System.out.println("Registration successful! Welcome, "+username+".\n");
+				System.out.println("Registration successful! Welcome, "+username+".");
 			} else {
-				System.out.println("Registration failed. Please try again.\n");
+				System.out.println("Registration failed. Please try again.");
 			}
 			
 		} catch (IOException e) {
-			System.out.println("Error executing UserRegistrationProtocol\n");
+			System.out.println("Error executing UserRegistrationProtocol");
 			e.printStackTrace();
 			System.exit(1);
 		}
@@ -88,13 +90,13 @@ public class UserRegistrationProtocol extends PeerProtocol {
 		out.writeObject(key);
 	}
 	
-	private Certificate readCertificate(Socket s) throws IOException {
+	private HubCertificate readCertificate(Socket s) throws IOException {
 		ObjectInputStream in = new ObjectInputStream(s.getInputStream());
-		Certificate cert = null;
+		HubCertificate cert = null;
 		try {
-			cert = (Certificate) in.readObject();
+			cert = (HubCertificate) in.readObject();
 		} catch (ClassNotFoundException e) {
-			System.out.println("Error reading certificate received from Hub\n");
+			System.out.println("Error reading certificate received from Hub");
 			e.printStackTrace();
 			System.exit(1);
 		}
@@ -105,12 +107,12 @@ public class UserRegistrationProtocol extends PeerProtocol {
 		BufferedReader stdin = new BufferedReader(
 				new InputStreamReader(System.in));
 		try {
-			System.out.println("Desired username...\n");
+			System.out.println("Desired username...");
 			username = stdin.readLine();
-			System.out.println("Password...\n");
+			System.out.println("Password...");
 			password = stdin.readLine();
 		} catch (IOException e) {
-			System.out.println("Error reading username and password\n");
+			System.out.println("Error reading username and password");
 			e.printStackTrace();
 			System.exit(1);
 		}

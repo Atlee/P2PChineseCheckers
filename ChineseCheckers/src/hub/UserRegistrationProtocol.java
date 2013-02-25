@@ -46,7 +46,7 @@ public class UserRegistrationProtocol extends HubProtocol {
 			sendCertificate(s, cert);
 			
 		} catch (IOException e) {
-			System.out.println("Error executing UserRegistrationProtocol\n");
+			System.out.println("Error executing UserRegistrationProtocol");
 			e.printStackTrace();
 			System.exit(1);
 		}
@@ -58,7 +58,7 @@ public class UserRegistrationProtocol extends HubProtocol {
 		try {
 			key = (PublicKey) in.readObject();
 		} catch (ClassNotFoundException e) {
-			System.out.println("Error reading public key received from peer\n");
+			System.out.println("Error reading public key received from peer");
 			e.printStackTrace();
 			System.exit(1);
 		}
