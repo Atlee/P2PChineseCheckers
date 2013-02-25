@@ -7,7 +7,6 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.security.KeyStore;
 import java.security.PublicKey;
-import java.security.cert.Certificate;
 
 import utils.KeyStoreUtils;
 
@@ -31,7 +30,7 @@ public class UserRegistrationProtocol extends HubProtocol {
 				
 				usernameAvailable = true;
 				message = ("AVAILABLE,"+username).getBytes();
-				sendSignedMessage(s, message, null); // FIXME: what is Hub's private key??
+				sendSignedMessage(s, message, KeyStoreUtils.getHubPrivateKey());
 			}
 		
 			PublicKey key = readPublicKey(s);
@@ -43,7 +42,7 @@ public class UserRegistrationProtocol extends HubProtocol {
 			KeyStoreUtils.addPublicKeyCertificate(ks, cert, username);
 			
 			message = ByteBuffer.allocate(4).putInt(cert.hashCode()).array();
-			sendSignedMessage(s, message, null); // FIXME: what is Hun's private key??
+			sendSignedMessage(s, message, KeyStoreUtils.getHubPrivateKey());
 			sendCertificate(s, cert);
 			
 		} catch (IOException e) {
@@ -70,6 +69,6 @@ public class UserRegistrationProtocol extends HubProtocol {
 		ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
 		out.writeObject(cert);
 	}
-	
+
 	
 }

@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import java.security.KeyFactory;
+import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.PublicKey;
 import java.security.PrivateKey;
@@ -19,6 +20,7 @@ import java.security.spec.X509EncodedKeySpec;
 public class KeyStoreUtils {
 	
 	private static PublicKey hubPublicKey;
+	private static PrivateKey hubPrivateKey;
 
 	/** 
 	 * Load the KeyStore from a file. 
@@ -27,7 +29,8 @@ public class KeyStoreUtils {
 	 * @param filename 
 	 */
 	public static KeyStore loadKeyStore(String filename) throws IOException {
-		if(hubPublicKey == null) initHubPublicKey();
+		//if(hubPublicKey == null) initHubPublicKey();
+		if(hubPrivateKey == null) initHubPublicPrivateKeys();
 		
 		KeyStore ks = null;
 		try {
@@ -95,6 +98,13 @@ public class KeyStoreUtils {
 	}
 	
 	/** 
+	 * Retrieve the Hub's public key.
+	 */
+	public static PrivateKey getHubPrivateKey() {
+		return hubPrivateKey;
+	}
+	
+	/** 
 	 * Retrieve the private key stored under the given alias in the KeyStore. Use the
 	 * given password to access this KeyStore entry. Return null if no such key exists.
 	 * 
@@ -141,6 +151,12 @@ public class KeyStoreUtils {
 			e.printStackTrace();
 			System.exit(1);
 		}
+	}
+	
+	private static void initHubPublicPrivateKeys() {
+		KeyPair keys = SignUtils.newSignKeyPair();
+		hubPublicKey = keys.getPublic();
+		hubPrivateKey = keys.getPrivate();
 	}
 	
 
