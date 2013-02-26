@@ -11,7 +11,7 @@ Atlee's contributions...
    are used to ensure proper sourcing and integrity of P2P messages.
 3. Implemented the demo GUI.
 
-Total hours: 20-25?
+Total hours: 30
 
 Emma's contributions...
 
