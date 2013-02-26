@@ -134,7 +134,7 @@ public class KeyStoreUtils {
 	 * @param cert
 	 * @param alias
 	 */
-	public static void addPublicKeyCertificate(KeyStore ks, Certificate cert, String alias) {
+	public static void addPublicKeyCertificate(KeyStore ks, String alias, Certificate cert) {
 		try {
 			ks.setCertificateEntry(alias, cert);
 		} catch (KeyStoreException e) {

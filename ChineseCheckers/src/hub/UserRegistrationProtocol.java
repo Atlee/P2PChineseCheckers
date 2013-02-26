@@ -14,8 +14,6 @@ import utils.Protocol;
 
 public class UserRegistrationProtocol extends Protocol {
 	
-	private String username = null;
-	
 	public void execute(Socket s, KeyStore ks) {
 		try {
 			
@@ -23,14 +21,20 @@ public class UserRegistrationProtocol extends Protocol {
 			byte[] response;
 			
 			boolean usernameAvailable = false;
+			String username = null;
+			
 			while(!usernameAvailable) {
 				response = readMessage(s);
 				username = new String(response);
 				
 				// TODO: check whether the desired username is actually available
+				if (nameAvailable(username)) {
+					usernameAvailable = true;
+					message = ("AVAILABLE,"+username).getBytes();
+				} else {
+					message = ("IN_USE,"+username).getBytes();
+				}
 				
-				usernameAvailable = true;
-				message = ("AVAILABLE,"+username).getBytes();
 				sendSignedMessage(s, message, KeyStoreUtils.getPrivateKey(ks, "hub", "password"));
 			}
 		
@@ -39,7 +43,7 @@ public class UserRegistrationProtocol extends Protocol {
 			
 			if ((new String(response)).equals(username)) {
 				HubCertificate cert = new HubCertificate(username, key);
-				KeyStoreUtils.addPublicKeyCertificate(ks, cert, username);
+				KeyStoreUtils.addPublicKeyCertificate(ks, username, cert);
 				//sendCertificate(s, cert);
 			} else {
 				return;
@@ -52,6 +56,11 @@ public class UserRegistrationProtocol extends Protocol {
 		}
 	}
 	
+	private boolean nameAvailable(String username) {
+		// TODO Auto-generated method stub
+		return true;
+	}
+
 	private PublicKey readPublicKey(Socket s) throws IOException {
 		ObjectInputStream in = new ObjectInputStream(s.getInputStream());
 		PublicKey key = null;

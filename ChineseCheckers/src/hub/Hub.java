@@ -19,7 +19,7 @@ import utils.Protocol;
 
 public class Hub {
 
-	private static KeyStore keyStore;
+	public static KeyStore keyStore;
 
 	public static void main(String[] args) throws IOException {
 		if(keyStore == null) {
@@ -34,8 +34,6 @@ public class Hub {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
-			
 		}
 		
 		ServerSocket hub = handleCreateServerSocket();
