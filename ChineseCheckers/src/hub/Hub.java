@@ -25,8 +25,8 @@ public class Hub {
 		ObjectInputStream in = new ObjectInputStream((new FileInputStream("private.key")));
 		try {
 			PrivateKey key = (PrivateKey) in.readObject();
-			in.close();
-			ks.addPrivateKey(key, "hub", "password");
+			in.close();			
+			ks.addPrivateKey(key, "hub", "password".toCharArray());
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -37,7 +37,7 @@ public class Hub {
 		while (true) {
 			// wait for a peer to connect
 			Socket peer = handleCreateSocket(hub);
-			Protocol p = selectProtocol(peer, ks);
+			HubProtocol p = selectProtocol(peer, ks);
 			if(p != null) {
 				p.execute(peer);
 			}
@@ -56,10 +56,10 @@ public class Hub {
 		}
 	}
 	
-	private static Protocol selectProtocol(Socket s, MyKeyStore ks) {
+	private static HubProtocol selectProtocol(Socket s, MyKeyStore ks) {
 		DataInputStream in = null;
 		int id = -1;
-		Protocol p = null;
+		HubProtocol p = null;
 		
 		try {
 			in = new DataInputStream(s.getInputStream());

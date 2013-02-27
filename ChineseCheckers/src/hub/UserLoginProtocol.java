@@ -6,7 +6,7 @@ import java.security.KeyStore;
 import utils.MyKeyStore;
 import utils.Protocol;
 
-public class UserLoginProtocol extends Protocol {
+public class UserLoginProtocol extends Protocol implements HubProtocol {
 	
 	private MyKeyStore ks;
 

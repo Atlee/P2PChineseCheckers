@@ -12,7 +12,7 @@ import utils.MyKeyStore;
 import utils.Protocol;
 
 
-public class UserRegistrationProtocol extends Protocol {
+public class UserRegistrationProtocol extends Protocol implements HubProtocol {
 	
 	private MyKeyStore ks;
 	
@@ -41,7 +41,7 @@ public class UserRegistrationProtocol extends Protocol {
 					message = ("IN_USE,"+username).getBytes();
 				}
 				
-				sendSignedMessage(s, message, ks.getPrivateKey("hub", "password"));
+				sendSignedMessage(s, message, ks.getPrivateKey("hub", "password".toCharArray()));
 			}
 		
 			PublicKey key = readPublicKey(s);

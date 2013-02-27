@@ -15,12 +15,12 @@ public class TestLoginGui implements Runnable {
     JInternalFrame loginFrame;
       
     public static void main(String[] args){
-        TestLoginGui ex1 = new TestLoginGui();  
-        ex1.run();      
+    	TestLoginGui g = new TestLoginGui();
     }
     
     public TestLoginGui() {
     	t = new Thread(this, "TestLoginGui");
+    	t.start();
     }
     
     public void run(){    	
@@ -124,7 +124,7 @@ public class TestLoginGui implements Runnable {
     		//open a new gui for account creation
     		System.out.println("YOU CLICKED CREATE");
     		
-    		//send away un/pw
+    		//send away un/pw UserRegProtocol.execute();
     	}
     }
     
@@ -134,7 +134,7 @@ public class TestLoginGui implements Runnable {
     		
     		JFrame mainFrame = (JFrame) SwingUtilities.getWindowAncestor((JButton) e.getSource());
     		mainFrame.setVisible(false);
-    		mainFrame.setEnabled(false);
+    		mainFrame.dispose();
     	}
     }
 } 
