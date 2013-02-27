@@ -1,44 +1,79 @@
 package peer;
 
+import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 
 import java.net.InetAddress;
 import java.net.Socket;
 
 import java.security.KeyStore;
+import java.util.ArrayList;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
 import utils.Constants;
 import utils.MyKeyStore;
 import utils.Protocol;
 
 
-public class Peer {
+public class Peer  {  
 
 	private static InetAddress host;
-
-	public static void main(String[] args) throws IOException {
-		MyKeyStore keyStore = new MyKeyStore();
-		Socket peer = handleCreateSocket();
-    	
-    	Protocol p = setProtocol("register", keyStore);
-    	p.execute(peer);
-    	
-		//MyGui gui = new MyGui();
-		
-	}
+	private static MyKeyStore ks;
 	
-	public static Protocol setProtocol(String ID, MyKeyStore ks) {
-		Protocol p = null;
-		if (ID.equals("register")) {
-			p = new UserRegistrationProtocol(ks);
-		} else if (ID.equals("login")) {
-            p = new UserLoginProtocol(ks);
-        } else {
-        	System.out.println("Unrecognized protocol ID");
-        	System.exit(1);
-		}
-		return p;
+	public static void main(String[] args) throws IOException {		
+		new Peer();
 	}
+    
+    public Peer() {
+    	ks = new MyKeyStore();
+    	displayLoginGui();
+    }
+    
+    private void displayLoginGui() {
+    	JFrame mainFrame = new JFrame("Chinese Checkers");
+        mainFrame.setSize(385,200);
+        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        JInternalFrame loginFrame = new JInternalFrame("Login");
+        loginFrame.setSize(400,200);
+        
+        JPanel loginPanel = new JPanel();
+        
+        JTextField usernameTxt = new JTextField(25);
+        JPasswordField passwordTxt = new JPasswordField(25);
+        JPanel buttonPanel = new JPanel();
+        JLabel usernameLbl = new JLabel("Username: ");
+        JLabel passwordLbl = new JLabel("Password: ");
+        
+        JButton loginButton = new JButton("Login");
+        JButton newUserButton = new JButton("New User");
+        loginButton.addActionListener(new loginButtonListener());
+        newUserButton.addActionListener(new newUserButtonListener());
+
+        loginPanel.add(usernameLbl);
+        loginPanel.add(usernameTxt);
+        loginPanel.add(passwordLbl);
+        loginPanel.add(passwordTxt);
+        loginPanel.add(buttonPanel);
+        loginPanel.add(loginButton);
+        loginPanel.add(newUserButton);
+        
+        loginFrame.getContentPane().add(BorderLayout.CENTER,loginPanel);
+        mainFrame.getContentPane().add(BorderLayout.CENTER,loginFrame);
+  
+        loginFrame.setVisible(true);
+        mainFrame.setVisible(true);
+    }
 	
 	private static Socket handleCreateSocket() {
 		Socket s = null;		
@@ -52,5 +87,20 @@ public class Peer {
 		}
 		return s;
 	}
+    
+    class loginButtonListener implements ActionListener {  
+        public void actionPerformed(ActionEvent e) {  
+            //if username and password is good hide child window  
+            System.out.println("YOU CLICKED LOGIN");
 
-}
+        }
+    }
+    
+    class newUserButtonListener implements ActionListener {
+    	public void actionPerformed (ActionEvent e) {
+    		//open a new gui for account creation
+    		System.out.println("YOU CLICKED NEW USER");
+            new UserRegistrationProtocol(ks);
+    	}
+    }
+} 

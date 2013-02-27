@@ -124,7 +124,7 @@ public class TestLoginGui implements Runnable {
     		//open a new gui for account creation
     		System.out.println("YOU CLICKED CREATE");
     		
-    		//send away un/pw
+    		//send away un/pw UserRegProtocol.execute();
     	}
     }
     
@@ -134,7 +134,7 @@ public class TestLoginGui implements Runnable {
     		
     		JFrame mainFrame = (JFrame) SwingUtilities.getWindowAncestor((JButton) e.getSource());
     		mainFrame.setVisible(false);
-    		mainFrame.setEnabled(false);
+    		mainFrame.dispose();
     	}
     }
 } 

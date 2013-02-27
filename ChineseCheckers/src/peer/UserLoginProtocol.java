@@ -12,11 +12,4 @@ public class UserLoginProtocol extends Protocol {
 	public UserLoginProtocol(MyKeyStore ks) {
 		this.ks = ks;
 	}
-	
-	@Override
-	public void execute(Socket s) {
-		// TODO Auto-generated method stub
-		
-	}
-
 }

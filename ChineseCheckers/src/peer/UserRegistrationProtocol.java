@@ -1,26 +1,25 @@
 package peer;
 
-import java.awt.Button;
-import java.awt.Dimension;
-import java.awt.Toolkit;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.Socket;
-import java.nio.ByteBuffer;
 import java.security.KeyPair;
-import java.security.KeyStore;
 import java.security.PublicKey;
 
 import hub.HubCertificate;
@@ -35,144 +34,167 @@ public class UserRegistrationProtocol extends Protocol {
 	
 	private MyKeyStore ks;
 	
-	private String username;
-	private String password;
+	private JTextField usernameTxt;
+	private JPasswordField passwordTxt;
 	
 	public UserRegistrationProtocol(MyKeyStore ks) {
 		this.ks = ks;
+		displayCreateUserGui();
 	}
 	
-	public void execute(Socket s) {
-		try {
-			sendProtocolID(s);
-			
-			byte[] message;
-			byte[] response;
-			
-			boolean usernameAvailable = false;
-			
-			while(!usernameAvailable) {
-				getDesiredCredentials();
-				message = (username).getBytes();
-				sendMessage(s, message);
-				response = readSignedMessage(s, MyKeyStore.getHubPublicKey());
-				String responseStr = new String(response);
-				if(responseStr.equals("AVAILABLE,"+username)){
-					usernameAvailable = true;
-				} else if(responseStr.equals("IN USE,"+username)) {
-					System.out.println("The username you have selected is already in use. Please try again.");
-				} else {
-					System.out.println("lolwat");
-					System.exit(1);
-				}
-			}
-			
-			KeyPair keys = SignUtils.newSignKeyPair();
-			
-			sendKey(s, keys.getPublic());
-			message = username.getBytes();
-			sendSignedMessage(s, message, keys.getPrivate());
+	private void displayCreateUserGui() {
+    	JFrame mainFrame = new JFrame("Chinese Checkers");
+        mainFrame.setSize(385,200);
+        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        JInternalFrame loginFrame = new JInternalFrame("Login");
+        loginFrame.setSize(400,200);
+        
+        JPanel loginPanel = new JPanel();
+        
+        usernameTxt = new JTextField(25);
+        passwordTxt = new JPasswordField(25);
+        JPanel buttonPanel = new JPanel();
+        JLabel usernameLbl = new JLabel("Username: ");
+        JLabel passwordLbl = new JLabel("Password: ");
+        
+        JButton loginButton = new JButton("Create");
+        JButton newUserButton = new JButton("Cancel");
+        loginButton.addActionListener(new createButtonListener());
+        newUserButton.addActionListener(new cancelButtonListener());
 
-			//HubCertificate cert = readCertificate(s);
-			if(true){ //FIXME
-				ks.addPrivateKey(keys.getPrivate(), username, password);
-				System.out.println("Registration successful! Welcome, "+username+".");
-			} else {
-				System.out.println("Registration failed. Please try again.");
-			}
-		} catch (IOException e) {
-			System.out.println("Error reading user input");
-		}
-	}
-	
-//	public void execute(Socket s, KeyStore ks) {
-//		keyStore = ks;
-//		CreateUserGui gui = new CreateUserGui(this, s);
-//	}
-	
-	void sendNewCredentials(String username, String password, Socket s) {
-		setCredentials(username, password);
-		
-		byte[] message = username.getBytes();
+        loginPanel.add(usernameLbl);
+        loginPanel.add(usernameTxt);
+        loginPanel.add(passwordLbl);
+        loginPanel.add(passwordTxt);
+        loginPanel.add(buttonPanel);
+        loginPanel.add(loginButton);
+        loginPanel.add(newUserButton);
+        
+        loginFrame.getContentPane().add(BorderLayout.CENTER,loginPanel);
+        mainFrame.getContentPane().add(BorderLayout.CENTER,loginFrame);
+  
+        loginFrame.setVisible(true);
+        mainFrame.setVisible(true);
+    }
+
+	private void sendProtocolID(Socket s) {
 		try {
-			sendProtocolID(s);
-			sendMessage(s, message);
+			DataOutputStream out = new DataOutputStream(s.getOutputStream());
+			out.writeInt(Constants.REGISTER);
 		} catch (IOException e) {
-			System.out.println("Error executing UserRegistrationProtocol");
 			e.printStackTrace();
 			System.exit(1);
 		}
 	}
 	
-	private void setCredentials(String username, String password) {
-		this.username = username;
-		this.password = password;
-	}
-	
-	void handleNameResponse(Socket s) throws IOException {
-		byte[] fromServerBytes = readSignedMessage(s, MyKeyStore.getHubPublicKey());
-		String fromServer = new String(fromServerBytes);
-		
-		if (fromServer.equals("AVAILABLE,"+username)) {
-			//TODO: add key generation/recovery code here
-			//for now assume keys in public/private.key files
-			//NOTE: I think the above happens automatically in SignUtils.init()
-			sendKey(s, ks.getPublicKey(username));
-			sendMessage(s, username.getBytes());
-			
-			fromServerBytes = readSignedMessage(s, MyKeyStore.getHubPublicKey());
-			fromServer = new String(fromServerBytes);
-			if (fromServer.equals("OK,"+username)) {
-				//TODO:Save password and username locally
-				System.out.println("username " + username + " successfully created");
-			} else {
-				System.out.println("Unknown message from server");
-			}			
-		} else if (fromServer.equals("IN_USE,"+username)) {
-			System.out.println("username " + username + " is not " +
-					"available, please pick another");
-		} else {
-			System.out.println("Unknown message from server");
+	private void sendKey(Socket s, PublicKey key) {
+		try {
+			ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+			out.writeObject(key);
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(1);
 		}
 	}
-
-	private void sendProtocolID(Socket s) throws IOException {
-		DataOutputStream out = new DataOutputStream(s.getOutputStream());
-		out.writeInt(Constants.REGISTER);
-	}
 	
-	private void sendKey(Socket s, PublicKey key) throws IOException {
-		ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-		out.writeObject(key);
-	}
-	
-	private HubCertificate readCertificate(Socket s) throws IOException {
-		ObjectInputStream in = new ObjectInputStream(s.getInputStream());
+	private HubCertificate readCertificate(Socket s) {
 		HubCertificate cert = null;
 		try {
+			ObjectInputStream in = new ObjectInputStream(s.getInputStream());
 			cert = (HubCertificate) in.readObject();
-		} catch (ClassNotFoundException e) {
+		} catch (ClassNotFoundException | IOException e) {
 			System.out.println("Error reading certificate received from Hub");
 			e.printStackTrace();
 			System.exit(1);
 		}
 		return cert;
 	}
-	
- 	private void getDesiredCredentials() {
-		BufferedReader stdin = new BufferedReader(
-				new InputStreamReader(System.in));
+ 	
+ 	//TODO: potentially create a network utils class for this kind of stuff? dunno
+	private static Socket handleCreateSocket() {
+		Socket s = null;		
 		try {
-			System.out.println("Desired username...");
-			username = stdin.readLine();
-			System.out.println("Password...");
-			password = stdin.readLine();
+			InetAddress host = InetAddress.getLocalHost();
+			s = new Socket(host, Constants.PORT_NUM);
 		} catch (IOException e) {
-			System.out.println("Error reading username and password");
+			System.out.println("Error creating socket");
 			e.printStackTrace();
 			System.exit(1);
 		}
+		return s;
 	}
  	
+ 	/*------------GUI CODE-------------------*/
+ 	
+    class createButtonListener implements ActionListener {
+    	public void actionPerformed (ActionEvent e) {
+    		Socket s = handleCreateSocket();
+    		sendProtocolID(s);
+    		
+    		String newUsername = usernameTxt.getText(), response;
+    		sendMessage(s, newUsername.getBytes());
+    		
+    		response = new String(readSignedMessage(s, MyKeyStore.getHubPublicKey()));
+    		System.out.println(response);
+    		
+    		if (response.equals("AVAILABLE,"+ newUsername)) {
+    			System.out.println("received correct response");
+    			KeyPair keys = SignUtils.newSignKeyPair();
+    			
+    			//send public key to server with authentication message
+    			sendKey(s, keys.getPublic());
+    			sendSignedMessage(s, newUsername.getBytes(), keys.getPrivate());
+    			
+    			//HubCertificate cert = readCertificate(s);
+    			if(true){ //FIXME
+    				ks.addPrivateKey(keys.getPrivate(), newUsername, passwordTxt.getPassword());
+    				JFrame createUserFrame = (JFrame) SwingUtilities.getWindowAncestor((JButton) e.getSource());
+    				displaySuccessWindow(createUserFrame);
+    			} else {
+    				displayFailWindow();
+    			}
+    		} else if (response.equals("IN_USE,"+ newUsername)) {
+    			displayFailWindow();
+    		}
+    	}
+    }
+    
+    private static void displaySuccessWindow(JFrame mainFrame) {
+    	//create a success window
+		JFrame frame = new JFrame("Create User Success");
+		JLabel label = new JLabel("Username sucessfully registered.", SwingConstants.CENTER);
+		
+		//dispose of the create user window
+		mainFrame.setVisible(false);
+		mainFrame.dispose();
+		
+		//show success/failure window
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		frame.getContentPane().add(label, BorderLayout.CENTER);			
+		frame.setSize(300, 100);
+		frame.setVisible(true);
+    }
+    
+    private static void displayFailWindow() {
+    	JFrame frame = new JFrame("Create User Failed");
+		JLabel label = new JLabel("Username already in use", SwingConstants.CENTER);
+		
+		//show success/failure window
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		frame.getContentPane().add(label, BorderLayout.CENTER);			
+		frame.setSize(300, 100);
+		frame.setVisible(true);
+    }
+    
+    class cancelButtonListener implements ActionListener {
+    	public void actionPerformed (ActionEvent e) {
+    		System.out.println("YOU CLICKED CANCEL");
+    		
+    		JFrame mainFrame = (JFrame) SwingUtilities.getWindowAncestor((JButton) e.getSource());
+    		mainFrame.setVisible(false);
+    		mainFrame.dispose();
+    	}
+    }
  	
 }
