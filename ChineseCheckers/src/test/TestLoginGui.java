@@ -15,12 +15,12 @@ public class TestLoginGui implements Runnable {
     JInternalFrame loginFrame;
       
     public static void main(String[] args){
-        TestLoginGui ex1 = new TestLoginGui();  
-        ex1.run();      
+    	TestLoginGui g = new TestLoginGui();
     }
     
     public TestLoginGui() {
     	t = new Thread(this, "TestLoginGui");
+    	t.start();
     }
     
     public void run(){    	
