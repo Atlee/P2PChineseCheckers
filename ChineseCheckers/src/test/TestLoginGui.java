@@ -6,21 +6,24 @@ import java.awt.*;
 import java.awt.event.*;  
 import java.util.ArrayList;
   
-public class TestLoginGui {  
-  
+public class TestLoginGui implements Runnable {  
+
+	Thread t;
     JFrame mainFrame;  
     JTextField usernameTxt;  
     JPasswordField passwordTxt;  
     JInternalFrame loginFrame;
       
-    public static void main(String[] args){  
+    public static void main(String[] args){
         TestLoginGui ex1 = new TestLoginGui();  
-        ex1.go();  
-                  
-      
+        ex1.run();      
     }
     
-    public void go(){    	
+    public TestLoginGui() {
+    	t = new Thread(this, "TestLoginGui");
+    }
+    
+    public void run(){    	
     	ArrayList<String> buttonNames = new ArrayList<String>();
     	buttonNames.add("Login");
     	buttonNames.add("New User");

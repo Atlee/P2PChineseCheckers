@@ -7,46 +7,37 @@ import java.net.Socket;
 
 import java.security.KeyStore;
 
-import utils.KeyStoreUtils;
 import utils.Constants;
+import utils.MyKeyStore;
 import utils.Protocol;
 
 
 public class Peer {
 
 	private static InetAddress host;
-	private static KeyStore keyStore;
-	
-	private static Protocol p = null;
 
 	public static void main(String[] args) throws IOException {
-    	if(keyStore == null) {
-			keyStore = KeyStoreUtils.loadKeyStore(Constants.KEYSTORE_FILE);
-		}
+		MyKeyStore keyStore = new MyKeyStore();
+		Socket peer = handleCreateSocket();
     	
-    	setProtocol("register");
-    	executeProtocol();
+    	Protocol p = setProtocol("register", keyStore);
+    	p.execute(peer);
     	
 		//MyGui gui = new MyGui();
 		
 	}
 	
-	public static void setProtocol(String ID) {
+	public static Protocol setProtocol(String ID, MyKeyStore ks) {
+		Protocol p = null;
 		if (ID.equals("register")) {
-			p = new UserRegistrationProtocol();
+			p = new UserRegistrationProtocol(ks);
 		} else if (ID.equals("login")) {
-            p = new UserLoginProtocol();
+            p = new UserLoginProtocol(ks);
         } else {
         	System.out.println("Unrecognized protocol ID");
         	System.exit(1);
 		}
-	}
-	
-	public static void executeProtocol() {
-		if (p != null) {
-			Socket hub = handleCreateSocket();
-			p.execute(hub, keyStore);
-		}
+		return p;
 	}
 	
 	private static Socket handleCreateSocket() {
@@ -61,6 +52,5 @@ public class Peer {
 		}
 		return s;
 	}
-		
 
 }

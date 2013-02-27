@@ -13,27 +13,23 @@ import java.security.KeyStore;
 import java.security.PrivateKey;
 
 import utils.Constants;
-import utils.KeyStoreUtils;
+import utils.MyKeyStore;
 import utils.Protocol;
 
 
 public class Hub {
 
-	public static KeyStore keyStore;
-
 	public static void main(String[] args) throws IOException {
-		if(keyStore == null) {
-			keyStore = KeyStoreUtils.loadKeyStore(Constants.KEYSTORE_FILE);
+		MyKeyStore ks = new MyKeyStore();
 
-			ObjectInputStream in = new ObjectInputStream((new FileInputStream("private.key")));
-			try {
-				PrivateKey key = (PrivateKey) in.readObject();
-				in.close();
-				KeyStoreUtils.addPrivateKey(keyStore, key, null, "hub", "password");
-			} catch (ClassNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		ObjectInputStream in = new ObjectInputStream((new FileInputStream("private.key")));
+		try {
+			PrivateKey key = (PrivateKey) in.readObject();
+			in.close();
+			ks.addPrivateKey(key, "hub", "password");
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		
 		ServerSocket hub = handleCreateServerSocket();
@@ -41,9 +37,9 @@ public class Hub {
 		while (true) {
 			// wait for a peer to connect
 			Socket peer = handleCreateSocket(hub);
-			Protocol p = selectProtocol(peer);
+			Protocol p = selectProtocol(peer, ks);
 			if(p != null) {
-				p.execute(peer, keyStore);
+				p.execute(peer);
 			}
 			closeSocket(peer);
 		}
@@ -60,7 +56,7 @@ public class Hub {
 		}
 	}
 	
-	private static Protocol selectProtocol(Socket s) {
+	private static Protocol selectProtocol(Socket s, MyKeyStore ks) {
 		DataInputStream in = null;
 		int id = -1;
 		Protocol p = null;
@@ -76,10 +72,10 @@ public class Hub {
 
 		switch (id) {
 		case Constants.REGISTER:
-			p = new UserRegistrationProtocol();
+			p = new UserRegistrationProtocol(ks);
 			break;
 		case Constants.LOGIN:
-			p = new UserLoginProtocol();
+			p = new UserLoginProtocol(ks);
 		default:
 			System.out.println("Unrecognized protocol ID");
 			return null;

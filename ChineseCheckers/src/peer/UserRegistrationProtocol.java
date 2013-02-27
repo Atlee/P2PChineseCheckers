@@ -25,20 +25,24 @@ import java.security.PublicKey;
 
 import hub.HubCertificate;
 
-import utils.KeyStoreUtils;
 import utils.Constants;
+import utils.MyKeyStore;
 import utils.Protocol;
 import utils.SignUtils;
 
 
 public class UserRegistrationProtocol extends Protocol {
 	
-	private KeyStore keyStore;
+	private MyKeyStore ks;
 	
 	private String username;
 	private String password;
 	
-	public void execute(Socket s, KeyStore ks) {
+	public UserRegistrationProtocol(MyKeyStore ks) {
+		this.ks = ks;
+	}
+	
+	public void execute(Socket s) {
 		try {
 			sendProtocolID(s);
 			
@@ -51,7 +55,7 @@ public class UserRegistrationProtocol extends Protocol {
 				getDesiredCredentials();
 				message = (username).getBytes();
 				sendMessage(s, message);
-				response = readSignedMessage(s, KeyStoreUtils.getHubPublicKey());
+				response = readSignedMessage(s, MyKeyStore.getHubPublicKey());
 				String responseStr = new String(response);
 				if(responseStr.equals("AVAILABLE,"+username)){
 					usernameAvailable = true;
@@ -71,7 +75,7 @@ public class UserRegistrationProtocol extends Protocol {
 
 			//HubCertificate cert = readCertificate(s);
 			if(true){ //FIXME
-				KeyStoreUtils.addPrivateKey(ks, keys.getPrivate(), null, username, password);
+				ks.addPrivateKey(keys.getPrivate(), username, password);
 				System.out.println("Registration successful! Welcome, "+username+".");
 			} else {
 				System.out.println("Registration failed. Please try again.");
@@ -106,17 +110,17 @@ public class UserRegistrationProtocol extends Protocol {
 	}
 	
 	void handleNameResponse(Socket s) throws IOException {
-		byte[] fromServerBytes = readSignedMessage(s, KeyStoreUtils.getHubPublicKey());
+		byte[] fromServerBytes = readSignedMessage(s, MyKeyStore.getHubPublicKey());
 		String fromServer = new String(fromServerBytes);
 		
 		if (fromServer.equals("AVAILABLE,"+username)) {
 			//TODO: add key generation/recovery code here
 			//for now assume keys in public/private.key files
 			//NOTE: I think the above happens automatically in SignUtils.init()
-			sendKey(s, KeyStoreUtils.getPublicKey(keyStore, this.username));
+			sendKey(s, ks.getPublicKey(username));
 			sendMessage(s, username.getBytes());
 			
-			fromServerBytes = readSignedMessage(s, KeyStoreUtils.getHubPublicKey());
+			fromServerBytes = readSignedMessage(s, MyKeyStore.getHubPublicKey());
 			fromServer = new String(fromServerBytes);
 			if (fromServer.equals("OK,"+username)) {
 				//TODO:Save password and username locally
@@ -171,64 +175,4 @@ public class UserRegistrationProtocol extends Protocol {
 	}
  	
  	
-}
-
-class CreateUserGui extends JFrame implements ActionListener {
-	
-	private JTextField username;
-	private JPasswordField password;
-	private Button createUsrBtn;
-	private static final String createUsrString = "Create User";
-	private UserRegistrationProtocol p = null;
-	private Socket s;
-
-	public CreateUserGui(UserRegistrationProtocol p, Socket s) {
-		this.p = p;
-		this.s = s;
-		
-		getContentPane().setLayout(
-				new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
-		setTitle("Chinese Checkers 0.1");
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		
-		//set size
-		int windowWidth = 300;
-		int windowHeight = 100;
-		setSize(windowWidth, windowHeight);
-		
-		//set location
-		Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
-		int centerX = (screen.width / 2) - (windowWidth / 2);
-		int centerY = (screen.height / 2) - (windowHeight / 2);
-		setLocation(centerX, centerY);
-		
-		username = new JTextField("username");
-		username.setSize(new Dimension(100, 50));
-		password = new JPasswordField("Password");
-		createUsrBtn = new Button(createUsrString);
-	
-		getContentPane().add(username);
-		getContentPane().add(password);
-		getContentPane().add(createUsrBtn);
-		createUsrBtn.addActionListener(this);
-		this.setVisible(true);
-	}
-
-	@Override
-	public void actionPerformed(ActionEvent arg0) {
-		// TODO Auto-generated method stub
-		if (arg0.getActionCommand().equals(createUsrString)) {
-			//Create new window for login
-			String usernameString = username.getText();
-			String passwordString = new String(password.getPassword());
-			p.sendNewCredentials(usernameString, passwordString, this.s);
-			try {
-				p.handleNameResponse(this.s);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				System.exit(1);
-			}
-		}
-	}
 }

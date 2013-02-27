@@ -6,14 +6,13 @@ import java.io.IOException;
 
 import java.net.Socket;
 
-import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 
 
 public abstract class Protocol {
 	
-	public abstract void execute(Socket s, KeyStore ks);
+	public abstract void execute(Socket s);
 	
 	protected void sendSignedMessage(Socket s, byte[] message, PrivateKey key) throws IOException {
 		byte[] signature = SignUtils.signData(key, message);

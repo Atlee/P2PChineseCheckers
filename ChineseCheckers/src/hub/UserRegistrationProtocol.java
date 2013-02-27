@@ -8,13 +8,19 @@ import java.nio.ByteBuffer;
 import java.security.KeyStore;
 import java.security.PublicKey;
 
-import utils.KeyStoreUtils;
+import utils.MyKeyStore;
 import utils.Protocol;
 
 
 public class UserRegistrationProtocol extends Protocol {
 	
-	public void execute(Socket s, KeyStore ks) {
+	private MyKeyStore ks;
+	
+	public UserRegistrationProtocol(MyKeyStore ks) {
+		this.ks = ks;
+	}
+	
+	public void execute(Socket s) {
 		try {
 			
 			byte[] message;
@@ -35,7 +41,7 @@ public class UserRegistrationProtocol extends Protocol {
 					message = ("IN_USE,"+username).getBytes();
 				}
 				
-				sendSignedMessage(s, message, KeyStoreUtils.getPrivateKey(ks, "hub", "password"));
+				sendSignedMessage(s, message, ks.getPrivateKey("hub", "password"));
 			}
 		
 			PublicKey key = readPublicKey(s);
@@ -43,7 +49,7 @@ public class UserRegistrationProtocol extends Protocol {
 			
 			if ((new String(response)).equals(username)) {
 				HubCertificate cert = new HubCertificate(username, key);
-				KeyStoreUtils.addPublicKeyCertificate(ks, username, cert);
+				ks.addPublicKeyCertificate(username, cert);
 				//sendCertificate(s, cert);
 			} else {
 				return;
@@ -79,5 +85,4 @@ public class UserRegistrationProtocol extends Protocol {
 		out.writeObject(cert);
 	}
 
-	
 }
