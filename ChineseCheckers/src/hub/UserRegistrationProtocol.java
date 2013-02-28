@@ -9,6 +9,7 @@ import java.security.KeyStore;
 import java.security.PublicKey;
 
 import utils.MyKeyStore;
+import utils.NetworkUtils;
 import utils.Protocol;
 
 
@@ -30,7 +31,7 @@ public class UserRegistrationProtocol extends Protocol implements HubProtocol {
 			String username = null;
 			
 			while(!usernameAvailable) {
-				response = readMessage(s);
+				response = NetworkUtils.readMessage(s);
 				username = new String(response);
 				
 				// TODO: check whether the desired username is actually available
@@ -41,11 +42,11 @@ public class UserRegistrationProtocol extends Protocol implements HubProtocol {
 					message = ("IN_USE,"+username).getBytes();
 				}
 				
-				sendSignedMessage(s, message, ks.getPrivateKey("hub", "password".toCharArray()));
+				NetworkUtils.sendSignedMessage(s, message, ks.getPrivateKey("hub", "password".toCharArray()));
 			}
 		
-			PublicKey key = readPublicKey(s);
-			response = readSignedMessage(s, key);
+			PublicKey key = NetworkUtils.readPublicKey(s);
+			response = NetworkUtils.readSignedMessage(s, key);
 			
 			if ((new String(response)).equals(username)) {
 				HubCertificate cert = new HubCertificate(username, key);
@@ -65,24 +66,6 @@ public class UserRegistrationProtocol extends Protocol implements HubProtocol {
 	private boolean nameAvailable(String username) {
 		// TODO Auto-generated method stub
 		return true;
-	}
-
-	private PublicKey readPublicKey(Socket s) throws IOException {
-		ObjectInputStream in = new ObjectInputStream(s.getInputStream());
-		PublicKey key = null;
-		try {
-			key = (PublicKey) in.readObject();
-		} catch (ClassNotFoundException e) {
-			System.out.println("Error reading public key received from peer");
-			e.printStackTrace();
-			System.exit(1);
-		}
-		return key;
-	}
-	
-	private void sendCertificate(Socket s, HubCertificate cert) throws IOException {
-		ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-		out.writeObject(cert);
 	}
 
 }

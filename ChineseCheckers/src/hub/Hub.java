@@ -70,15 +70,16 @@ public class Hub {
 			System.exit(1);
 		}
 
+		System.out.println(id);
 		switch (id) {
 		case Constants.REGISTER:
 			p = new UserRegistrationProtocol(ks);
 			break;
 		case Constants.LOGIN:
 			p = new UserLoginProtocol(ks);
+			break;
 		default:
 			System.out.println("Unrecognized protocol ID");
-			return null;
 		}
 		return p;
 	}

@@ -9,7 +9,9 @@ import java.net.InetAddress;
 import java.net.Socket;
 
 import java.security.KeyStore;
+import java.security.PrivateKey;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -18,10 +20,12 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import utils.Constants;
 import utils.MyKeyStore;
+import utils.NetworkUtils;
 import utils.Protocol;
 
 
@@ -29,6 +33,9 @@ public class Peer  {
 
 	private static InetAddress host;
 	private static MyKeyStore ks;
+	private JTextField usernameTxt;
+	private JPasswordField passwordTxt;
+	private PrivateKey myKey;
 	
 	public static void main(String[] args) throws IOException {		
 		new Peer();
@@ -49,8 +56,8 @@ public class Peer  {
         
         JPanel loginPanel = new JPanel();
         
-        JTextField usernameTxt = new JTextField(25);
-        JPasswordField passwordTxt = new JPasswordField(25);
+        usernameTxt = new JTextField(25);
+        passwordTxt = new JPasswordField(25);
         JPanel buttonPanel = new JPanel();
         JLabel usernameLbl = new JLabel("Username: ");
         JLabel passwordLbl = new JLabel("Password: ");
@@ -74,26 +81,57 @@ public class Peer  {
         loginFrame.setVisible(true);
         mainFrame.setVisible(true);
     }
-	
-	private static Socket handleCreateSocket() {
-		Socket s = null;		
-		try {
-			host = InetAddress.getLocalHost();
-			s = new Socket(host, Constants.PORT_NUM);
-		} catch (IOException e) {
-			System.out.println("Error creating socket");
-			e.printStackTrace();
-			System.exit(1);
-		}
-		return s;
-	}
     
     class loginButtonListener implements ActionListener {  
-        public void actionPerformed(ActionEvent e) {  
-            //if username and password is good hide child window  
-            System.out.println("YOU CLICKED LOGIN");
-
+        public void actionPerformed(ActionEvent e) {
+        	//TODO: locally verify usn/pw
+            String username = usernameTxt.getText();
+        	Socket s = NetworkUtils.handleCreateSocket();
+            
+        	//-------step 4----------
+            NetworkUtils.sendProtocolID(s, Constants.LOGIN);
+            System.out.println("Sent protocol");
+            NetworkUtils.sendMessage(s, username.getBytes());
+            //---------end---------
+            //-------step 5--------
+            byte[] challenge = NetworkUtils.readSignedMessage(s, MyKeyStore.getHubPublicKey());
+            char[] password = passwordTxt.getPassword();
+            NetworkUtils.sendSignedMessage(s, challenge, ks.getPrivateKey(username, password));
+            Arrays.fill(password, '_');
+            
+            //-------step 7--------
+            String welcome = new String(NetworkUtils.readSignedMessage(s, MyKeyStore.getHubPublicKey()));
+            if (welcome.equals("Welcome")) {
+            	JFrame loginFrame = (JFrame) SwingUtilities.getWindowAncestor(((JButton) e.getSource()));
+            	loginFrame.setVisible(false);
+            	loginFrame.dispose();
+            	displayHub();
+            } else {
+            	displayFailWindow();
+            }
         }
+    }
+    
+    private static void displayHub() {
+    	JFrame frame = new JFrame("Chinese Checkers");
+		JLabel label = new JLabel("Welcome to the hub", SwingConstants.CENTER);
+		
+		//show success/failure window
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		frame.getContentPane().add(label, BorderLayout.CENTER);			
+		frame.setSize(300, 100);
+		frame.setVisible(true);
+    }
+    
+    private static void displayFailWindow() {
+    	JFrame frame = new JFrame("Error");
+		JLabel label = new JLabel("Login Unsuccessful", SwingConstants.CENTER);
+		
+		//show success/failure window
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		frame.getContentPane().add(label, BorderLayout.CENTER);			
+		frame.setSize(300, 100);
+		frame.setVisible(true);
     }
     
     class newUserButtonListener implements ActionListener {

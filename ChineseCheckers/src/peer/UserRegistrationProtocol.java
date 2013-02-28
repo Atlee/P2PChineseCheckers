@@ -28,6 +28,7 @@ import utils.Constants;
 import utils.MyKeyStore;
 import utils.Protocol;
 import utils.SignUtils;
+import utils.NetworkUtils;
 
 
 public class UserRegistrationProtocol extends Protocol {
@@ -77,65 +78,18 @@ public class UserRegistrationProtocol extends Protocol {
         loginFrame.setVisible(true);
         mainFrame.setVisible(true);
     }
-
-	private void sendProtocolID(Socket s) {
-		try {
-			DataOutputStream out = new DataOutputStream(s.getOutputStream());
-			out.writeInt(Constants.REGISTER);
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
-	}
-	
-	private void sendKey(Socket s, PublicKey key) {
-		try {
-			ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-			out.writeObject(key);
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
-	}
-	
-	private HubCertificate readCertificate(Socket s) {
-		HubCertificate cert = null;
-		try {
-			ObjectInputStream in = new ObjectInputStream(s.getInputStream());
-			cert = (HubCertificate) in.readObject();
-		} catch (ClassNotFoundException | IOException e) {
-			System.out.println("Error reading certificate received from Hub");
-			e.printStackTrace();
-			System.exit(1);
-		}
-		return cert;
-	}
- 	
- 	//TODO: potentially create a network utils class for this kind of stuff? dunno
-	private static Socket handleCreateSocket() {
-		Socket s = null;		
-		try {
-			InetAddress host = InetAddress.getLocalHost();
-			s = new Socket(host, Constants.PORT_NUM);
-		} catch (IOException e) {
-			System.out.println("Error creating socket");
-			e.printStackTrace();
-			System.exit(1);
-		}
-		return s;
-	}
  	
  	/*------------GUI CODE-------------------*/
  	
     class createButtonListener implements ActionListener {
     	public void actionPerformed (ActionEvent e) {
-    		Socket s = handleCreateSocket();
-    		sendProtocolID(s);
+    		Socket s = NetworkUtils.handleCreateSocket();
+    		NetworkUtils.sendProtocolID(s, Constants.REGISTER);
     		
     		String newUsername = usernameTxt.getText(), response;
-    		sendMessage(s, newUsername.getBytes());
+    		NetworkUtils.sendMessage(s, newUsername.getBytes());
     		
-    		response = new String(readSignedMessage(s, MyKeyStore.getHubPublicKey()));
+    		response = new String(NetworkUtils.readSignedMessage(s, MyKeyStore.getHubPublicKey()));
     		System.out.println(response);
     		
     		if (response.equals("AVAILABLE,"+ newUsername)) {
@@ -143,8 +97,8 @@ public class UserRegistrationProtocol extends Protocol {
     			KeyPair keys = SignUtils.newSignKeyPair();
     			
     			//send public key to server with authentication message
-    			sendKey(s, keys.getPublic());
-    			sendSignedMessage(s, newUsername.getBytes(), keys.getPrivate());
+    			NetworkUtils.sendKey(s, keys.getPublic());
+    			NetworkUtils.sendSignedMessage(s, newUsername.getBytes(), keys.getPrivate());
     			
     			//HubCertificate cert = readCertificate(s);
     			if(true){ //FIXME
