@@ -35,8 +35,10 @@ Protocol for user login & establishing a peer-to-hub connection...
 [1]  C -> U:	user:pass ?
 [2]  U -> C:	user:pass
 [3]  C:		if user:pass exists, retrieve K_user/k_user; else goto [1]
-[4]  C -> H:	Sign({ LOGIN, user, n }, k_user)	**[n is fresh at C]**
-[5]  H:		Ver({ LOGIN, user, n }, K_user)
+[4]  C -> H:	LOGIN, user
+[5]  H -> C: 	Sign({ CHALLENGE, user, n }, k_H)		**[n is fresh at H]**
+[6]  C -> H:	Sign({ CHALLENGE, user, n }, k_user)
+[5]  H:		Ver({ n }, K_user)
 [6]  H -> C:	Sign({ WELCOME, user, n }, k_H)
 [7]  C:		Ver({ WELCOME, user, n }, K_H)
 [8]  C -> U:    success!
