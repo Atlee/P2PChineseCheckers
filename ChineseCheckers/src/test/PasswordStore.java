@@ -7,11 +7,19 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.io.RandomAccessFile;
+import java.io.Serializable;
+import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.SecureRandom;
 import java.security.spec.KeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 
 import javax.crypto.SecretKey;
@@ -31,9 +39,14 @@ public class PasswordStore {
 	/**
 	 * @param args
 	 */
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
+	public static void main(String[] args) throws Exception {
+		PasswordStore pws = new PasswordStore();
+		System.out.println(pws.addEntry("test1", "password1".toCharArray()));
+		System.out.println(pws.getEntry("test1").username);
+		System.out.println(pws.containsEntry("test1"));
+		System.out.println(pws.containsEntry("false"));
+		System.out.println(pws.authenticate("test1", "password1".toCharArray()));
+		System.out.println(pws.authenticate("test1", "password2".toCharArray()));
 	}
 	
 	public boolean authenticate(String username, char[] passwordAttempt) 
@@ -56,13 +69,14 @@ public class PasswordStore {
 	 */
 	private PasswordFileEntry getEntry(String username) throws Exception {
 		File f = getPasswordFile();
-		ObjectInputStream in = new ObjectInputStream(new FileInputStream(f));
+		DataInputStream in = new DataInputStream(new FileInputStream(f));
 		PasswordFileEntry e = null;
+		
 		int numEntries = in.readInt();
 		boolean found = false;
 		
 		for (int i = 0; i < numEntries; i++) {
-			e = (PasswordFileEntry) in.readObject();
+			e = readPWEntryFromStream(in);
 			if (e.equals(username)) {
 				found = true;
 				break;
@@ -88,25 +102,32 @@ public class PasswordStore {
 		File f = new File(PASSWORD_FILE_NAME);
 		if (!f.exists()) {
 			f.createNewFile();
-			ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(f));
+			RandomAccessFile raf = new RandomAccessFile(f, "rw");
 			//write the number of entries in the file
-			out.writeInt(0);
+			raf.writeInt(0);
+			raf.close();
 		}
 		return f;
 	}
 	
-	/** writes an entry to the file.  in the format 
+	/** writes an entry to the file.
 	 *  
 	 */
 	private void writeEntry(PasswordFileEntry entry) throws Exception {
 		File f = getPasswordFile();
-		ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(f, true));
+		RandomAccessFile raf = new RandomAccessFile(f, "rw");
+		entry.writeToStream(new FileOutputStream(f, true));
 		
-		out.writeObject(entry);
-		out.close();
+		raf.seek(0);
+		int numEntries = raf.readInt();
+		System.out.println(numEntries);
+		numEntries++;
+		raf.seek(0);
+		raf.writeInt(numEntries);
+		raf.close();
 	}
 	
-	private boolean usernameInUse(String username) throws Exception {
+	private boolean containsEntry(String username) throws Exception {
 		PasswordFileEntry entry = getEntry(username);
 		if (entry == null) {
 			return false;
@@ -114,8 +135,8 @@ public class PasswordStore {
 		return true;
 	}
 	
-	private boolean addEntry(String username, char[] password) throws Exception {
-		if (usernameInUse(username)) {
+	public boolean addEntry(String username, char[] password) throws Exception {
+		if (containsEntry(username)) {
 			return false;
 		}
 		byte[] salt = generateSalt();
@@ -137,7 +158,29 @@ public class PasswordStore {
 		return salt;
 	}
 	
-	class PasswordFileEntry {
+	public PasswordFileEntry readPWEntryFromStream(InputStream inStream) 
+			throws Exception {
+		DataInputStream in = new DataInputStream(inStream);
+		int len = in.readInt();
+		char[] usernameChars = new char[len];
+		for (int i = 0; i < len; i++) {
+			usernameChars[i] = in.readChar();
+		}
+		len = in.readInt();
+		byte[] salt = new byte[len];
+		for (int i = 0; i < len; i++) {
+			salt[i] = in.readByte();
+		}
+		len = in.readInt();
+		byte[] encryptedPW = new byte[len];
+		for (int i = 0; i < len; i++) {
+			encryptedPW[i] = in.readByte();
+		}
+		return new PasswordFileEntry(new String(usernameChars), salt, encryptedPW);
+	}
+	
+	class PasswordFileEntry implements Serializable {
+		
 		String username;
 		byte[] salt;
 		byte[] encryptedPW;
@@ -150,6 +193,17 @@ public class PasswordStore {
 		
 		public boolean equals(String username) {
 			return this.username.equals(username);
+		}
+		
+		public void writeToStream(OutputStream outStream) throws Exception {
+			DataOutputStream out = new DataOutputStream(outStream);
+			out.writeInt(username.length());
+			out.writeChars(username);
+			out.writeInt(this.salt.length);
+			out.write(salt);
+			out.writeInt(encryptedPW.length);
+			out.write(encryptedPW);
+			out.close();
 		}
 	}
 
