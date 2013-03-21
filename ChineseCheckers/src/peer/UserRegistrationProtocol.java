@@ -98,11 +98,7 @@ public class UserRegistrationProtocol extends Protocol {
     		Key sharedKey = EncryptUtils.handleCreateSharedKey();   		
     		
     		sendSharedKey(s, sharedKey);
-    		// test
-    		byte[] ciphertext = EncryptUtils.encryptData(sharedKey.getEncoded(), Constants.getHubPublicKey(), Constants.PUBLIC_ENCRYPT_ALG);
-    		byte[] encodedKey = EncryptUtils.decryptData(ciphertext, HubConstants.getHubPrivate(), Constants.PUBLIC_ENCRYPT_ALG);
-    		System.out.println(Arrays.equals(encodedKey, sharedKey.getEncoded()));
-    		//end test
+    		
     		NetworkUtils.sendProtocolID(s, Constants.REGISTER);
     		
     		System.out.println("Sending encrypted message: username");

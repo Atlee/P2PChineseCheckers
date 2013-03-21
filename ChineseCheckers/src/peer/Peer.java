@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 
+import java.security.Key;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.util.ArrayList;
@@ -24,6 +25,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import utils.Constants;
+import utils.EncryptUtils;
 import utils.NetworkUtils;
 import utils.Protocol;
 
@@ -81,31 +83,24 @@ public class Peer  {
     
     class loginButtonListener implements ActionListener {  
         public void actionPerformed(ActionEvent e) {
-        	//TODO: locally verify usn/pw
-            /*String username = usernameTxt.getText();
+            String username = usernameTxt.getText();
         	Socket s = NetworkUtils.handleCreateSocket();
+            Key sharedKey = EncryptUtils.handleCreateSharedKey();
             
-        	//-------step 4----------
-            NetworkUtils.sendProtocolID(s, Constants.LOGIN);
-            System.out.println("Sent protocol");
-            NetworkUtils.sendMessage(s, username.getBytes());
-            //---------end---------
-            //-------step 5--------
-            byte[] challenge = NetworkUtils.readSignedMessage(s, MyKeyStore.getHubPublicKey());
             char[] password = passwordTxt.getPassword();
-            NetworkUtils.sendSignedMessage(s, challenge, ks.getPrivateKey(username, password));
+            UserLoginProtocol login = new UserLoginProtocol();
+            login.sendCredentials(s, sharedKey, username, password);
+            //eliminate the password from memory as fast as possible
             Arrays.fill(password, '_');
             
-            //-------step 7--------
-            String welcome = new String(NetworkUtils.readSignedMessage(s, MyKeyStore.getHubPublicKey()));
-            if (welcome.equals("Welcome")) {
+            if (login.isAuthenticated(s, sharedKey)) {
             	JFrame loginFrame = (JFrame) SwingUtilities.getWindowAncestor(((JButton) e.getSource()));
             	loginFrame.setVisible(false);
             	loginFrame.dispose();
             	displayHub();
             } else {
             	displayFailWindow();
-            }*/
+            }
         }
     }
     

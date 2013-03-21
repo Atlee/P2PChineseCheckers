@@ -18,17 +18,14 @@ public class UserLoginProtocol extends Protocol implements HubProtocol {
 	public void execute(Socket s, Key sharedKey) {
 		PasswordStore pws = new PasswordStore();
 		String username = new String(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_KEY_ALGORITHM));
+		char[] password = NetworkUtils.bytesToChars(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_KEY_ALGORITHM));
 		
-		String sessionID = UUID.randomUUID().toString();
-		NetworkUtils.sendSignedMessage(s, sessionID.getBytes(), HubConstants.getHubPrivate());
-		
-		String userResponse = "";//new String(NetworkUtils.readSignedMessage(s, userPublic));
-		byte[] lastFromHub = null;
-		if (userResponse.equals(sessionID)) {
-			lastFromHub = "WELCOME".getBytes(); 
+		byte[] authenticateResponse = null;
+		if (pws.authenticate(username, password)) {
+			authenticateResponse = Constants.LOGIN_SUCCESS.getBytes(); 
 		} else {
-			lastFromHub = "FAILURE".getBytes();
+			authenticateResponse = Constants.LOGIN_FAILURE.getBytes();
 		}
-		NetworkUtils.sendSignedMessage(s,lastFromHub, HubConstants.getHubPrivate());
+		NetworkUtils.sendEncryptedMessage(s, authenticateResponse, sharedKey, Constants.SHARED_KEY_ALGORITHM);
 	}
 }
