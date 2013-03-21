@@ -9,37 +9,44 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.KeyFactory;
+import java.security.KeyPair;
 import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.SecureRandom;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.DESKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 
 import utils.Constants;
-import utils.MyKeyStore;
+import utils.EncryptUtils;
+import utils.NetworkUtils;
 import utils.Protocol;
 
 
 public class Hub {
 
-	public static void main(String[] args) throws IOException {
-		MyKeyStore ks = new MyKeyStore();
-
-		ObjectInputStream in = new ObjectInputStream((new FileInputStream("private.key")));
-		try {
-			PrivateKey key = (PrivateKey) in.readObject();
-			in.close();			
-			ks.addPrivateKey(key, "hub", "password".toCharArray());
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
+	public static void main(String[] args) throws IOException {		
 		ServerSocket hub = handleCreateServerSocket();
 		
 		while (true) {
 			// wait for a peer to connect
 			Socket peer = handleCreateSocket(hub);
-			HubProtocol p = selectProtocol(peer, ks);
+			Key sharedKey = handleGetSharedKey(peer);
+			System.out.println("Success");
+			HubProtocol p = selectProtocol(peer);
 			if(p != null) {
-				p.execute(peer);
+				p.execute(peer, sharedKey);
 			}
 			closeSocket(peer);
 		}
@@ -56,7 +63,7 @@ public class Hub {
 		}
 	}
 	
-	private static HubProtocol selectProtocol(Socket s, MyKeyStore ks) {
+	private static HubProtocol selectProtocol(Socket s) {
 		DataInputStream in = null;
 		int id = -1;
 		HubProtocol p = null;
@@ -73,10 +80,10 @@ public class Hub {
 		System.out.println(id);
 		switch (id) {
 		case Constants.REGISTER:
-			p = new UserRegistrationProtocol(ks);
+			p = new UserRegistrationProtocol();
 			break;
 		case Constants.LOGIN:
-			p = new UserLoginProtocol(ks);
+			p = new UserLoginProtocol();
 			break;
 		default:
 			System.out.println("Unrecognized protocol ID");
@@ -108,5 +115,20 @@ public class Hub {
 			System.exit(-1);
 		}
 		return peer;
+	}
+	
+	private static Key handleGetSharedKey(Socket s) {
+		try {
+			PrivateKey hubPrivate = HubConstants.getHubPrivate();
+			byte[] sharedKeyBytes = NetworkUtils.readEncryptedMessage(s, hubPrivate, Constants.PUBLIC_ENCRYPT_ALG);
+			
+			SecretKeyFactory skf = SecretKeyFactory.getInstance(Constants.SHARED_KEY_ALGORITHM);
+			DESKeySpec keySpec = new DESKeySpec(sharedKeyBytes);
+			return skf.generateSecret(keySpec);
+		} catch (InvalidKeySpecException | NoSuchAlgorithmException | InvalidKeyException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+		return null;
 	}
 }

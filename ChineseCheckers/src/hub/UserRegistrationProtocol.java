@@ -5,55 +5,48 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.security.Key;
 import java.security.KeyStore;
 import java.security.PublicKey;
 
-import utils.MyKeyStore;
+import utils.Constants;
+import utils.EncryptUtils;
 import utils.NetworkUtils;
 import utils.Protocol;
 
 
 public class UserRegistrationProtocol extends Protocol implements HubProtocol {
 	
-	private MyKeyStore ks;
-	
-	public UserRegistrationProtocol(MyKeyStore ks) {
-		this.ks = ks;
-	}
-	
-	public void execute(Socket s) {
-		try {
-			
+	public void execute(Socket s, Key sharedKey) {
+		try {			
 			byte[] message;
-			byte[] response;
+			byte[] usernameBytes;
+			byte[] passwordBytes;
+			PasswordStore pws = new PasswordStore();
 			
 			boolean usernameAvailable = false;
 			String username = null;
+			char[] password = null;
 			
 			while(!usernameAvailable) {
-				response = NetworkUtils.readMessage(s);
-				username = new String(response);
+				usernameBytes = NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_KEY_ALGORITHM);
+				passwordBytes = NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_KEY_ALGORITHM);
 				
-				// TODO: check whether the desired username is actually available
-				if (nameAvailable(username)) {
+				username = new String(usernameBytes);
+				password = NetworkUtils.bytesToChars(passwordBytes);
+				
+				if (!pws.containsEntry(username)) {
 					usernameAvailable = true;
-					message = ("AVAILABLE,"+username).getBytes();
+					if (pws.addEntry(username, password)) {
+						message = (Constants.REGISTRATION_SUCCESS+username).getBytes();
+					} else {
+						message = (Constants.REGISTRATION_FAILURE+username).getBytes();
+					}
 				} else {
-					message = ("IN_USE,"+username).getBytes();
+					message = (Constants.REGISTRATION_IN_USE+username).getBytes();
 				}
 				
-				NetworkUtils.sendSignedMessage(s, message, ks.getPrivateKey("hub", "password".toCharArray()));
-			}
-		
-			PublicKey key = NetworkUtils.readPublicKey(s);
-			response = NetworkUtils.readSignedMessage(s, key);
-			
-			if ((new String(response)).equals(username)) {
-				HubCertificate cert = new HubCertificate(username, key);
-				ks.addPublicKeyCertificate(username, cert);
-				//sendCertificate(s, cert);
-			} else {
-				return;
+				NetworkUtils.sendEncryptedMessage(s, message, sharedKey, Constants.SHARED_KEY_ALGORITHM);
 			}
 			
 		} catch (IOException e) {
@@ -62,10 +55,4 @@ public class UserRegistrationProtocol extends Protocol implements HubProtocol {
 			System.exit(1);
 		}
 	}
-	
-	private boolean nameAvailable(String username) {
-		// TODO Auto-generated method stub
-		return true;
-	}
-
 }

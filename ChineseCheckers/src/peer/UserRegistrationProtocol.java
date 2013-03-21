@@ -3,6 +3,11 @@ package peer;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
@@ -19,13 +24,19 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.util.Arrays;
 
 import hub.HubCertificate;
+import hub.HubConstants;
 
 import utils.Constants;
-import utils.MyKeyStore;
+import utils.EncryptUtils;
 import utils.Protocol;
 import utils.SignUtils;
 import utils.NetworkUtils;
@@ -33,13 +44,10 @@ import utils.NetworkUtils;
 
 public class UserRegistrationProtocol extends Protocol {
 	
-	private MyKeyStore ks;
-	
 	private JTextField usernameTxt;
 	private JPasswordField passwordTxt;
 	
-	public UserRegistrationProtocol(MyKeyStore ks) {
-		this.ks = ks;
+	public UserRegistrationProtocol() {
 		displayCreateUserGui();
 	}
 	
@@ -84,33 +92,39 @@ public class UserRegistrationProtocol extends Protocol {
     class createButtonListener implements ActionListener {
     	public void actionPerformed (ActionEvent e) {
     		Socket s = NetworkUtils.handleCreateSocket();
-    		NetworkUtils.sendProtocolID(s, Constants.REGISTER);
     		
     		String newUsername = usernameTxt.getText(), response;
-    		NetworkUtils.sendMessage(s, newUsername.getBytes());
     		
-    		response = new String(NetworkUtils.readSignedMessage(s, MyKeyStore.getHubPublicKey()));
-    		System.out.println(response);
+    		Key sharedKey = EncryptUtils.handleCreateSharedKey();   		
     		
-    		if (response.equals("AVAILABLE,"+ newUsername)) {
-    			System.out.println("received correct response");
-    			KeyPair keys = SignUtils.newSignKeyPair();
-    			
-    			//send public key to server with authentication message
-    			NetworkUtils.sendKey(s, keys.getPublic());
-    			NetworkUtils.sendSignedMessage(s, newUsername.getBytes(), keys.getPrivate());
-    			
-    			//HubCertificate cert = readCertificate(s);
-    			if(true){ //FIXME
-    				ks.addPrivateKey(keys.getPrivate(), newUsername, passwordTxt.getPassword());
-    				JFrame createUserFrame = (JFrame) SwingUtilities.getWindowAncestor((JButton) e.getSource());
-    				displaySuccessWindow(createUserFrame);
-    			} else {
-    				displayFailWindow();
-    			}
-    		} else if (response.equals("IN_USE,"+ newUsername)) {
+    		sendSharedKey(s, sharedKey);
+    		// test
+    		byte[] ciphertext = EncryptUtils.encryptData(sharedKey.getEncoded(), Constants.getHubPublicKey(), Constants.PUBLIC_ENCRYPT_ALG);
+    		byte[] encodedKey = EncryptUtils.decryptData(ciphertext, HubConstants.getHubPrivate(), Constants.PUBLIC_ENCRYPT_ALG);
+    		System.out.println(Arrays.equals(encodedKey, sharedKey.getEncoded()));
+    		//end test
+    		NetworkUtils.sendProtocolID(s, Constants.REGISTER);
+    		
+    		System.out.println("Sending encrypted message: username");
+    		NetworkUtils.sendEncryptedMessage(s, newUsername.getBytes(), sharedKey, Constants.SHARED_KEY_ALGORITHM);
+    		System.out.println("Sent encrypted username; Sending encrypted pw");
+    		NetworkUtils.sendEncryptedMessage(s, NetworkUtils.charsToBytes(passwordTxt.getPassword()), sharedKey, Constants.SHARED_KEY_ALGORITHM);
+    		
+    		response = new String(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_KEY_ALGORITHM));
+    		
+    		if (response.equals(Constants.REGISTRATION_SUCCESS + newUsername)) {
+				JFrame createUserFrame = (JFrame) SwingUtilities.getWindowAncestor((JButton) e.getSource());
+				displaySuccessWindow(createUserFrame);
+    		} else {
     			displayFailWindow();
     		}
+    	}
+    	
+    	private void sendSharedKey(Socket s, Key sharedKey) {
+    		PublicKey hubPublic = Constants.getHubPublicKey();
+    		
+    		NetworkUtils.sendEncryptedMessage(s, sharedKey.getEncoded(), hubPublic, Constants.PUBLIC_ENCRYPT_ALG);
+    		System.out.println("Sending encrypted shared key");
     	}
     }
     

@@ -24,7 +24,6 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import utils.Constants;
-import utils.MyKeyStore;
 import utils.NetworkUtils;
 import utils.Protocol;
 
@@ -32,7 +31,6 @@ import utils.Protocol;
 public class Peer  {  
 
 	private static InetAddress host;
-	private static MyKeyStore ks;
 	private JTextField usernameTxt;
 	private JPasswordField passwordTxt;
 	private PrivateKey myKey;
@@ -42,7 +40,6 @@ public class Peer  {
 	}
     
     public Peer() {
-    	ks = new MyKeyStore();
     	displayLoginGui();
     }
     
@@ -85,7 +82,7 @@ public class Peer  {
     class loginButtonListener implements ActionListener {  
         public void actionPerformed(ActionEvent e) {
         	//TODO: locally verify usn/pw
-            String username = usernameTxt.getText();
+            /*String username = usernameTxt.getText();
         	Socket s = NetworkUtils.handleCreateSocket();
             
         	//-------step 4----------
@@ -108,7 +105,7 @@ public class Peer  {
             	displayHub();
             } else {
             	displayFailWindow();
-            }
+            }*/
         }
     }
     
@@ -138,7 +135,7 @@ public class Peer  {
     	public void actionPerformed (ActionEvent e) {
     		//open a new gui for account creation
     		System.out.println("YOU CLICKED NEW USER");
-            new UserRegistrationProtocol(ks);
+            new UserRegistrationProtocol();
     	}
     }
 } 
