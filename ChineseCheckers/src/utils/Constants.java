@@ -13,7 +13,7 @@ public class Constants {
 	public static final String SIGN_ALGORITHM = "SHA512withRSA";
 	public static final String KEYSTORE_FILE = "TheKeyStore";
 	public static final String RANDOM_ALGORITHM = "SHA1PRNG";
-	public static final String SHARED_KEY_ALGORITHM = "DES";
+	public static final String SHARED_ENCRYPT_ALG = "DES";
 	public static final String PUBLIC_ENCRYPT_ALG = "RSA";
 	
 	public static final String REGISTRATION_SUCCESS = "SUCCESS";
@@ -28,7 +28,7 @@ public class Constants {
 	// Protocol IDs
 	public static final int REGISTER = 0;
 	public static final int LOGIN = 1;
-	public static final int P2P = 2;
+	public static final int GET_HOSTS = 2;
 	
 	private static PublicKey hubKey = null;
 	

@@ -60,10 +60,10 @@ public class NetworkUtils {
 		return cert;
 	}
  	
- 	//TODO: potentially create a network utils class for this kind of stuff? dunno
 	public static Socket handleCreateSocket() {
 		Socket s = null;		
 		try {
+			//TODO: change to the hub's InetAddress
 			InetAddress host = InetAddress.getLocalHost();
 			s = new Socket(host, Constants.PORT_NUM);
 		} catch (IOException e) {

@@ -19,12 +19,12 @@ public class UserLoginProtocol extends Protocol {
 		sendSharedKey(s, sharedKey);
 		NetworkUtils.sendProtocolID(s, Constants.LOGIN);		
 				
-		NetworkUtils.sendEncryptedMessage(s, username.getBytes(), sharedKey, Constants.SHARED_KEY_ALGORITHM);
-		NetworkUtils.sendEncryptedMessage(s, NetworkUtils.charsToBytes(password), sharedKey, Constants.SHARED_KEY_ALGORITHM);		
+		NetworkUtils.sendEncryptedMessage(s, username.getBytes(), sharedKey, Constants.SHARED_ENCRYPT_ALG);
+		NetworkUtils.sendEncryptedMessage(s, NetworkUtils.charsToBytes(password), sharedKey, Constants.SHARED_ENCRYPT_ALG);		
 	}
 	
 	public boolean isAuthenticated(Socket s, Key sharedKey) {
-		String response = new String(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_KEY_ALGORITHM));
+		String response = new String(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG));
 		if (response.equals(Constants.LOGIN_SUCCESS)) {
 			return true;
 		} else {

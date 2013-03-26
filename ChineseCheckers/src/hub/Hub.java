@@ -21,6 +21,8 @@ import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -36,6 +38,11 @@ import utils.Protocol;
 
 public class Hub {
 
+	//a list of all users currently logged in
+	private static List<User> loggedInUsers;
+	//a list of all users currently hosting games
+	private static List<User> hosts;
+	
 	public static void main(String[] args) throws IOException {		
 		ServerSocket hub = handleCreateServerSocket();
 		
@@ -43,13 +50,40 @@ public class Hub {
 			// wait for a peer to connect
 			Socket peer = handleCreateSocket(hub);
 			Key sharedKey = handleGetSharedKey(peer);
-			System.out.println("Success");
 			HubProtocol p = selectProtocol(peer);
 			if(p != null) {
 				p.execute(peer, sharedKey);
 			}
 			closeSocket(peer);
 		}
+	}
+	
+	public static List<User> getUserLogin() {
+		if (loggedInUsers == null) {
+			loggedInUsers = new LinkedList<User>();
+		}
+		return loggedInUsers;
+	}
+	
+	public static List<User> getUserHost() {
+		if (hosts == null) {
+			hosts = new LinkedList<User>();
+		}
+		return hosts;
+	}
+	
+	public static void addUserLogin(User u) {
+		if (loggedInUsers == null) {
+			loggedInUsers = new LinkedList<User>();
+		}
+		loggedInUsers.add(u);
+	}
+	
+	public static void addUserHost(User u) {
+		if (hosts == null) {
+			hosts = new LinkedList<User>();
+		}
+		hosts.add(u);
 	}
 	
 	private static void closeSocket(Socket s) {
@@ -85,6 +119,8 @@ public class Hub {
 		case Constants.LOGIN:
 			p = new UserLoginProtocol();
 			break;
+		case Constants.GET_HOSTS:
+			p = new GetHostsProtocol();
 		default:
 			System.out.println("Unrecognized protocol ID");
 		}
@@ -122,7 +158,7 @@ public class Hub {
 			PrivateKey hubPrivate = HubConstants.getHubPrivate();
 			byte[] sharedKeyBytes = NetworkUtils.readEncryptedMessage(s, hubPrivate, Constants.PUBLIC_ENCRYPT_ALG);
 			
-			SecretKeyFactory skf = SecretKeyFactory.getInstance(Constants.SHARED_KEY_ALGORITHM);
+			SecretKeyFactory skf = SecretKeyFactory.getInstance(Constants.SHARED_ENCRYPT_ALG);
 			DESKeySpec keySpec = new DESKeySpec(sharedKeyBytes);
 			return skf.generateSecret(keySpec);
 		} catch (InvalidKeySpecException | NoSuchAlgorithmException | InvalidKeyException e) {

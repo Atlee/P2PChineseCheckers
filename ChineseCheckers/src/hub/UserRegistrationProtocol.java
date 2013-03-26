@@ -29,8 +29,8 @@ public class UserRegistrationProtocol extends Protocol implements HubProtocol {
 			char[] password = null;
 			
 			while(!usernameAvailable) {
-				usernameBytes = NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_KEY_ALGORITHM);
-				passwordBytes = NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_KEY_ALGORITHM);
+				usernameBytes = NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG);
+				passwordBytes = NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG);
 				
 				username = new String(usernameBytes);
 				password = NetworkUtils.bytesToChars(passwordBytes);
@@ -46,7 +46,7 @@ public class UserRegistrationProtocol extends Protocol implements HubProtocol {
 					message = (Constants.REGISTRATION_IN_USE+username).getBytes();
 				}
 				
-				NetworkUtils.sendEncryptedMessage(s, message, sharedKey, Constants.SHARED_KEY_ALGORITHM);
+				NetworkUtils.sendEncryptedMessage(s, message, sharedKey, Constants.SHARED_ENCRYPT_ALG);
 			}
 			
 		} catch (IOException e) {

@@ -115,7 +115,7 @@ public class EncryptUtils {
 		Key sharedKey = null;
 		try {
 			//generate the shared key
-			KeyGenerator gen = KeyGenerator.getInstance(Constants.SHARED_KEY_ALGORITHM);
+			KeyGenerator gen = KeyGenerator.getInstance(Constants.SHARED_ENCRYPT_ALG);
 			SecureRandom rand = SecureRandom.getInstance(Constants.RANDOM_ALGORITHM);
 			gen.init(rand);
 			sharedKey = gen.generateKey();

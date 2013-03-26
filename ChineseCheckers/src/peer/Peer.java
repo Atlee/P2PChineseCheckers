@@ -32,10 +32,8 @@ import utils.Protocol;
 
 public class Peer  {  
 
-	private static InetAddress host;
 	private JTextField usernameTxt;
 	private JPasswordField passwordTxt;
-	private PrivateKey myKey;
 	
 	public static void main(String[] args) throws IOException {		
 		new Peer();
@@ -85,7 +83,7 @@ public class Peer  {
         public void actionPerformed(ActionEvent e) {
             String username = usernameTxt.getText();
         	Socket s = NetworkUtils.handleCreateSocket();
-            Key sharedKey = EncryptUtils.handleCreateSharedKey();
+            final Key sharedKey = EncryptUtils.handleCreateSharedKey();
             
             char[] password = passwordTxt.getPassword();
             UserLoginProtocol login = new UserLoginProtocol();
@@ -97,7 +95,8 @@ public class Peer  {
             	JFrame loginFrame = (JFrame) SwingUtilities.getWindowAncestor(((JButton) e.getSource()));
             	loginFrame.setVisible(false);
             	loginFrame.dispose();
-            	displayHub();
+            	//displayHub();
+                HubGui.createAndShowGUI(sharedKey);
             } else {
             	displayFailWindow();
             }

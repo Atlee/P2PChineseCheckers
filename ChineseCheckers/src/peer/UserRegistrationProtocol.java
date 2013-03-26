@@ -102,11 +102,11 @@ public class UserRegistrationProtocol extends Protocol {
     		NetworkUtils.sendProtocolID(s, Constants.REGISTER);
     		
     		System.out.println("Sending encrypted message: username");
-    		NetworkUtils.sendEncryptedMessage(s, newUsername.getBytes(), sharedKey, Constants.SHARED_KEY_ALGORITHM);
+    		NetworkUtils.sendEncryptedMessage(s, newUsername.getBytes(), sharedKey, Constants.SHARED_ENCRYPT_ALG);
     		System.out.println("Sent encrypted username; Sending encrypted pw");
-    		NetworkUtils.sendEncryptedMessage(s, NetworkUtils.charsToBytes(passwordTxt.getPassword()), sharedKey, Constants.SHARED_KEY_ALGORITHM);
+    		NetworkUtils.sendEncryptedMessage(s, NetworkUtils.charsToBytes(passwordTxt.getPassword()), sharedKey, Constants.SHARED_ENCRYPT_ALG);
     		
-    		response = new String(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_KEY_ALGORITHM));
+    		response = new String(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG));
     		
     		if (response.equals(Constants.REGISTRATION_SUCCESS + newUsername)) {
 				JFrame createUserFrame = (JFrame) SwingUtilities.getWindowAncestor((JButton) e.getSource());
