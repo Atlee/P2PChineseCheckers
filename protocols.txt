@@ -65,3 +65,31 @@ The session ID, n, must be included in all subsequent messages between C1 and
 C2 until the connection is closed.
 
 --------------------------------------------------------------------------------
+
+UPDATED 3/25
+
+--------------------------------------------------------------------------------
+
+Protocol for establishing a shared key between a user U and the hub H
+
+C: Generate a new SHARED key k_C  //k_C must be unique for this to work
+C->H: Enc{k_C, K_H}
+H: Dec{k_C, k_H} and save k_C for all further communication with C
+
+--------------------------------------------------------------------------------
+
+Protocol for new user registration...
+
+1: C->U: username, pass?
+2: U->C: username, pass
+3: C and H establish a shared key k_C
+4: C->H: Enc{username, password, k_C}
+5: H: Dec{username, password, k_C}
+   if username in use:
+	H->C: Enc{REGISTRATION_FAILURE, k_C}
+   else:
+	H->C: Enc{REGISTRATION_SUCCESS, k_C}
+6: C: if Dec{message, k_C} is equal to REGISTRATION_SUCCESS
+	C->U: Success
+      else:
+	C->U: Failure
