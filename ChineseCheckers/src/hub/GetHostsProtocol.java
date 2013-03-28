@@ -12,9 +12,7 @@ public class GetHostsProtocol implements HubProtocol {
 
 	@Override
 	public void execute(Socket s, Key sharedKey) {
-		// TODO Auto-generated method stub
-		System.out.println("in get hosts");
-		List<User> hosts = Hub.getUserLogin();
+		List<User> hosts = Hub.getUserHost();
 		byte[] listLenBytes = ByteBuffer.allocate(4).putInt(hosts.size()).array();
 		NetworkUtils.sendEncryptedMessage(s, listLenBytes, sharedKey, Constants.SHARED_ENCRYPT_ALG);
 		

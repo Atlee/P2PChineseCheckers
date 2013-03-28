@@ -41,8 +41,10 @@ public class HubGui extends JPanel
  
     private static final String HOST_STRING = "Host";
     private static final String JOIN_STRING = "Join";
+    private static final String REFRESH_STRING = "Refresh";
     private static final String TEXT_FIELD_DEFAULT = "New Game Name";
     private JButton joinButton;
+    private JButton refreshButton;
     private JTextField newGameName;
     private Key sharedKey;
  
@@ -50,23 +52,13 @@ public class HubGui extends JPanel
         super(new BorderLayout());
         this.sharedKey = sharedKey;
         
-        System.out.println("Creating Socket");
-        Socket s = NetworkUtils.handleCreateSocket();
-        NetworkUtils.sendEncryptedMessage(s, sharedKey.getEncoded(), Constants.getHubPublicKey(), Constants.PUBLIC_ENCRYPT_ALG);
-        System.out.println("After create socket");
-        NetworkUtils.sendProtocolID(s, Constants.GET_HOSTS);
-        System.out.println("After send protocol");
- 
-        //get the current list of hosts from the hub
-        List<String> hosts = getHostList(s);
-        
+        //get the list of hsots from the server and update
+        //listModel to represent that list
         listModel = new DefaultListModel<String>();
+        updateHostList();
         
-        //add all the hosts to the listmodel display
-        for (String hostname : hosts) {
-        	listModel.addElement(hostname);
-        }
- 
+        int size = listModel.getSize();
+        
         //Create the list and put it in a scroll pane.
         list = new JList<String>(listModel);
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -79,11 +71,18 @@ public class HubGui extends JPanel
         HostListener hostListener = new HostListener(hostButton);
         hostButton.setActionCommand(HOST_STRING);
         hostButton.addActionListener(hostListener);
-        hostButton.setEnabled(false);
+        
+        refreshButton = new JButton(REFRESH_STRING);
+        refreshButton.setActionCommand(REFRESH_STRING);
+        refreshButton.addActionListener(new RefreshListener());
+        refreshButton.setSize(10, 10);
  
         joinButton = new JButton(JOIN_STRING);
         joinButton.setActionCommand(JOIN_STRING);
         joinButton.addActionListener(new JoinListener());
+        if (size == 0) {
+        	joinButton.setEnabled(false);
+        }
  
         newGameName = new JTextField(TEXT_FIELD_DEFAULT, 10);
         newGameName.addActionListener(hostListener);
@@ -93,11 +92,13 @@ public class HubGui extends JPanel
         JPanel buttonPane = new JPanel();
         buttonPane.setLayout(new BoxLayout(buttonPane,
                                            BoxLayout.LINE_AXIS));
+        buttonPane.add(refreshButton);
+        buttonPane.add(new JSeparator(SwingConstants.VERTICAL));
         buttonPane.add(joinButton);
         buttonPane.add(Box.createHorizontalStrut(5));
         buttonPane.add(new JSeparator(SwingConstants.VERTICAL));
         buttonPane.add(Box.createHorizontalStrut(5));
-        buttonPane.add(newGameName);
+        //buttonPane.add(newGameName);
         buttonPane.add(hostButton);
         buttonPane.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
  
@@ -105,15 +106,21 @@ public class HubGui extends JPanel
         add(buttonPane, BorderLayout.PAGE_END);
     }
     
-    private List<String> getHostList(Socket s) {
-    	int len = ByteBuffer.wrap(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG)).getInt();
-    	System.out.println(len);
-    	List<String> list = new LinkedList<String>();
-    	for (int i = 0; i < len; i++) {
-    		System.out.println(i);
-    		list.add(new String(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG)));
+    private void updateHostList() {
+    	List<String> hosts = HubGuiProtocols.getHostList(sharedKey);
+    	
+    	listModel.clear();
+        
+        //add all the hosts to the listmodel display
+        for (String hostname : hosts) {
+        	listModel.addElement(hostname);
+        }
+    }
+    
+    class RefreshListener implements ActionListener {
+    	public void actionPerformed(ActionEvent e) {
+    		updateHostList();
     	}
-    	return list;
     }
  
     class JoinListener implements ActionListener {
@@ -161,25 +168,9 @@ public class HubGui extends JPanel
                 newGameName.selectAll();
                 return;
             }
- 
-            int index = list.getSelectedIndex(); //get selected index
-            if (index == -1) { //no selection, so insert at beginning
-                index = 0;
-            } else {           //add after the selected item
-                index++;
-            }
- 
-            listModel.insertElementAt(newGameName.getText(), index);
-            //If we just wanted to add to the end, we'd do this:
-            //listModel.addElement(employeeName.getText());
- 
-            //Reset the text field.
-            newGameName.requestFocusInWindow();
-            newGameName.setText("");
- 
-            //Select the new item and make it visible.
-            list.setSelectedIndex(index);
-            list.ensureIndexIsVisible(index);
+            
+            HubGuiProtocols.hostNewGame(sharedKey);
+            updateHostList();
         }
  
         //This method tests for string equality. You could certainly

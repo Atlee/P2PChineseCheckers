@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.InvalidKeyException;
@@ -21,6 +22,7 @@ import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -39,7 +41,7 @@ import utils.Protocol;
 public class Hub {
 
 	//a list of all users currently logged in
-	private static List<User> loggedInUsers;
+	private static HashMap<InetAddress, User> loggedInUsers;
 	//a list of all users currently hosting games
 	private static List<User> hosts;
 	
@@ -58,11 +60,13 @@ public class Hub {
 		}
 	}
 	
-	public static List<User> getUserLogin() {
-		if (loggedInUsers == null) {
-			loggedInUsers = new LinkedList<User>();
+	public static User getUser(InetAddress i) {
+		if (loggedInUsers == null || !loggedInUsers.containsKey(i)) {
+			loggedInUsers = new HashMap<InetAddress, User>();
+			return null;
 		}
-		return loggedInUsers;
+		
+		return loggedInUsers.get(i);
 	}
 	
 	public static List<User> getUserHost() {
@@ -74,9 +78,9 @@ public class Hub {
 	
 	public static void addUserLogin(User u) {
 		if (loggedInUsers == null) {
-			loggedInUsers = new LinkedList<User>();
+			loggedInUsers = new HashMap<InetAddress, User>();
 		}
-		loggedInUsers.add(u);
+		loggedInUsers.put(u.getAddr(), u);
 	}
 	
 	public static void addUserHost(User u) {
@@ -121,6 +125,10 @@ public class Hub {
 			break;
 		case Constants.GET_HOSTS:
 			p = new GetHostsProtocol();
+			break;
+		case Constants.NEW_HOST:
+			p = new NewHostProtocol();
+			break;
 		default:
 			System.out.println("Unrecognized protocol ID");
 		}

@@ -29,6 +29,7 @@ public class Constants {
 	public static final int REGISTER = 0;
 	public static final int LOGIN = 1;
 	public static final int GET_HOSTS = 2;
+	public static final int NEW_HOST = 3;
 	
 	private static PublicKey hubKey = null;
 	
