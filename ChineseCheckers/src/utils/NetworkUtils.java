@@ -175,14 +175,15 @@ public class NetworkUtils {
 		
         SSLServerSocketFactory sf = sslContext.getServerSocketFactory();
         
-        SSLServerSocket socket = null;
+        SSLServerSocket ssocket = null;
 		try {
-			socket = (SSLServerSocket)sf.createServerSocket(port);
+			ssocket = (SSLServerSocket)sf.createServerSocket(port);
+	        ssocket.setNeedClientAuth(true);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		
-		return socket;
+		return ssocket;
 	}
 	
 	public static void sendSignedMessage(Socket s, byte[] message, PrivateKey key) {
