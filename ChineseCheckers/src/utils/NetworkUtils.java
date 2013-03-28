@@ -8,20 +8,33 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyFactory;
+import java.security.KeyManagementException;
 import java.security.KeyPair;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.SecureRandom;
+import java.security.UnrecoverableKeyException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.UUID;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DESKeySpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
 
 public class NetworkUtils {
 
@@ -70,6 +83,106 @@ public class NetworkUtils {
 			System.exit(1);
 		}
 		return s;
+	}
+	
+	public static Socket createSocket( InetAddress host, int port ) {
+		Socket s = null;
+		try {
+			s = new Socket(host, port);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return s;
+	} 
+	
+	public static ServerSocket createServerSocket( int port ) {
+		ServerSocket ss = null;
+		try {
+			ss = new ServerSocket(port);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return ss;
+	}
+	
+	public static SSLSocket createSecureSocket( InetAddress host, int port , KeyStore truststore, KeyStore keystore, String passphrase ) {
+		SecureRandom sRand = new SecureRandom();
+	    sRand.nextInt();
+	    
+	    TrustManagerFactory tmf = null;
+		try {
+			tmf = TrustManagerFactory.getInstance( "SunX509" );
+		    tmf.init(truststore);
+		} catch (NoSuchAlgorithmException | KeyStoreException e) {
+			e.printStackTrace();
+		}
+	    
+	    KeyManagerFactory kmf = null;
+	    try {
+		    kmf = KeyManagerFactory.getInstance( "SunX509" );
+			kmf.init(keystore, passphrase.toCharArray());
+		} catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+	    
+	    SSLContext sslContext = null;
+		try {
+			sslContext = SSLContext.getInstance( "TLS" );
+		    sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), sRand);
+		} catch (NoSuchAlgorithmException | KeyManagementException e) {
+			e.printStackTrace();
+		}
+		
+        SSLSocketFactory sf = sslContext.getSocketFactory();
+        
+        SSLSocket socket = null;
+		try {
+			socket = (SSLSocket)sf.createSocket(host, port);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return socket;
+	}
+	
+	public static SSLServerSocket createSecureServerSocket( int port , KeyStore truststore, KeyStore keystore, String passphrase ) {
+		SecureRandom sRand = new SecureRandom();
+	    sRand.nextInt();
+	    
+	    TrustManagerFactory tmf = null;
+		try {
+			tmf = TrustManagerFactory.getInstance( "SunX509" );
+		    tmf.init(truststore);
+		} catch (NoSuchAlgorithmException | KeyStoreException e) {
+			e.printStackTrace();
+		}
+	    
+	    KeyManagerFactory kmf = null;
+	    try {
+		    kmf = KeyManagerFactory.getInstance( "SunX509" );
+			kmf.init(keystore, passphrase.toCharArray());
+		} catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+	    
+	    SSLContext sslContext = null;
+		try {
+			sslContext = SSLContext.getInstance( "TLS" );
+		    sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), sRand);
+		} catch (NoSuchAlgorithmException | KeyManagementException e) {
+			e.printStackTrace();
+		}
+		
+        SSLServerSocketFactory sf = sslContext.getServerSocketFactory();
+        
+        SSLServerSocket socket = null;
+		try {
+			socket = (SSLServerSocket)sf.createServerSocket(port);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return socket;
 	}
 	
 	public static void sendSignedMessage(Socket s, byte[] message, PrivateKey key) {
