@@ -52,7 +52,7 @@ public class KeyStoreUtils {
 	public KeyStore genUserTrustStore( String tsFilename ) throws GeneralSecurityException, IOException {
 		KeyStore ts = KeyStore.getInstance("JKS");
 		FileInputStream input = new FileInputStream(tsFilename);
-		ts.load(input, "hubadmin".toCharArray());
+		ts.load(input, "public".toCharArray());
 		input.close();
 		return ts;
 	}
