@@ -23,8 +23,6 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DESKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import com.sun.crypto.provider.DESKeyFactory;
-
 public class NetworkUtils {
 
 	public static void sendProtocolID(Socket s, int protocolID) {
