@@ -20,7 +20,7 @@ public class KeyStoreUtils {
 	public KeyStore loadHubKeyStore( String ksFilename ) throws GeneralSecurityException, IOException {
 		KeyStore ks = KeyStore.getInstance("JKS");
 		FileInputStream input = new FileInputStream(ksFilename);
-		ks.load(input, "hubadmin".toCharArray());
+		ks.load(input, "hubpassword".toCharArray());
 		input.close();
 		return ks;
 	}
@@ -28,7 +28,7 @@ public class KeyStoreUtils {
 	public KeyStore loadHubTrustStore( String tsFilename ) throws GeneralSecurityException, IOException {
 		KeyStore ts = KeyStore.getInstance("JKS");
 		FileInputStream input = new FileInputStream(tsFilename);
-		ts.load(input, "hubadmin".toCharArray());
+		ts.load(input, "public".toCharArray());
 		input.close();
 		return ts;
 	}
