@@ -17,15 +17,15 @@ import java.io.FileInputStream;
 
 public class KeyStoreUtils {
 
-	public KeyStore loadHubKeyStore( String ksFilename ) throws GeneralSecurityException, IOException {
+	public static KeyStore loadHubKeyStore( String ksFilename , String password) throws GeneralSecurityException, IOException {
 		KeyStore ks = KeyStore.getInstance("JKS");
 		FileInputStream input = new FileInputStream(ksFilename);
-		ks.load(input, "hubpassword".toCharArray());
+		ks.load(input, password.toCharArray());
 		input.close();
 		return ks;
 	}
 
-	public KeyStore loadHubTrustStore( String tsFilename ) throws GeneralSecurityException, IOException {
+	public static KeyStore loadHubTrustStore( String tsFilename ) throws GeneralSecurityException, IOException {
 		KeyStore ts = KeyStore.getInstance("JKS");
 		FileInputStream input = new FileInputStream(tsFilename);
 		ts.load(input, "public".toCharArray());
@@ -33,14 +33,14 @@ public class KeyStoreUtils {
 		return ts;
 	}
 
-	public KeyStore genUserKeyStore( String username, String password ) throws GeneralSecurityException, IOException {
+	public static KeyStore genUserKeyStore( String username, String password ) throws GeneralSecurityException, IOException {
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance(Constants.KEYGEN_ALGORITHM);
 		SecureRandom sRand = SecureRandom.getInstance(Constants.RANDOM_ALGORITHM);
 		sRand.setSeed(password.getBytes());
 		kpg.initialize(1024, sRand);
 		KeyPair keys = kpg.generateKeyPair();
 
-		String distinguishedName = username + " O=P2PChineseCheckers";
+		String distinguishedName = "CN=" + username + " O=P2PChineseCheckers";
 		X509Certificate cert = generateCertificate(distinguishedName, keys, 10);
 
 		KeyStore ks = KeyStore.getInstance("JKS");
@@ -49,7 +49,7 @@ public class KeyStoreUtils {
 		return ks;
 	}
 	
-	public KeyStore genUserTrustStore( String tsFilename ) throws GeneralSecurityException, IOException {
+	public static KeyStore genUserTrustStore( String tsFilename ) throws GeneralSecurityException, IOException {
 		KeyStore ts = KeyStore.getInstance("JKS");
 		FileInputStream input = new FileInputStream(tsFilename);
 		ts.load(input, "public".toCharArray());
@@ -64,7 +64,7 @@ public class KeyStoreUtils {
 	 * @param days how many days from now the Certificate is valid for
 	 * @author STACKOVERFLOW
 	 */ 
-	private X509Certificate generateCertificate(String dn, KeyPair pair, int days) throws GeneralSecurityException, IOException {
+	private static X509Certificate generateCertificate(String dn, KeyPair pair, int days) throws GeneralSecurityException, IOException {
 		String algorithm = Constants.SIGN_ALGORITHM;
 		PrivateKey privkey = pair.getPrivate();
 		X509CertInfo info = new X509CertInfo();
