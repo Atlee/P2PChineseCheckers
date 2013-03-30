@@ -1,5 +1,7 @@
 package peer;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.security.Key;
@@ -32,12 +34,33 @@ public class HubGuiProtocols {
     	return list;
     }
     
-    public static void hostNewGame(Key sharedKey) {
+    /**
+     * 
+     * @param sharedKey
+     * @return the socket connection to a peer
+     */
+    public static ServerSocket hostNewGame(Key sharedKey) {
     	Socket s = NetworkUtils.handleCreateSocket();
     	
     	NetworkUtils.sendEncryptedMessage(s, sharedKey.getEncoded(), Constants.getHubPublicKey(), Constants.PUBLIC_ENCRYPT_ALG);
     	NetworkUtils.sendProtocolID(s, Constants.NEW_HOST);
     	
+    	ServerSocket peer = null;
+    	try {
+    		peer = new ServerSocket(Constants.CLIENT_HOST_PORT);
+    	} catch (IOException e) {
+    		System.out.println("Could not listen on port " + Constants.CLIENT_HOST_PORT);
+    		e.printStackTrace();
+    		System.exit(1);
+    	}
+    	return peer;
+    }
+    
+    public static void joinNewGame(String gameName, Key sharedKey) {
+    	Socket s = NetworkUtils.handleCreateSocket();
+    	
+    	NetworkUtils.sendEncryptedMessage(s, sharedKey.getEncoded(), Constants.getHubPublicKey(), Constants.PUBLIC_ENCRYPT_ALG);
+    	NetworkUtils.sendProtocolID(s, Constants.JOIN_GAME);
     }
 
 }

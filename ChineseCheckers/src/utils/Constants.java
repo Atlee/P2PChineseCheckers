@@ -8,7 +8,8 @@ import java.security.PublicKey;
 
 public class Constants {
 	
-	public static final int PORT_NUM = 4321;
+	public static final int HUB_PORT = 4321;
+	public static final int CLIENT_HOST_PORT = 4444;
 	public static final String KEYGEN_ALGORITHM = "RSA";
 	public static final String SIGN_ALGORITHM = "SHA512withRSA";
 	public static final String KEYSTORE_FILE = "TheKeyStore";
@@ -30,6 +31,7 @@ public class Constants {
 	public static final int LOGIN = 1;
 	public static final int GET_HOSTS = 2;
 	public static final int NEW_HOST = 3;
+	public static final int JOIN_GAME = 4;
 	
 	private static PublicKey hubKey = null;
 	

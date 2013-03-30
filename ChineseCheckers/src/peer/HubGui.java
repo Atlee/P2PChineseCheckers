@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.security.Key;
@@ -17,6 +19,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -152,6 +155,7 @@ public class HubGui extends JPanel
     class HostListener implements ActionListener, DocumentListener {
         private boolean alreadyEnabled = false;
         private JButton button;
+        private ServerSocket hostSocket = null;
  
         public HostListener(JButton button) {
             this.button = button;
@@ -169,8 +173,30 @@ public class HubGui extends JPanel
                 return;
             }
             
-            HubGuiProtocols.hostNewGame(sharedKey);
+            hostSocket = HubGuiProtocols.hostNewGame(sharedKey);
             updateHostList();
+            Socket peer = displayWaitingWindow();
+        }
+        
+        private Socket displayWaitingWindow() {
+        	JFrame frame = new JFrame("Waiting for opponent");
+    		JLabel label = new JLabel("Waiting for opponent to join", SwingConstants.CENTER);
+    		
+    		//show success/failure window
+    		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    		frame.getContentPane().add(label, BorderLayout.CENTER);			
+    		frame.setSize(300, 100);
+    		frame.setVisible(true);
+    		
+    		Socket peer = null;
+    		try {
+				peer = hostSocket.accept();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				System.exit(1);
+			}
+    		return peer;
         }
  
         //This method tests for string equality. You could certainly

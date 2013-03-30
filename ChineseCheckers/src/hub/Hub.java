@@ -139,9 +139,9 @@ public class Hub {
 		// start Hub listening on port 4321
 		ServerSocket hub = null;
 		try {
-			hub = new ServerSocket(Constants.PORT_NUM);
+			hub = new ServerSocket(Constants.HUB_PORT);
 		} catch (IOException e) {
-			System.out.println("Could not listen on port " + Constants.PORT_NUM);
+			System.out.println("Could not listen on port " + Constants.HUB_PORT);
 			e.printStackTrace();
 			System.exit(-1);
 		}
@@ -154,7 +154,7 @@ public class Hub {
 		try {
 			peer = server.accept();
 		} catch (IOException e) {
-			System.out.println("Accept failed:" + Constants.PORT_NUM);
+			System.out.println("Accept failed:" + Constants.HUB_PORT);
 			e.printStackTrace();
 			System.exit(-1);
 		}

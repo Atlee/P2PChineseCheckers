@@ -65,7 +65,7 @@ public class NetworkUtils {
 		try {
 			//TODO: change to the hub's InetAddress
 			InetAddress host = InetAddress.getLocalHost();
-			s = new Socket(host, Constants.PORT_NUM);
+			s = new Socket(host, Constants.HUB_PORT);
 		} catch (IOException e) {
 			System.out.println("Error creating socket");
 			e.printStackTrace();
