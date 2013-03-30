@@ -9,6 +9,8 @@ import java.security.PublicKey;
 public class Constants {
 	
 	public static final int PORT_NUM = 4321;
+	public static final int HUB_SSL_PORT = 4321;
+	public static final int NEW_USER_REG_PORT = 4322;
 	public static final String KEYGEN_ALGORITHM = "RSA";
 	public static final String SIGN_ALGORITHM = "SHA512withRSA";
 	public static final String KEYSTORE_FILE = "TheKeyStore";
