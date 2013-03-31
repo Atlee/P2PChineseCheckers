@@ -10,9 +10,6 @@ import java.net.Socket;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.SecureRandom;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
@@ -22,10 +19,7 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 
-import sun.security.x509.X509CertImpl;
-import sun.security.x509.X509CertInfo;
 import utils.Constants;
 
 
@@ -57,7 +51,7 @@ public class MultiThreadedHub {
 		tsLock.lock();
 		truststore = KeyStore.getInstance("JKS");
 		FileInputStream tsFile = new FileInputStream(trustStoreFile);
-		truststore.load(tsFile, "public".toCharArray());
+		truststore.load(tsFile, tsPassword.toCharArray());
 		tsFile.close();
 		tsLock.unlock();
 	}

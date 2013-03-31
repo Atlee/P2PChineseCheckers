@@ -40,7 +40,7 @@ public class JSSEPeerTest {
 		String pwRequest = (String)in.readObject();
 		System.out.println(pwRequest);
 
-		if(pwRequest.equals("Server: Password, please?")) {
+		if(pwRequest.equals("Login Server: Password, please?")) {
 			System.out.println("(Sending password...)");
 			out.writeObject(password);
 			
@@ -81,10 +81,12 @@ public class JSSEPeerTest {
 		out.writeObject(password);
 		
 		String loginStatus = (String)in.readObject();
-		System.out.println(loginStatus);
+		System.out.println(loginStatus + "\n");
 		
 		// Now make sure the logged in user can access hub services
 		s = NetworkUtils.createSecureSocket(InetAddress.getLocalHost(), Constants.HUB_PORT, ts, ks, password);
+		
+		System.out.println("(Accessing hub services as the logged in user...)");
 		
 		in = new ObjectInputStream(s.getInputStream());
 		String greeting = (String)in.readObject();

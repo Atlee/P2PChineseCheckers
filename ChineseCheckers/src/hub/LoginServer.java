@@ -67,17 +67,17 @@ public class LoginServer implements Runnable {
 				ObjectOutputStream out = new ObjectOutputStream(client.getOutputStream());
 				
 				if(serviceRequest.equals("REGISTER")) {
-					out.writeObject("Server: Desired username, please?");
+					out.writeObject("Login Server: Desired username, please?");
 					String uname = (String)in.readObject();
 					
 					if(pwStore.containsEntry(uname)) {
-						out.writeObject("Server: That username is already in use. Please try again.");
+						out.writeObject("Login Server: That username is already in use. Please try again.");
 					} else {
-						out.writeObject("Server: Password, please?");
+						out.writeObject("Login Server: Password, please?");
 						String password = (String)in.readObject();
 						pwStore.addEntry(uname, password.toCharArray());
 						
-						out.writeObject("Server: Self-signed certificate, please?");
+						out.writeObject("Login Server: Self-signed certificate, please?");
 						Certificate cert = (Certificate)in.readObject();
 						htsLock.lock();
 						hubTrustStore.setCertificateEntry(uname, cert);
@@ -90,9 +90,9 @@ public class LoginServer implements Runnable {
 					}
 					
 				} else if(serviceRequest.equals("LOGIN")) {
-					out.writeObject("Server: Username?");
+					out.writeObject("Login Server: Username?");
 					String uname = (String)in.readObject();
-					out.writeObject("Server: Password?");
+					out.writeObject("Login Server: Password?");
 					String password = (String)in.readObject();
 					
 					if(pwStore.authenticate(uname, password.toCharArray())) {
@@ -101,13 +101,13 @@ public class LoginServer implements Runnable {
 							online.add(uname);
 						}
 						onlineLock.unlock();
-						out.writeObject("Server: Welcome to P2P Chinese Checkers, " + uname + "!");
+						out.writeObject("Login Server: Welcome to P2P Chinese Checkers, " + uname + "!");
 						System.out.println("Online: " + online.toString());
 					} else {
-						out.writeObject("Server: Incorrect username or password. Please try again.");
+						out.writeObject("Login Server: Incorrect username or password. Please try again.");
 					}
 				} else {
-					out.writeObject("Server: lolwut");
+					out.writeObject("Login Server: lolwut");
 				}
 				
 			}
