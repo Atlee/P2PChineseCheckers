@@ -1,8 +1,11 @@
 package peer;
 
 import java.awt.BorderLayout;
+import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 
 import java.net.InetAddress;
@@ -90,15 +93,21 @@ public class Peer  {
             login.sendCredentials(s, sharedKey, username, password);
             //eliminate the password from memory as fast as possible
             Arrays.fill(password, '_');
-            
-            if (login.isAuthenticated(s, sharedKey)) {
-            	JFrame loginFrame = (JFrame) SwingUtilities.getWindowAncestor(((JButton) e.getSource()));
-            	loginFrame.setVisible(false);
-            	loginFrame.dispose();
-            	//displayHub();
-                HubGui.createAndShowGUI(sharedKey);
-            } else {
-            	displayFailWindow();
+            try {
+	            if (login.isAuthenticated(s, sharedKey)) {
+	            	//dispose of the gui for logging in and display the gui for the hub
+	            	JFrame loginFrame = (JFrame) SwingUtilities.getWindowAncestor(((JButton) e.getSource()));
+	            	loginFrame.setVisible(false);
+	            	loginFrame.dispose();
+	            	//displayHub();
+	                HubGui.createAndShowGUI(sharedKey);
+	            } else {
+	            	displayFailWindow();
+	            }
+            } catch (IOException ex) {
+            	System.out.println("Error getting authentication result from hub");
+            	ex.printStackTrace();
+            	System.exit(1);
             }
         }
     }
@@ -120,7 +129,7 @@ public class Peer  {
 		
 		//show success/failure window
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		frame.getContentPane().add(label, BorderLayout.CENTER);			
+		frame.getContentPane().add(label, BorderLayout.CENTER);
 		frame.setSize(300, 100);
 		frame.setVisible(true);
     }

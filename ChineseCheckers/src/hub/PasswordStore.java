@@ -182,7 +182,7 @@ public class PasswordStore {
 		return salt;
 	}
 	
-	public PasswordFileEntry readPWEntryFromStream(InputStream inStream) 
+	private PasswordFileEntry readPWEntryFromStream(InputStream inStream) 
 			throws IOException {
 		DataInputStream in = new DataInputStream(inStream);
 		int len = in.readInt();

@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.InvalidKeyException;
@@ -21,6 +22,7 @@ import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -39,79 +41,81 @@ import utils.Protocol;
 public class Hub {
 
 	//a list of all users currently logged in
-	private static List<User> loggedInUsers;
+	private static HashMap<InetAddress, User> loggedInUsers;
 	//a list of all users currently hosting games
-	private static List<User> hosts;
+	private static HashMap<String, User> hosts;
 	
-	public static void main(String[] args) throws IOException {		
+	public static void main(String[] args) {		
 		ServerSocket hub = handleCreateServerSocket();
 		
 		while (true) {
-			// wait for a peer to connect
-			Socket peer = handleCreateSocket(hub);
-			Key sharedKey = handleGetSharedKey(peer);
-			HubProtocol p = selectProtocol(peer);
-			if(p != null) {
-				p.execute(peer, sharedKey);
+			try {
+				// wait for a peer to connect
+				Socket peer = handleCreateSocket(hub);
+				if (peer != null) {
+					Key sharedKey = handleGetSharedKey(peer);
+					HubProtocol p = selectProtocol(peer);
+					if(p != null) {
+						p.execute(peer, sharedKey);
+					}
+					closeSocket(peer);
+				}
+			} catch (IOException e) {
+				System.out.println("Error processing client protocol");
 			}
-			closeSocket(peer);
 		}
 	}
 	
-	public static List<User> getUserLogin() {
-		if (loggedInUsers == null) {
-			loggedInUsers = new LinkedList<User>();
+	public static User getUser(InetAddress i) {
+		if (loggedInUsers == null || !loggedInUsers.containsKey(i)) {
+			loggedInUsers = new HashMap<InetAddress, User>();
+			return null;
 		}
-		return loggedInUsers;
+		
+		return loggedInUsers.get(i);
 	}
 	
-	public static List<User> getUserHost() {
+	public static HashMap<String, User> getUserHost() {
 		if (hosts == null) {
-			hosts = new LinkedList<User>();
+			hosts = new HashMap<String, User>();
 		}
 		return hosts;
 	}
 	
 	public static void addUserLogin(User u) {
 		if (loggedInUsers == null) {
-			loggedInUsers = new LinkedList<User>();
+			loggedInUsers = new HashMap<InetAddress, User>();
 		}
-		loggedInUsers.add(u);
+		loggedInUsers.put(u.getAddr(), u);
 	}
 	
 	public static void addUserHost(User u) {
 		if (hosts == null) {
-			hosts = new LinkedList<User>();
+			hosts = new HashMap<String, User>();
 		}
-		hosts.add(u);
+		hosts.put(u.getUsername(), u);
 	}
 	
-	private static void closeSocket(Socket s) {
-		try {
+	public static void removeUserLogin(InetAddress addr) {
+		if (loggedInUsers == null) {
+			return;
+		}
+		loggedInUsers.remove(addr);
+	}
+	
+	private static void closeSocket(Socket s) throws IOException {
 			s.getOutputStream().close();
 			s.close();
-		} catch (IOException e) {
-			System.out.println("Error closing socket");
-			e.printStackTrace();
-			System.exit(1);
-		}
 	}
 	
-	private static HubProtocol selectProtocol(Socket s) {
+	private static HubProtocol selectProtocol(Socket s) throws IOException {
 		DataInputStream in = null;
 		int id = -1;
 		HubProtocol p = null;
 		
-		try {
-			in = new DataInputStream(s.getInputStream());
-			id = in.readInt();
-		} catch (IOException e) {
-			System.out.println("Error determining protocol ID");
-			e.printStackTrace();
-			System.exit(1);
-		}
+		in = new DataInputStream(s.getInputStream());
+		id = in.readInt();
 
-		System.out.println(id);
 		switch (id) {
 		case Constants.REGISTER:
 			p = new UserRegistrationProtocol();
@@ -121,6 +125,16 @@ public class Hub {
 			break;
 		case Constants.GET_HOSTS:
 			p = new GetHostsProtocol();
+			break;
+		case Constants.NEW_HOST:
+			p = new NewHostProtocol();
+			break;
+		case Constants.JOIN_GAME:
+			p = new JoinHostProtocol();
+			break;
+		case Constants.LOGOUT:
+			p = new UserLogoutProtocol();
+			break;
 		default:
 			System.out.println("Unrecognized protocol ID");
 		}
@@ -131,29 +145,23 @@ public class Hub {
 		// start Hub listening on port 4321
 		ServerSocket hub = null;
 		try {
-			hub = new ServerSocket(Constants.PORT_NUM);
+			hub = new ServerSocket(Constants.HUB_PORT);
 		} catch (IOException e) {
-			System.out.println("Could not listen on port " + Constants.PORT_NUM);
+			System.out.println("Could not listen on port " + Constants.HUB_PORT);
 			e.printStackTrace();
 			System.exit(-1);
 		}
 		return hub;
 	}
 	
-	private static Socket handleCreateSocket(ServerSocket server) {
+	private static Socket handleCreateSocket(ServerSocket server) throws IOException {
 		Socket peer = null;
 		// accept a peer connection
-		try {
-			peer = server.accept();
-		} catch (IOException e) {
-			System.out.println("Accept failed:" + Constants.PORT_NUM);
-			e.printStackTrace();
-			System.exit(-1);
-		}
+		peer = server.accept();
 		return peer;
 	}
 	
-	private static Key handleGetSharedKey(Socket s) {
+	private static Key handleGetSharedKey(Socket s) throws IOException {
 		try {
 			PrivateKey hubPrivate = HubConstants.getHubPrivate();
 			byte[] sharedKeyBytes = NetworkUtils.readEncryptedMessage(s, hubPrivate, Constants.PUBLIC_ENCRYPT_ALG);

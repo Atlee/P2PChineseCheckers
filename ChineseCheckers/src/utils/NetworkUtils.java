@@ -76,7 +76,7 @@ public class NetworkUtils {
 		try {
 			//TODO: change to the hub's InetAddress
 			InetAddress host = InetAddress.getLocalHost();
-			s = new Socket(host, Constants.PORT_NUM);
+			s = new Socket(host, Constants.HUB_PORT);
 		} catch (IOException e) {
 			System.out.println("Error creating socket");
 			e.printStackTrace();
@@ -185,27 +185,22 @@ public class NetworkUtils {
 		
 		return ssocket;
 	}
-	
-	public static void sendSignedMessage(Socket s, byte[] message, PrivateKey key) {
+
+	public static void sendSignedMessage(Socket s, byte[] message, PrivateKey key) throws IOException {
 		byte[] signature = SignUtils.signData(key, message);
 		sendMessage(s, signature);
 		sendMessage(s, message);
 	}
 	
-	public static void sendEncryptedMessage(Socket s, byte[] message, Key key, String encryptAlg) {
+	public static void sendEncryptedMessage(Socket s, byte[] message, Key key, String encryptAlg) throws IOException {
 		byte[] cipherText = EncryptUtils.encryptData(message, key, encryptAlg);
 		sendMessage(s, cipherText);
 	}
 	
-	public static void sendMessage(Socket s, byte[] message) {
-		try {
-			DataOutputStream out = new DataOutputStream(s.getOutputStream());
-			out.writeInt(message.length);
-			out.write(message);
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
+	public static void sendMessage(Socket s, byte[] message) throws IOException {
+		DataOutputStream out = new DataOutputStream(s.getOutputStream());
+		out.writeInt(message.length);
+		out.write(message);
 	}
 
 	public static byte[] readSignedMessage(Socket s, PublicKey key) {
@@ -234,23 +229,20 @@ public class NetworkUtils {
 		}
 	}
 	
-	public static byte[] readEncryptedMessage(Socket s, Key key, String encryptAlg) {
+	public static byte[] readEncryptedMessage(Socket s, Key key, String encryptAlg) throws IOException {
 		byte[] cipherText = readMessage(s);
 		byte[] message = EncryptUtils.decryptData(cipherText, key, encryptAlg);
 		return message;
 	}
 	
-	public static byte[] readMessage(Socket s) {
+	public static byte[] readMessage(Socket s) throws IOException {
 		byte[] output = null;
-		try {
-			DataInputStream in = new DataInputStream(s.getInputStream());
-			int len = in.readInt();
-			output = new byte[len];
-			in.read(output, 0, len);
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
+
+		DataInputStream in = new DataInputStream(s.getInputStream());
+		int len = in.readInt();
+		output = new byte[len];
+		in.read(output, 0, len);
+
 		return output;
 	}
 	

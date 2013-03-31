@@ -1,9 +1,15 @@
 package peer;
 
 import java.awt.BorderLayout;
+import java.awt.Frame;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.security.Key;
@@ -17,6 +23,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -41,8 +48,10 @@ public class HubGui extends JPanel
  
     private static final String HOST_STRING = "Host";
     private static final String JOIN_STRING = "Join";
+    private static final String REFRESH_STRING = "Refresh";
     private static final String TEXT_FIELD_DEFAULT = "New Game Name";
     private JButton joinButton;
+    private JButton refreshButton;
     private JTextField newGameName;
     private Key sharedKey;
  
@@ -50,23 +59,13 @@ public class HubGui extends JPanel
         super(new BorderLayout());
         this.sharedKey = sharedKey;
         
-        System.out.println("Creating Socket");
-        Socket s = NetworkUtils.handleCreateSocket();
-        NetworkUtils.sendEncryptedMessage(s, sharedKey.getEncoded(), Constants.getHubPublicKey(), Constants.PUBLIC_ENCRYPT_ALG);
-        System.out.println("After create socket");
-        NetworkUtils.sendProtocolID(s, Constants.GET_HOSTS);
-        System.out.println("After send protocol");
- 
-        //get the current list of hosts from the hub
-        List<String> hosts = getHostList(s);
-        
+        //get the list of hsots from the server and update
+        //listModel to represent that list
         listModel = new DefaultListModel<String>();
+        updateHostList();
         
-        //add all the hosts to the listmodel display
-        for (String hostname : hosts) {
-        	listModel.addElement(hostname);
-        }
- 
+        int size = listModel.getSize();
+        
         //Create the list and put it in a scroll pane.
         list = new JList<String>(listModel);
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -79,11 +78,18 @@ public class HubGui extends JPanel
         HostListener hostListener = new HostListener(hostButton);
         hostButton.setActionCommand(HOST_STRING);
         hostButton.addActionListener(hostListener);
-        hostButton.setEnabled(false);
+        
+        refreshButton = new JButton(REFRESH_STRING);
+        refreshButton.setActionCommand(REFRESH_STRING);
+        refreshButton.addActionListener(new RefreshListener());
+        refreshButton.setSize(10, 10);
  
         joinButton = new JButton(JOIN_STRING);
         joinButton.setActionCommand(JOIN_STRING);
         joinButton.addActionListener(new JoinListener());
+        if (size == 0) {
+        	joinButton.setEnabled(false);
+        }
  
         newGameName = new JTextField(TEXT_FIELD_DEFAULT, 10);
         newGameName.addActionListener(hostListener);
@@ -93,11 +99,13 @@ public class HubGui extends JPanel
         JPanel buttonPane = new JPanel();
         buttonPane.setLayout(new BoxLayout(buttonPane,
                                            BoxLayout.LINE_AXIS));
+        buttonPane.add(refreshButton);
+        buttonPane.add(new JSeparator(SwingConstants.VERTICAL));
         buttonPane.add(joinButton);
         buttonPane.add(Box.createHorizontalStrut(5));
         buttonPane.add(new JSeparator(SwingConstants.VERTICAL));
         buttonPane.add(Box.createHorizontalStrut(5));
-        buttonPane.add(newGameName);
+        //buttonPane.add(newGameName);
         buttonPane.add(hostButton);
         buttonPane.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
  
@@ -105,15 +113,28 @@ public class HubGui extends JPanel
         add(buttonPane, BorderLayout.PAGE_END);
     }
     
-    private List<String> getHostList(Socket s) {
-    	int len = ByteBuffer.wrap(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG)).getInt();
-    	System.out.println(len);
-    	List<String> list = new LinkedList<String>();
-    	for (int i = 0; i < len; i++) {
-    		System.out.println(i);
-    		list.add(new String(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG)));
+    private void updateHostList() {
+    	List<String> hosts = null;
+    	try {
+    		hosts = HubGuiProtocols.getHostList(sharedKey);
+    	} catch (IOException e) {
+    		System.out.println("Error getting host list from server");
+    		e.printStackTrace();
+    		System.exit(1);
     	}
-    	return list;
+    	
+    	listModel.clear();
+        
+        //add all the hosts to the listmodel display
+        for (String hostname : hosts) {
+        	listModel.addElement(hostname);
+        }
+    }
+    
+    class RefreshListener implements ActionListener {
+    	public void actionPerformed(ActionEvent e) {
+    		updateHostList();
+    	}
     }
  
     class JoinListener implements ActionListener {
@@ -122,22 +143,19 @@ public class HubGui extends JPanel
             //there's a valid selection
             //so go ahead and remove whatever's selected.
             int index = list.getSelectedIndex();
-            listModel.remove(index);
- 
-            int size = listModel.getSize();
- 
-            if (size == 0) { //Nobody's left, disable firing.
-                joinButton.setEnabled(false);
- 
-            } else { //Select an index.
-                if (index == listModel.getSize()) {
-                    //removed item in last position
-                    index--;
-                }
- 
-                list.setSelectedIndex(index);
-                list.ensureIndexIsVisible(index);
-            }
+            String hostname = list.getSelectedValue();
+            
+            try {
+				InetAddress hostAddr = HubGuiProtocols.joinGame(hostname, sharedKey);
+				Socket s = new Socket(hostAddr, Constants.CLIENT_HOST_PORT);
+				Chat c = new Chat(s);
+				c.start();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				System.out.println("unable to get address from hub");
+				e1.printStackTrace();
+				System.exit(1);
+			}
         }
     }
  
@@ -145,6 +163,7 @@ public class HubGui extends JPanel
     class HostListener implements ActionListener, DocumentListener {
         private boolean alreadyEnabled = false;
         private JButton button;
+        private ServerSocket hostSocket = null;
  
         public HostListener(JButton button) {
             this.button = button;
@@ -155,31 +174,41 @@ public class HubGui extends JPanel
             String name = newGameName.getText();
  
             //User didn't type in a unique name...
-            if (name.equals("") || alreadyInList(name)) {
+            /*if (name.equals("") || alreadyInList(name)) {
                 Toolkit.getDefaultToolkit().beep();
                 newGameName.requestFocusInWindow();
                 newGameName.selectAll();
                 return;
-            }
- 
-            int index = list.getSelectedIndex(); //get selected index
-            if (index == -1) { //no selection, so insert at beginning
-                index = 0;
-            } else {           //add after the selected item
-                index++;
-            }
- 
-            listModel.insertElementAt(newGameName.getText(), index);
-            //If we just wanted to add to the end, we'd do this:
-            //listModel.addElement(employeeName.getText());
- 
-            //Reset the text field.
-            newGameName.requestFocusInWindow();
-            newGameName.setText("");
- 
-            //Select the new item and make it visible.
-            list.setSelectedIndex(index);
-            list.ensureIndexIsVisible(index);
+            }*/
+            
+            hostSocket = HubGuiProtocols.hostNewGame(sharedKey);
+            updateHostList();
+            //blocks waiting for peer, need this to happen in new thread
+            Socket peer = displayWaitingWindow();
+            Chat c = new Chat(peer);
+            c.start();
+        }
+        
+        private Socket displayWaitingWindow() {
+        	JFrame frame = new JFrame("Waiting for opponent");
+    		JLabel label = new JLabel("Waiting for opponent to join", SwingConstants.CENTER);
+    		
+    		//show success/failure window
+    		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    		frame.getContentPane().add(label, BorderLayout.CENTER);			
+    		frame.setSize(300, 100);
+    		frame.setVisible(true);
+    		
+    		Socket peer = null;
+    		try {
+				peer = hostSocket.accept();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				System.exit(1);
+			}
+    		frame.dispose();
+    		return peer;
         }
  
         //This method tests for string equality. You could certainly
@@ -236,19 +265,15 @@ public class HubGui extends JPanel
             }
         }
     }
- 
-    /**
-     * Create the GUI and show it.  For thread safety,
-     * this method should be invoked from the
-     * event-dispatching thread.
-     */
+
     public static void createAndShowGUI(Key sharedKey) {
         //Create and set up the window.
         JFrame frame = new JFrame("ListDemo");
+        frame.addWindowListener(new CloseListener(sharedKey));
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
  
         //Create and set up the content pane.
-        System.out.println("Createing HubGUI");
+        System.out.println("Creating HubGUI");
         JComponent newContentPane = new HubGui(sharedKey);
         System.out.println("Created HubGUI");
         newContentPane.setOpaque(true); //content panes must be opaque
@@ -257,8 +282,7 @@ public class HubGui extends JPanel
         //Display the window.
         frame.pack();
         frame.setVisible(true);
-    }
- 
+    } 
 /*    public static void main(String[] args) {
         //Schedule a job for the event-dispatching thread:
         //creating and showing this application's GUI.
@@ -268,4 +292,20 @@ public class HubGui extends JPanel
             }
         });
     }*/
+}
+
+class CloseListener extends WindowAdapter {
+	
+	Key sharedKey;
+	
+	public CloseListener(Key sharedKey) {
+		this.sharedKey = sharedKey;
+	}
+	
+	public void windowClosing(WindowEvent e) {
+		System.out.println("Sending logout");
+		HubGuiProtocols.logout(sharedKey);
+		Frame frame = (Frame) e.getSource();
+		frame.dispose();
+	}
 }

@@ -87,13 +87,23 @@ public class UserRegistrationProtocol extends Protocol {
         mainFrame.setVisible(true);
     }
  	
- 	/*------------GUI CODE-------------------*/
- 	
     class createButtonListener implements ActionListener {
     	public void actionPerformed (ActionEvent e) {
     		Socket s = NetworkUtils.handleCreateSocket();
     		
     		String newUsername = usernameTxt.getText(), response;
+    		
+    		//if the username is invalid
+    		if (!Constants.verifyUsername(newUsername)) {
+    			displayFailWindow("User Registration Failed", "Invalid Username");
+    			return;
+    		}
+    		char[] password = passwordTxt.getPassword();
+    		System.out.println(new String(password));
+    		if (!Constants.verifyPassword(password)) {
+    			displayFailWindow("User Registration Failed", "Invalid Password");
+    			return;
+    		}
     		
     		Key sharedKey = EncryptUtils.handleCreateSharedKey();   		
     		
@@ -101,25 +111,42 @@ public class UserRegistrationProtocol extends Protocol {
     		
     		NetworkUtils.sendProtocolID(s, Constants.REGISTER);
     		
-    		System.out.println("Sending encrypted message: username");
-    		NetworkUtils.sendEncryptedMessage(s, newUsername.getBytes(), sharedKey, Constants.SHARED_ENCRYPT_ALG);
-    		System.out.println("Sent encrypted username; Sending encrypted pw");
-    		NetworkUtils.sendEncryptedMessage(s, NetworkUtils.charsToBytes(passwordTxt.getPassword()), sharedKey, Constants.SHARED_ENCRYPT_ALG);
+    		try {
+	    		NetworkUtils.sendEncryptedMessage(s, newUsername.getBytes(), sharedKey, Constants.SHARED_ENCRYPT_ALG);
+	    		NetworkUtils.sendEncryptedMessage(s, NetworkUtils.charsToBytes(passwordTxt.getPassword()), sharedKey, Constants.SHARED_ENCRYPT_ALG);
+    		} catch (IOException ex) {
+    			System.out.println("Error sending credentails to hub");
+    			ex.printStackTrace();
+    			System.exit(1);
+    		}
     		
-    		response = new String(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG));
-    		
-    		if (response.equals(Constants.REGISTRATION_SUCCESS + newUsername)) {
-				JFrame createUserFrame = (JFrame) SwingUtilities.getWindowAncestor((JButton) e.getSource());
-				displaySuccessWindow(createUserFrame);
-    		} else {
-    			displayFailWindow();
+    		try {
+	    		response = new String(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG));
+	    		
+	    		if (response.equals(Constants.REGISTRATION_SUCCESS + newUsername)) {
+					JFrame createUserFrame = (JFrame) SwingUtilities.getWindowAncestor((JButton) e.getSource());
+					displaySuccessWindow(createUserFrame);
+	    		} else if (response.equals(Constants.REGISTRATION_IN_USE)) {
+	    			displayFailWindow("User Registration Failed", "Username already in use");
+	    		} else {
+	    			displayFailWindow("User Registration Failed", "Unknown response from server");
+	    		}
+    		} catch (IOException ex) {
+    			System.out.println("Error reading registration response from server");
+    			ex.printStackTrace();
+    			System.exit(1);
     		}
     	}
     	
     	private void sendSharedKey(Socket s, Key sharedKey) {
     		PublicKey hubPublic = Constants.getHubPublicKey();
     		
-    		NetworkUtils.sendEncryptedMessage(s, sharedKey.getEncoded(), hubPublic, Constants.PUBLIC_ENCRYPT_ALG);
+    		try {
+    			NetworkUtils.sendEncryptedMessage(s, sharedKey.getEncoded(), hubPublic, Constants.PUBLIC_ENCRYPT_ALG);
+    		} catch (IOException e) {
+    			e.printStackTrace();
+    			System.exit(1);
+    		}
     		System.out.println("Sending encrypted shared key");
     	}
     }
@@ -140,9 +167,9 @@ public class UserRegistrationProtocol extends Protocol {
 		frame.setVisible(true);
     }
     
-    private static void displayFailWindow() {
-    	JFrame frame = new JFrame("Create User Failed");
-		JLabel label = new JLabel("Username already in use", SwingConstants.CENTER);
+    private static void displayFailWindow(String title, String labelString) {
+    	JFrame frame = new JFrame(title);
+		JLabel label = new JLabel(labelString, SwingConstants.CENTER);
 		
 		//show success/failure window
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -153,7 +180,6 @@ public class UserRegistrationProtocol extends Protocol {
     
     class cancelButtonListener implements ActionListener {
     	public void actionPerformed (ActionEvent e) {
-    		System.out.println("YOU CLICKED CANCEL");
     		
     		JFrame mainFrame = (JFrame) SwingUtilities.getWindowAncestor((JButton) e.getSource());
     		mainFrame.setVisible(false);
