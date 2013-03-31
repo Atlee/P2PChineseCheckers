@@ -35,6 +35,7 @@ public class Constants {
 	public static final int GET_HOSTS = 2;
 	public static final int NEW_HOST = 3;
 	public static final int JOIN_GAME = 4;
+	public static final int LOGOUT = 5;
 	
 	private static PublicKey hubKey = null;
 	

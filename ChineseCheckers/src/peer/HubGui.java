@@ -1,9 +1,12 @@
 package peer;
 
 import java.awt.BorderLayout;
+import java.awt.Frame;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -262,19 +265,15 @@ public class HubGui extends JPanel
             }
         }
     }
- 
-    /**
-     * Create the GUI and show it.  For thread safety,
-     * this method should be invoked from the
-     * event-dispatching thread.
-     */
+
     public static void createAndShowGUI(Key sharedKey) {
         //Create and set up the window.
         JFrame frame = new JFrame("ListDemo");
+        frame.addWindowListener(new CloseListener(sharedKey));
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
  
         //Create and set up the content pane.
-        System.out.println("Createing HubGUI");
+        System.out.println("Creating HubGUI");
         JComponent newContentPane = new HubGui(sharedKey);
         System.out.println("Created HubGUI");
         newContentPane.setOpaque(true); //content panes must be opaque
@@ -283,8 +282,7 @@ public class HubGui extends JPanel
         //Display the window.
         frame.pack();
         frame.setVisible(true);
-    }
- 
+    } 
 /*    public static void main(String[] args) {
         //Schedule a job for the event-dispatching thread:
         //creating and showing this application's GUI.
@@ -294,4 +292,20 @@ public class HubGui extends JPanel
             }
         });
     }*/
+}
+
+class CloseListener extends WindowAdapter {
+	
+	Key sharedKey;
+	
+	public CloseListener(Key sharedKey) {
+		this.sharedKey = sharedKey;
+	}
+	
+	public void windowClosing(WindowEvent e) {
+		System.out.println("Sending logout");
+		HubGuiProtocols.logout(sharedKey);
+		Frame frame = (Frame) e.getSource();
+		frame.dispose();
+	}
 }

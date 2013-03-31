@@ -63,18 +63,6 @@ public class HubGuiProtocols {
     	}
     	return peer;
     }
-    
-    public static void joinNewGame(String gameName, Key sharedKey) {
-    	Socket s = NetworkUtils.handleCreateSocket();
-    	
-    	try {
-    		NetworkUtils.sendEncryptedMessage(s, sharedKey.getEncoded(), Constants.getHubPublicKey(), Constants.PUBLIC_ENCRYPT_ALG);
-    	} catch (IOException e) {
-    		e.printStackTrace();
-    		System.exit(1);
-    	}
-    	NetworkUtils.sendProtocolID(s, Constants.JOIN_GAME);
-    }
 
 	public static InetAddress joinGame(String hostname, Key sharedKey) throws IOException {
 		Socket s = NetworkUtils.handleCreateSocket();
@@ -84,6 +72,20 @@ public class HubGuiProtocols {
 		NetworkUtils.sendEncryptedMessage(s, hostname.getBytes(), sharedKey, Constants.SHARED_ENCRYPT_ALG);
 		byte[] hostAddrBytes = NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG);
 		return InetAddress.getByAddress(hostAddrBytes);
+	}
+	
+	public static void logout(Key sharedKey) {
+		Socket s = NetworkUtils.handleCreateSocket();
+		
+		try {
+			NetworkUtils.sendEncryptedMessage(s, sharedKey.getEncoded(), Constants.getHubPublicKey(), Constants.PUBLIC_ENCRYPT_ALG);
+			NetworkUtils.sendProtocolID(s, Constants.LOGOUT);
+			
+		} catch (IOException e) {
+			System.out.println("User not logged out");
+			e.printStackTrace();
+			System.exit(1);
+		}
 	}
 
 }

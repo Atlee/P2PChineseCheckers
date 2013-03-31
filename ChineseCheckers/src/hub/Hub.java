@@ -96,6 +96,13 @@ public class Hub {
 		hosts.put(u.getUsername(), u);
 	}
 	
+	public static void removeUserLogin(InetAddress addr) {
+		if (loggedInUsers == null) {
+			return;
+		}
+		loggedInUsers.remove(addr);
+	}
+	
 	private static void closeSocket(Socket s) throws IOException {
 			s.getOutputStream().close();
 			s.close();
@@ -124,6 +131,9 @@ public class Hub {
 			break;
 		case Constants.JOIN_GAME:
 			p = new JoinHostProtocol();
+			break;
+		case Constants.LOGOUT:
+			p = new UserLogoutProtocol();
 			break;
 		default:
 			System.out.println("Unrecognized protocol ID");
