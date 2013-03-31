@@ -126,7 +126,7 @@ public class Peer  {
 		
 		//show success/failure window
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		frame.getContentPane().add(label, BorderLayout.CENTER);			
+		frame.getContentPane().add(label, BorderLayout.CENTER);
 		frame.setSize(300, 100);
 		frame.setVisible(true);
     }

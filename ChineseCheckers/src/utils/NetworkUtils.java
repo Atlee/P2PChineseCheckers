@@ -74,26 +74,21 @@ public class NetworkUtils {
 		return s;
 	}
 	
-	public static void sendSignedMessage(Socket s, byte[] message, PrivateKey key) {
+	public static void sendSignedMessage(Socket s, byte[] message, PrivateKey key) throws IOException {
 		byte[] signature = SignUtils.signData(key, message);
 		sendMessage(s, signature);
 		sendMessage(s, message);
 	}
 	
-	public static void sendEncryptedMessage(Socket s, byte[] message, Key key, String encryptAlg) {
+	public static void sendEncryptedMessage(Socket s, byte[] message, Key key, String encryptAlg) throws IOException {
 		byte[] cipherText = EncryptUtils.encryptData(message, key, encryptAlg);
 		sendMessage(s, cipherText);
 	}
 	
-	public static void sendMessage(Socket s, byte[] message) {
-		try {
-			DataOutputStream out = new DataOutputStream(s.getOutputStream());
-			out.writeInt(message.length);
-			out.write(message);
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
+	public static void sendMessage(Socket s, byte[] message) throws IOException {
+		DataOutputStream out = new DataOutputStream(s.getOutputStream());
+		out.writeInt(message.length);
+		out.write(message);
 	}
 
 	public static byte[] readSignedMessage(Socket s, PublicKey key) {

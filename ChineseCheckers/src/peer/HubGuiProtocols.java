@@ -45,7 +45,12 @@ public class HubGuiProtocols {
     public static ServerSocket hostNewGame(Key sharedKey) {
     	Socket s = NetworkUtils.handleCreateSocket();
     	
-    	NetworkUtils.sendEncryptedMessage(s, sharedKey.getEncoded(), Constants.getHubPublicKey(), Constants.PUBLIC_ENCRYPT_ALG);
+    	try {
+    		NetworkUtils.sendEncryptedMessage(s, sharedKey.getEncoded(), Constants.getHubPublicKey(), Constants.PUBLIC_ENCRYPT_ALG);
+    	} catch (IOException e) {
+    		e.printStackTrace();
+    		System.exit(1);
+    	}
     	NetworkUtils.sendProtocolID(s, Constants.NEW_HOST);
     	
     	ServerSocket peer = null;
@@ -62,7 +67,12 @@ public class HubGuiProtocols {
     public static void joinNewGame(String gameName, Key sharedKey) {
     	Socket s = NetworkUtils.handleCreateSocket();
     	
-    	NetworkUtils.sendEncryptedMessage(s, sharedKey.getEncoded(), Constants.getHubPublicKey(), Constants.PUBLIC_ENCRYPT_ALG);
+    	try {
+    		NetworkUtils.sendEncryptedMessage(s, sharedKey.getEncoded(), Constants.getHubPublicKey(), Constants.PUBLIC_ENCRYPT_ALG);
+    	} catch (IOException e) {
+    		e.printStackTrace();
+    		System.exit(1);
+    	}
     	NetworkUtils.sendProtocolID(s, Constants.JOIN_GAME);
     }
 

@@ -19,9 +19,14 @@ public class UserLoginProtocol extends Protocol {
 	public void sendCredentials(Socket s, Key sharedKey, String username, char[] password) {
 		sendSharedKey(s, sharedKey);
 		NetworkUtils.sendProtocolID(s, Constants.LOGIN);		
-				
-		NetworkUtils.sendEncryptedMessage(s, username.getBytes(), sharedKey, Constants.SHARED_ENCRYPT_ALG);
-		NetworkUtils.sendEncryptedMessage(s, NetworkUtils.charsToBytes(password), sharedKey, Constants.SHARED_ENCRYPT_ALG);		
+		
+		try {
+			NetworkUtils.sendEncryptedMessage(s, username.getBytes(), sharedKey, Constants.SHARED_ENCRYPT_ALG);
+			NetworkUtils.sendEncryptedMessage(s, NetworkUtils.charsToBytes(password), sharedKey, Constants.SHARED_ENCRYPT_ALG);
+		} catch (IOException e) {
+			System.out.println("Error sending credentials to hub");
+			System.exit(1);
+		}
 	}
 	
 	public boolean isAuthenticated(Socket s, Key sharedKey) throws IOException {
@@ -36,7 +41,11 @@ public class UserLoginProtocol extends Protocol {
 	private void sendSharedKey(Socket s, Key sharedKey) {
 		PublicKey hubPublic = Constants.getHubPublicKey();
 		
-		NetworkUtils.sendEncryptedMessage(s, sharedKey.getEncoded(), hubPublic, Constants.PUBLIC_ENCRYPT_ALG);
-		System.out.println("Sending encrypted shared key");
+		try {
+			NetworkUtils.sendEncryptedMessage(s, sharedKey.getEncoded(), hubPublic, Constants.PUBLIC_ENCRYPT_ALG);
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
 	}
 }

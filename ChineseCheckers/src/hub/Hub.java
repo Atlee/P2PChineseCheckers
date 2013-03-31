@@ -151,7 +151,7 @@ public class Hub {
 		return peer;
 	}
 	
-	private static Key handleGetSharedKey(Socket s) {
+	private static Key handleGetSharedKey(Socket s) throws IOException {
 		try {
 			PrivateKey hubPrivate = HubConstants.getHubPrivate();
 			byte[] sharedKeyBytes = NetworkUtils.readEncryptedMessage(s, hubPrivate, Constants.PUBLIC_ENCRYPT_ALG);
@@ -159,7 +159,7 @@ public class Hub {
 			SecretKeyFactory skf = SecretKeyFactory.getInstance(Constants.SHARED_ENCRYPT_ALG);
 			DESKeySpec keySpec = new DESKeySpec(sharedKeyBytes);
 			return skf.generateSecret(keySpec);
-		} catch (InvalidKeySpecException | NoSuchAlgorithmException | InvalidKeyException | IOException e) {
+		} catch (InvalidKeySpecException | NoSuchAlgorithmException | InvalidKeyException e) {
 			e.printStackTrace();
 			System.exit(1);
 		}

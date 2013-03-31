@@ -1,5 +1,6 @@
 package hub;
 
+import java.io.IOException;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.security.Key;
@@ -15,10 +16,15 @@ public class GetHostsProtocol implements HubProtocol {
 	public void execute(Socket s, Key sharedKey) {
 		HashMap<String, User> hosts = Hub.getUserHost();
 		byte[] listLenBytes = ByteBuffer.allocate(4).putInt(hosts.size()).array();
-		NetworkUtils.sendEncryptedMessage(s, listLenBytes, sharedKey, Constants.SHARED_ENCRYPT_ALG);
-		
-		for (String hostname : hosts.keySet()) {
-			NetworkUtils.sendEncryptedMessage(s, hostname.getBytes(), sharedKey, Constants.SHARED_ENCRYPT_ALG);
+		try {
+			NetworkUtils.sendEncryptedMessage(s, listLenBytes, sharedKey, Constants.SHARED_ENCRYPT_ALG);
+			
+			for (String hostname : hosts.keySet()) {
+				NetworkUtils.sendEncryptedMessage(s, hostname.getBytes(), sharedKey, Constants.SHARED_ENCRYPT_ALG);
+			}
+		} catch (IOException e) {
+			System.out.println("Error GetHostProtocol");
+			e.printStackTrace();
 		}
 	}
 }

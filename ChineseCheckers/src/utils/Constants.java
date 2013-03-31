@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.InetAddress;
 import java.security.PublicKey;
+import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Constants {
 	
@@ -51,5 +54,37 @@ public class Constants {
 			e.printStackTrace();
 			System.exit(1);
 		}		
+	}
+	
+	public static boolean verifyUsername(String username) {
+		Pattern whitespacePattern = Pattern.compile("\\s");
+		Matcher whitespaceMatcher = whitespacePattern.matcher(username);
+		
+		if (username.equals("")) {
+			return false;
+		}
+		if (whitespaceMatcher.find()) {
+			return false;
+		}
+		System.out.println(username.length());
+		if (username.length() >= 30) {
+			return false;
+		}
+		return true;
+	}
+	
+	public static boolean verifyPassword(char[] password) {
+		boolean output = true;
+		
+		if (password.length == 0) {
+			output = false;
+		}
+		for (char c : password) {
+			if (Character.isWhitespace(c)) {
+				output = false;
+			}
+		}
+		Arrays.fill(password, ' ');
+		return output;
 	}
 }

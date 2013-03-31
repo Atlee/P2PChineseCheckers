@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.Scanner;
 
 import utils.NetworkUtils;
@@ -13,6 +14,7 @@ public class Chat {
 	
 	Thread sender;
 	Thread listener;
+	boolean isDone = false;
 	Socket s;
 	
 	public Chat(Socket s) {
@@ -37,14 +39,23 @@ public class Chat {
 		public void run() {
 			System.out.println("Welcome to AtleeChat");
 			System.out.println("Please enter message to send it to your firend or" +
-					"enter \"QUIT_NOW\" to quit");
+					"enter \"ZZZ\" to quit");
 			Scanner scn = new Scanner(System.in);
 			String next = null;
 			//while the user input doesn't equal ZZZ
-			while (!(next = scn.nextLine()).equals("ZZZ")) {
-				NetworkUtils.sendMessage(s, next.getBytes());
+			try {
+				while (!(next = scn.nextLine()).equals("ZZZ")) {
+					NetworkUtils.sendMessage(s, next.getBytes());
+				}
+				NetworkUtils.sendMessage(s, "ZZZ".getBytes());
+				scn.close();
+				s.close();
+			} catch (SocketException e) {
+				;
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-			scn.close();
+			System.out.println("socket closed");
 		}
 	}
 	
@@ -57,12 +68,22 @@ public class Chat {
 		
 		@Override
 		public void run() {
-			while (true) {
+			String message = "";
+			while (!message.equals("ZZZ")) {
 				try {
-					System.out.println(new String(NetworkUtils.readMessage(s)));
+					message = new String(NetworkUtils.readMessage(s));
+					System.out.println(message);
+				} catch (SocketException e) {
+					break;
 				} catch (IOException e) {
 					System.out.println("Error reading message from socket");
 				}
+			}
+			try {
+				s.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
 	}
