@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.security.Key;
 import java.security.KeyStore;
@@ -49,6 +50,8 @@ public class UserRegistrationProtocol extends Protocol implements HubProtocol {
 				NetworkUtils.sendEncryptedMessage(s, message, sharedKey, Constants.SHARED_ENCRYPT_ALG);
 			}
 			
+		} catch (SocketException e) {
+			return;
 		} catch (IOException e) {
 			System.out.println("Error executing UserRegistrationProtocol");
 			e.printStackTrace();

@@ -5,6 +5,7 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
@@ -110,7 +111,14 @@ public class HubGui extends JPanel
     }
     
     private void updateHostList() {
-    	List<String> hosts = HubGuiProtocols.getHostList(sharedKey);
+    	List<String> hosts = null;
+    	try {
+    		hosts = HubGuiProtocols.getHostList(sharedKey);
+    	} catch (IOException e) {
+    		System.out.println("Error getting host list from server");
+    		e.printStackTrace();
+    		System.exit(1);
+    	}
     	
     	listModel.clear();
         
@@ -132,22 +140,19 @@ public class HubGui extends JPanel
             //there's a valid selection
             //so go ahead and remove whatever's selected.
             int index = list.getSelectedIndex();
-            listModel.remove(index);
- 
-            int size = listModel.getSize();
- 
-            if (size == 0) { //Nobody's left, disable firing.
-                joinButton.setEnabled(false);
- 
-            } else { //Select an index.
-                if (index == listModel.getSize()) {
-                    //removed item in last position
-                    index--;
-                }
- 
-                list.setSelectedIndex(index);
-                list.ensureIndexIsVisible(index);
-            }
+            String hostname = list.getSelectedValue();
+            
+            try {
+				InetAddress hostAddr = HubGuiProtocols.joinGame(hostname, sharedKey);
+				Socket s = new Socket(hostAddr, Constants.CLIENT_HOST_PORT);
+				Chat c = new Chat(s);
+				c.start();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				System.out.println("unable to get address from hub");
+				e1.printStackTrace();
+				System.exit(1);
+			}
         }
     }
  
@@ -166,16 +171,19 @@ public class HubGui extends JPanel
             String name = newGameName.getText();
  
             //User didn't type in a unique name...
-            if (name.equals("") || alreadyInList(name)) {
+            /*if (name.equals("") || alreadyInList(name)) {
                 Toolkit.getDefaultToolkit().beep();
                 newGameName.requestFocusInWindow();
                 newGameName.selectAll();
                 return;
-            }
+            }*/
             
             hostSocket = HubGuiProtocols.hostNewGame(sharedKey);
             updateHostList();
+            //blocks waiting for peer, need this to happen in new thread
             Socket peer = displayWaitingWindow();
+            Chat c = new Chat(peer);
+            c.start();
         }
         
         private Socket displayWaitingWindow() {
@@ -196,6 +204,7 @@ public class HubGui extends JPanel
 				e.printStackTrace();
 				System.exit(1);
 			}
+    		frame.dispose();
     		return peer;
         }
  

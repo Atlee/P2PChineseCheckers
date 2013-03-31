@@ -1,5 +1,6 @@
 package peer;
 
+import java.io.IOException;
 import java.net.Socket;
 import java.security.Key;
 import java.security.PublicKey;
@@ -23,7 +24,7 @@ public class UserLoginProtocol extends Protocol {
 		NetworkUtils.sendEncryptedMessage(s, NetworkUtils.charsToBytes(password), sharedKey, Constants.SHARED_ENCRYPT_ALG);		
 	}
 	
-	public boolean isAuthenticated(Socket s, Key sharedKey) {
+	public boolean isAuthenticated(Socket s, Key sharedKey) throws IOException {
 		String response = new String(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG));
 		if (response.equals(Constants.LOGIN_SUCCESS)) {
 			return true;

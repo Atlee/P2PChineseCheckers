@@ -90,15 +90,21 @@ public class Peer  {
             login.sendCredentials(s, sharedKey, username, password);
             //eliminate the password from memory as fast as possible
             Arrays.fill(password, '_');
-            
-            if (login.isAuthenticated(s, sharedKey)) {
-            	JFrame loginFrame = (JFrame) SwingUtilities.getWindowAncestor(((JButton) e.getSource()));
-            	loginFrame.setVisible(false);
-            	loginFrame.dispose();
-            	//displayHub();
-                HubGui.createAndShowGUI(sharedKey);
-            } else {
-            	displayFailWindow();
+            try {
+	            if (login.isAuthenticated(s, sharedKey)) {
+	            	//dispose of the gui for logging in and display the gui for the hub
+	            	JFrame loginFrame = (JFrame) SwingUtilities.getWindowAncestor(((JButton) e.getSource()));
+	            	loginFrame.setVisible(false);
+	            	loginFrame.dispose();
+	            	//displayHub();
+	                HubGui.createAndShowGUI(sharedKey);
+	            } else {
+	            	displayFailWindow();
+	            }
+            } catch (IOException ex) {
+            	System.out.println("Error getting authentication result from hub");
+            	ex.printStackTrace();
+            	System.exit(1);
             }
         }
     }

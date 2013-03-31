@@ -122,23 +122,20 @@ public class NetworkUtils {
 		}
 	}
 	
-	public static byte[] readEncryptedMessage(Socket s, Key key, String encryptAlg) {
+	public static byte[] readEncryptedMessage(Socket s, Key key, String encryptAlg) throws IOException {
 		byte[] cipherText = readMessage(s);
 		byte[] message = EncryptUtils.decryptData(cipherText, key, encryptAlg);
 		return message;
 	}
 	
-	public static byte[] readMessage(Socket s) {
+	public static byte[] readMessage(Socket s) throws IOException {
 		byte[] output = null;
-		try {
-			DataInputStream in = new DataInputStream(s.getInputStream());
-			int len = in.readInt();
-			output = new byte[len];
-			in.read(output, 0, len);
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
+
+		DataInputStream in = new DataInputStream(s.getInputStream());
+		int len = in.readInt();
+		output = new byte[len];
+		in.read(output, 0, len);
+
 		return output;
 	}
 	

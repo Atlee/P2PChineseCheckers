@@ -43,20 +43,26 @@ public class Hub {
 	//a list of all users currently logged in
 	private static HashMap<InetAddress, User> loggedInUsers;
 	//a list of all users currently hosting games
-	private static List<User> hosts;
+	private static HashMap<String, User> hosts;
 	
-	public static void main(String[] args) throws IOException {		
+	public static void main(String[] args) {		
 		ServerSocket hub = handleCreateServerSocket();
 		
 		while (true) {
-			// wait for a peer to connect
-			Socket peer = handleCreateSocket(hub);
-			Key sharedKey = handleGetSharedKey(peer);
-			HubProtocol p = selectProtocol(peer);
-			if(p != null) {
-				p.execute(peer, sharedKey);
+			try {
+				// wait for a peer to connect
+				Socket peer = handleCreateSocket(hub);
+				if (peer != null) {
+					Key sharedKey = handleGetSharedKey(peer);
+					HubProtocol p = selectProtocol(peer);
+					if(p != null) {
+						p.execute(peer, sharedKey);
+					}
+					closeSocket(peer);
+				}
+			} catch (IOException e) {
+				System.out.println("Error processing client protocol");
 			}
-			closeSocket(peer);
 		}
 	}
 	
@@ -69,9 +75,9 @@ public class Hub {
 		return loggedInUsers.get(i);
 	}
 	
-	public static List<User> getUserHost() {
+	public static HashMap<String, User> getUserHost() {
 		if (hosts == null) {
-			hosts = new LinkedList<User>();
+			hosts = new HashMap<String, User>();
 		}
 		return hosts;
 	}
@@ -85,37 +91,24 @@ public class Hub {
 	
 	public static void addUserHost(User u) {
 		if (hosts == null) {
-			hosts = new LinkedList<User>();
+			hosts = new HashMap<String, User>();
 		}
-		hosts.add(u);
+		hosts.put(u.getUsername(), u);
 	}
 	
-	private static void closeSocket(Socket s) {
-		try {
+	private static void closeSocket(Socket s) throws IOException {
 			s.getOutputStream().close();
 			s.close();
-		} catch (IOException e) {
-			System.out.println("Error closing socket");
-			e.printStackTrace();
-			System.exit(1);
-		}
 	}
 	
-	private static HubProtocol selectProtocol(Socket s) {
+	private static HubProtocol selectProtocol(Socket s) throws IOException {
 		DataInputStream in = null;
 		int id = -1;
 		HubProtocol p = null;
 		
-		try {
-			in = new DataInputStream(s.getInputStream());
-			id = in.readInt();
-		} catch (IOException e) {
-			System.out.println("Error determining protocol ID");
-			e.printStackTrace();
-			System.exit(1);
-		}
+		in = new DataInputStream(s.getInputStream());
+		id = in.readInt();
 
-		System.out.println(id);
 		switch (id) {
 		case Constants.REGISTER:
 			p = new UserRegistrationProtocol();
@@ -128,6 +121,9 @@ public class Hub {
 			break;
 		case Constants.NEW_HOST:
 			p = new NewHostProtocol();
+			break;
+		case Constants.JOIN_GAME:
+			p = new JoinHostProtocol();
 			break;
 		default:
 			System.out.println("Unrecognized protocol ID");
@@ -148,16 +144,10 @@ public class Hub {
 		return hub;
 	}
 	
-	private static Socket handleCreateSocket(ServerSocket server) {
+	private static Socket handleCreateSocket(ServerSocket server) throws IOException {
 		Socket peer = null;
 		// accept a peer connection
-		try {
-			peer = server.accept();
-		} catch (IOException e) {
-			System.out.println("Accept failed:" + Constants.HUB_PORT);
-			e.printStackTrace();
-			System.exit(-1);
-		}
+		peer = server.accept();
 		return peer;
 	}
 	
@@ -169,7 +159,7 @@ public class Hub {
 			SecretKeyFactory skf = SecretKeyFactory.getInstance(Constants.SHARED_ENCRYPT_ALG);
 			DESKeySpec keySpec = new DESKeySpec(sharedKeyBytes);
 			return skf.generateSecret(keySpec);
-		} catch (InvalidKeySpecException | NoSuchAlgorithmException | InvalidKeyException e) {
+		} catch (InvalidKeySpecException | NoSuchAlgorithmException | InvalidKeyException | IOException e) {
 			e.printStackTrace();
 			System.exit(1);
 		}

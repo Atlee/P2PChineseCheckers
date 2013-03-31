@@ -87,8 +87,6 @@ public class UserRegistrationProtocol extends Protocol {
         mainFrame.setVisible(true);
     }
  	
- 	/*------------GUI CODE-------------------*/
- 	
     class createButtonListener implements ActionListener {
     	public void actionPerformed (ActionEvent e) {
     		Socket s = NetworkUtils.handleCreateSocket();
@@ -101,18 +99,22 @@ public class UserRegistrationProtocol extends Protocol {
     		
     		NetworkUtils.sendProtocolID(s, Constants.REGISTER);
     		
-    		System.out.println("Sending encrypted message: username");
     		NetworkUtils.sendEncryptedMessage(s, newUsername.getBytes(), sharedKey, Constants.SHARED_ENCRYPT_ALG);
-    		System.out.println("Sent encrypted username; Sending encrypted pw");
     		NetworkUtils.sendEncryptedMessage(s, NetworkUtils.charsToBytes(passwordTxt.getPassword()), sharedKey, Constants.SHARED_ENCRYPT_ALG);
     		
-    		response = new String(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG));
-    		
-    		if (response.equals(Constants.REGISTRATION_SUCCESS + newUsername)) {
-				JFrame createUserFrame = (JFrame) SwingUtilities.getWindowAncestor((JButton) e.getSource());
-				displaySuccessWindow(createUserFrame);
-    		} else {
-    			displayFailWindow();
+    		try {
+	    		response = new String(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG));
+	    		
+	    		if (response.equals(Constants.REGISTRATION_SUCCESS + newUsername)) {
+					JFrame createUserFrame = (JFrame) SwingUtilities.getWindowAncestor((JButton) e.getSource());
+					displaySuccessWindow(createUserFrame);
+	    		} else {
+	    			displayFailWindow();
+	    		}
+    		} catch (IOException ex) {
+    			System.out.println("Error reading registration response from server");
+    			ex.printStackTrace();
+    			System.exit(1);
     		}
     	}
     	
