@@ -3,8 +3,6 @@ package hub;
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +11,9 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManager;
 
 import utils.Constants;
@@ -88,10 +88,11 @@ public class MultiThreadedHub {
 		TrustManager tm = new HubTrustManager(trustStore, tsLock);
         sslContext.init(kmf.getKeyManagers(), new TrustManager[] { tm }, null);
         SSLServerSocketFactory sf = sslContext.getServerSocketFactory();
-		ServerSocket ss = sf.createServerSocket(Constants.HUB_PORT);
+		SSLServerSocket ss = (SSLServerSocket) sf.createServerSocket(Constants.HUB_PORT);
+		ss.setNeedClientAuth(true);
 		
 		while(true) {
-			Socket client = ss.accept();
+			SSLSocket client = (SSLSocket)ss.accept();
 			
 			ObjectOutputStream out = new ObjectOutputStream(client.getOutputStream());
 			out.writeObject("Hub: Welcome to the hub!");
