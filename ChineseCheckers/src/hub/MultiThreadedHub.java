@@ -4,8 +4,6 @@ import java.io.FileInputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.security.KeyStore;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -14,7 +12,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
-import javax.net.ssl.TrustManager;
 
 import utils.Constants;
 
@@ -26,17 +23,11 @@ public class MultiThreadedHub {
 	protected String ksPassword;
 	protected Lock ksLock = new ReentrantLock();
 	
-	protected KeyStore trustStore;
-	protected String tsFilename;
-	protected String tsPassword;
-	protected Lock tsLock = new ReentrantLock();
-	
-	protected List<String> online = new ArrayList<String>();
-	protected Lock onlineLock = new ReentrantLock();
+	protected AuthenticatedUsers online = new AuthenticatedUsers();
 	
 	public static void main(String[] args) {
 		try {
-			MultiThreadedHub hub = new MultiThreadedHub("hub.private", "hubpassword", "all.public", "public");
+			MultiThreadedHub hub = new MultiThreadedHub("hub.private", "hubpassword");
 			hub.openHub();
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -44,7 +35,7 @@ public class MultiThreadedHub {
 		}
 	}
 
-	public MultiThreadedHub( String keyStoreFilename, String ksPassword, String trustStoreFilename, String tsPassword ) throws Exception {
+	public MultiThreadedHub( String keyStoreFilename, String ksPassword ) throws Exception {
 		// Load the keystore
 		ksLock.lock();
 		this.ksFilename = keyStoreFilename;
@@ -56,18 +47,6 @@ public class MultiThreadedHub {
 		} finally {
 			ksFile.close();
 			ksLock.unlock();
-		}
-		// Load the trust store
-		tsLock.lock();
-		this.tsFilename = trustStoreFilename;
-		this.tsPassword = tsPassword;
-		trustStore = KeyStore.getInstance("JKS");
-		FileInputStream tsFile = new FileInputStream(this.tsFilename);
-		try {
-			trustStore.load(tsFile, this.tsPassword.toCharArray());
-		} finally {
-			tsFile.close();
-			tsLock.unlock();
 		}
 	}
 	
@@ -85,23 +64,28 @@ public class MultiThreadedHub {
 	    } finally {
 	    	ksLock.unlock();
 	    }
-		TrustManager tm = new HubTrustManager(trustStore, tsLock);
-        sslContext.init(kmf.getKeyManagers(), new TrustManager[] { tm }, null);
+        sslContext.init(kmf.getKeyManagers(), null, null);
         SSLServerSocketFactory sf = sslContext.getServerSocketFactory();
 		SSLServerSocket ss = (SSLServerSocket) sf.createServerSocket(Constants.HUB_PORT);
-		ss.setNeedClientAuth(true);
 		
 		while(true) {
 			SSLSocket client = (SSLSocket)ss.accept();
 			
-			ObjectOutputStream out = new ObjectOutputStream(client.getOutputStream());
-			out.writeObject("Hub: Welcome to the hub!");
-			
 			ObjectInputStream in = new ObjectInputStream(client.getInputStream());
-			String reply = (String)in.readObject();
-			System.out.println(reply);
-			
-			out.writeObject("Hub: Goodbye.");
+			String uname = (String)in.readObject();
+			ObjectOutputStream out = new ObjectOutputStream(client.getOutputStream());
+			out.writeObject("ACK");
+			Integer secret = (Integer)in.readObject();
+			if(!online.check(uname, secret)) {
+				client.close();
+			} else {
+				out.writeObject("Hub: Welcome to the hub!");
+
+				String reply = (String)in.readObject();
+				System.out.println(reply);
+
+				out.writeObject("Hub: Goodbye.");
+			}
 		}
 		
 	}

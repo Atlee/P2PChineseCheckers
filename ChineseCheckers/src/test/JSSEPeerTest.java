@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
-import java.net.Socket;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
-import java.security.cert.Certificate;
+
+import javax.net.ssl.SSLSocket;
 
 import utils.Constants;
 import utils.KeyStoreUtils;
@@ -23,12 +23,11 @@ public class JSSEPeerTest {
 		KeyStore ks = KeyStoreUtils.genUserKeyStore(uname, password);
 		KeyStore ts = KeyStoreUtils.genUserTrustStore("hub.public");
 		
-		Socket s;
+		SSLSocket s;
 		ObjectOutputStream out;
 		ObjectInputStream in;
 		String unameRequest;
 		String pwRequest;
-		String certRequest;
 
 		// Open an SSL connection to the login server and register a new user account
 		s = NetworkUtils.createSecureSocket(InetAddress.getLocalHost(), Constants.LOGIN_SERVER_PORT, ts, ks, password);
@@ -51,13 +50,6 @@ public class JSSEPeerTest {
 		if(pwRequest.equals("Login Server: Password, please?")) {
 			System.out.println("(Sending password...)");
 			out.writeObject(password);
-			
-			certRequest = (String)in.readObject();
-			System.out.println(certRequest);
-			
-			System.out.println("(Sending certificate...)");
-			Certificate cert = ks.getCertificate(uname);
-			out.writeObject(cert);
 
 			String regStatus = (String)in.readObject();
 			System.out.println(regStatus + "\n");
@@ -91,16 +83,27 @@ public class JSSEPeerTest {
 		String loginStatus = (String)in.readObject();
 		System.out.println(loginStatus + "\n");
 		
+		Integer sessionSecret = 123456789;
+		if(loginStatus.equals("Login Server: Welcome to P2P Chinese Checkers, " + uname + "!")) {
+			sessionSecret = (Integer)in.readObject();
+		}
+		
 		// Now make sure the logged in user can access hub services
 		s = NetworkUtils.createSecureSocket(InetAddress.getLocalHost(), Constants.HUB_PORT, ts, ks, password);
 		
 		System.out.println("(Accessing hub services...)");
 		
+		out = new ObjectOutputStream(s.getOutputStream());
+		out.writeObject(uname);
+		
 		in = new ObjectInputStream(s.getInputStream());
+		String ack = (String)in.readObject();
+		
+		out.writeObject(sessionSecret);
+
 		String greeting = (String)in.readObject();
 		System.out.println(greeting);
 		
-		out = new ObjectOutputStream(s.getOutputStream());
 		out.writeObject(uname + ": Hi!");
 		
 		String farewell = (String)in.readObject();

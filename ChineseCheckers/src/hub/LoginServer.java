@@ -1,17 +1,13 @@
 package hub;
 
-import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.security.cert.Certificate;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
-import javax.net.ssl.TrustManager;
 
 import utils.Constants;
 
@@ -37,11 +33,9 @@ public class LoginServer implements Runnable {
 			} finally {
 				hub.ksLock.unlock();
 			}
-			TrustManager tm = new LoginServerTrustManager(hub.trustStore, hub.tsLock);
-			sslContext.init(kmf.getKeyManagers(), new TrustManager[] { tm }, null);
+			sslContext.init(kmf.getKeyManagers(), null, null);
 			SSLServerSocketFactory sf = sslContext.getServerSocketFactory();
 			ss = (SSLServerSocket)sf.createServerSocket(Constants.LOGIN_SERVER_PORT);
-			ss.setNeedClientAuth(false);
 		} catch(Exception e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -49,7 +43,7 @@ public class LoginServer implements Runnable {
 		
 		try {
 
-			System.out.println("Online: " + hub.online.toString());
+			System.out.println("Online: " + hub.online.list().toString());
 
 			while(true) {
 
@@ -71,19 +65,6 @@ public class LoginServer implements Runnable {
 						String password = (String)in.readObject();
 						pwStore.addEntry(uname, password.toCharArray());
 						
-						out.writeObject("Login Server: Self-signed certificate, please?");
-						Certificate cert = (Certificate)in.readObject();
-						hub.tsLock.lock();
-						OutputStream tsFile = null;
-						try {
-							hub.trustStore.setCertificateEntry(uname, cert);
-							tsFile = new FileOutputStream("all.public");
-							hub.trustStore.store(tsFile, "public".toCharArray());
-						} finally {
-							tsFile.close();
-							hub.tsLock.unlock();
-						}
-						
 						out.writeObject("Login Server: Account registration successful!");
 					}
 					
@@ -94,16 +75,10 @@ public class LoginServer implements Runnable {
 					String password = (String)in.readObject();
 					
 					if(pwStore.authenticate(uname, password.toCharArray())) {
-						hub.onlineLock.lock();
-						try {
-							if(!hub.online.contains(uname)) {
-								hub.online.add(uname);
-							}
-						} finally {
-							hub.onlineLock.unlock();
-						}
+						Integer secret = hub.online.add(uname);
 						out.writeObject("Login Server: Welcome to P2P Chinese Checkers, " + uname + "!");
-						System.out.println("Online: " + hub.online.toString());
+						out.writeObject(secret);
+						System.out.println("Online: " + hub.online.list().toString());
 					} else {
 						out.writeObject("Login Server: Incorrect username or password. Please try again.");
 					}
