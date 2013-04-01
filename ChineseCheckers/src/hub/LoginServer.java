@@ -4,13 +4,13 @@ import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.security.cert.Certificate;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManager;
 
 import utils.Constants;
@@ -27,7 +27,7 @@ public class LoginServer implements Runnable {
 	
 	public void run( ) {
 		
-		ServerSocket ss = null;
+		SSLServerSocket ss = null;
 		try {
 			SSLContext sslContext = SSLContext.getInstance("TLS");
 			KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
@@ -40,7 +40,8 @@ public class LoginServer implements Runnable {
 			TrustManager tm = new LoginServerTrustManager(hub.trustStore, hub.tsLock);
 			sslContext.init(kmf.getKeyManagers(), new TrustManager[] { tm }, null);
 			SSLServerSocketFactory sf = sslContext.getServerSocketFactory();
-			ss = sf.createServerSocket(Constants.LOGIN_SERVER_PORT);
+			ss = (SSLServerSocket)sf.createServerSocket(Constants.LOGIN_SERVER_PORT);
+			ss.setNeedClientAuth(true);
 		} catch(Exception e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -52,7 +53,7 @@ public class LoginServer implements Runnable {
 
 			while(true) {
 
-				Socket client = ss.accept();
+				SSLSocket client = (SSLSocket)ss.accept();
 				
 				ObjectInputStream in = new ObjectInputStream(client.getInputStream());
 				String serviceRequest = (String)in.readObject();
