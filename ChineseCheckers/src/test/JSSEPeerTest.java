@@ -13,6 +13,7 @@ import utils.Constants;
 import utils.KeyStoreUtils;
 import utils.NetworkUtils;
 
+
 public class JSSEPeerTest {
 
 	public static void main(String[] args) throws GeneralSecurityException, IOException, ClassNotFoundException {
@@ -21,30 +22,37 @@ public class JSSEPeerTest {
 		
 		KeyStore ks = KeyStoreUtils.genUserKeyStore(uname, password);
 		KeyStore ts = KeyStoreUtils.genUserTrustStore("hub.public");
+		
+		Socket s;
+		ObjectOutputStream out;
+		ObjectInputStream in;
+		String unameRequest;
+		String pwRequest;
+		String certRequest;
 
 		// Open an SSL connection to the login server and register a new user account
-		Socket s = NetworkUtils.createSecureSocket(InetAddress.getLocalHost(), Constants.LOGIN_SERVER_PORT, ts, ks, password);
+		s = NetworkUtils.createSecureSocket(InetAddress.getLocalHost(), Constants.LOGIN_SERVER_PORT, ts, ks, password);
 		
 		System.out.println("(Registering a new user...)");
 		
-		ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+		out = new ObjectOutputStream(s.getOutputStream());
 		out.writeObject("REGISTER");
 		
-		ObjectInputStream in = new ObjectInputStream(s.getInputStream());
-		String unameRequest = (String)in.readObject();
+		in = new ObjectInputStream(s.getInputStream());
+		unameRequest = (String)in.readObject();
 		System.out.println(unameRequest);
 		
 		System.out.println("(Sending username...)");
 		out.writeObject(uname);
 		
-		String pwRequest = (String)in.readObject();
+		pwRequest = (String)in.readObject();
 		System.out.println(pwRequest);
 
 		if(pwRequest.equals("Login Server: Password, please?")) {
 			System.out.println("(Sending password...)");
 			out.writeObject(password);
 			
-			String certRequest = (String)in.readObject();
+			certRequest = (String)in.readObject();
 			System.out.println(certRequest);
 			
 			System.out.println("(Sending certificate...)");
@@ -62,7 +70,7 @@ public class JSSEPeerTest {
 		// Now open an SSL connection to the login server and login as the user just registered
 		s = NetworkUtils.createSecureSocket(InetAddress.getLocalHost(), Constants.LOGIN_SERVER_PORT, ts, ks, password);
 		
-		System.out.println("(Attempting to login as newly registered user...)");
+		System.out.println("(Attempting to login...)");
 		
 		out = new ObjectOutputStream(s.getOutputStream());
 		out.writeObject("LOGIN");
@@ -86,7 +94,7 @@ public class JSSEPeerTest {
 		// Now make sure the logged in user can access hub services
 		s = NetworkUtils.createSecureSocket(InetAddress.getLocalHost(), Constants.HUB_PORT, ts, ks, password);
 		
-		System.out.println("(Accessing hub services as the logged in user...)");
+		System.out.println("(Accessing hub services...)");
 		
 		in = new ObjectInputStream(s.getInputStream());
 		String greeting = (String)in.readObject();

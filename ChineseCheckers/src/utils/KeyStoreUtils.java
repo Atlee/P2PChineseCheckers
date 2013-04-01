@@ -17,22 +17,6 @@ import java.io.FileInputStream;
 
 public class KeyStoreUtils {
 
-	public static KeyStore loadHubKeyStore( String ksFilename , String password) throws GeneralSecurityException, IOException {
-		KeyStore ks = KeyStore.getInstance("JKS");
-		FileInputStream input = new FileInputStream(ksFilename);
-		ks.load(input, password.toCharArray());
-		input.close();
-		return ks;
-	}
-
-	public static KeyStore loadHubTrustStore( String tsFilename ) throws GeneralSecurityException, IOException {
-		KeyStore ts = KeyStore.getInstance("JKS");
-		FileInputStream input = new FileInputStream(tsFilename);
-		ts.load(input, "public".toCharArray());
-		input.close();
-		return ts;
-	}
-
 	public static KeyStore genUserKeyStore( String username, String password ) throws GeneralSecurityException, IOException {
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance(Constants.KEYGEN_ALGORITHM);
 		SecureRandom sRand = SecureRandom.getInstance(Constants.RANDOM_ALGORITHM);
