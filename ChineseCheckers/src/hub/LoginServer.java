@@ -41,7 +41,7 @@ public class LoginServer implements Runnable {
 			sslContext.init(kmf.getKeyManagers(), new TrustManager[] { tm }, null);
 			SSLServerSocketFactory sf = sslContext.getServerSocketFactory();
 			ss = (SSLServerSocket)sf.createServerSocket(Constants.LOGIN_SERVER_PORT);
-			ss.setNeedClientAuth(true);
+			ss.setNeedClientAuth(false);
 		} catch(Exception e) {
 			e.printStackTrace();
 			System.exit(1);

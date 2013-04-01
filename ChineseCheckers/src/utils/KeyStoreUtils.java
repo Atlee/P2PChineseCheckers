@@ -25,7 +25,7 @@ public class KeyStoreUtils {
 		KeyPair keys = kpg.generateKeyPair();
 
 		String distinguishedName = "CN=" + username + " O=P2PChineseCheckers";
-		X509Certificate cert = generateCertificate(distinguishedName, keys, 10);
+		X509Certificate cert = generateCertificate(distinguishedName, keys, 1);
 
 		KeyStore ks = KeyStore.getInstance("JKS");
 		ks.load(null, null);
