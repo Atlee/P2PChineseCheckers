@@ -2,7 +2,6 @@ package hub;
 
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.security.KeyStore;
 
 import javax.net.ssl.KeyManagerFactory;
@@ -16,11 +15,13 @@ import utils.Constants;
 
 public class MultiThreadedHub {
 
+	boolean verboseHub = true;
+	
 	private KeyStore keyStore;
 	private char[] ksPassword;
 
-	private PasswordStore pwStore = new PasswordStore();
-	private OnlineUsers online = new OnlineUsers();
+	PasswordStore pwStore = new PasswordStore();
+    OnlineUsers online = new OnlineUsers();
 
 	public static void main(String[] args) throws Exception {
 		MultiThreadedHub hub = new MultiThreadedHub(Constants.HUB_KS_FILENAME, Constants.HUB_KS_PASSWORD);
@@ -51,54 +52,41 @@ public class MultiThreadedHub {
 		// Begin accepting SSL client connections
 		while(true) {
 			
-			System.out.println("Online: " + online.list().toString());
+			if(verboseHub) {
+				System.out.println("Online: " + online.list().toString());
+				System.out.println("Ready to accept an SSL client connection...");
+			}
 			
 			SSLSocket client = (SSLSocket)ss.accept();
-			ObjectOutputStream out = new ObjectOutputStream(client.getOutputStream());
 			ObjectInputStream in = new ObjectInputStream(client.getInputStream());
-
+			
 			Integer serviceRequest = (Integer)in.readObject();
 			
+			HubHandler handler;
 			if(serviceRequest.equals(Constants.REGISTER)) {
-				out.writeObject("Hub: Desired username, please?");
-				String uname = (String)in.readObject();
-				if(pwStore.containsEntry(uname)) {
-					out.writeObject("Hub: That username is already in use. Please try again.\n");
-				} else {
-					out.writeObject("Hub: Password, please?");
-					String password = (String)in.readObject();
-					pwStore.addEntry(uname, password.toCharArray());
-					out.writeObject("Hub: Account registration successful!");
+				if(verboseHub) {
+					System.out.println("    Connection accepted! Handling a REGISTER request...");
 				}
-				
+				handler = new RegisterHandler(this, client, in);
 			} else if(serviceRequest.equals(Constants.LOGIN)) {
-				out.writeObject("Hub: Username?");
-				String uname = (String)in.readObject();
-				out.writeObject("Hub: Password?");
-				String password = (String)in.readObject();
-				if(pwStore.authenticate(uname, password.toCharArray())) {
-					Integer secret = online.add(uname);
-					out.writeObject("Hub: Welcome to P2P Chinese Checkers, " + uname + "!");
-					out.writeObject(secret);
-				} else {
-					out.writeObject("Hub: Incorrect username or password. Please try again.");
+				if(verboseHub) {
+					System.out.println("    Connection accepted! Handling a LOGIN request...");
 				}
-				
+                handler = new LoginHandler(this, client, in);			
+			} else if(serviceRequest.equals(Constants.HELLO)) {
+				if(verboseHub) {
+					System.out.println("    Connection accepted! Handling a HELLO request...");
+				}
+                handler = new HelloHandler(this, client, in);
 			} else {
-				out.writeObject("Hub: Username, please?");
-				String uname = (String)in.readObject();
-				out.writeObject("Hub: Session secret, please?");
-				Integer secret = (Integer)in.readObject();
-				if(!online.check(uname, secret)) {
-					out.writeObject("Hub: lolwut");
-					client.close();
-				} else {
-					out.writeObject("Hub: Welcome to the Hub!");
-					String reply = (String)in.readObject();
-					System.out.println(reply);
-					out.writeObject("Hub: Goodbye.");
+				if(verboseHub) {
+					System.out.println("    Connection accepted! But the client fucked up...");
 				}
+				client.close();
+				continue;
 			}
+
+			handler.run();
 			
 		}
 

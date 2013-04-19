@@ -16,7 +16,7 @@ import utils.NetworkUtils;
 
 public class MTHubTest {
 
-	private static final boolean doLogin = true;
+	public static final boolean doLogin = true;
 
 	public static void main(String[] args) throws GeneralSecurityException, IOException, ClassNotFoundException {
 		String uname = args[0];
