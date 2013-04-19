@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
 
-import junit.framework.Assert;
-
 import hub.PasswordStore;
 
 
