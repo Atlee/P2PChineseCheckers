@@ -25,6 +25,7 @@ public class Game {
 
 	public void start() throws Exception {
 		while (!Rules.gameOver(this)) {
+			board.printBoard();
 			Move m;
 			if (this.localPlayersTurn()) {
 				m = getMove();
@@ -47,6 +48,10 @@ public class Game {
 		Scanner scn = new Scanner(System.in);
 		System.out.println("Please enter point you would like to move from as: row (from the top), index");
 		int x = scn.nextInt();
+		if (x == -2) {
+			//TODO:Remove this
+			
+		}
 		int y = scn.nextInt();
 		Point from = new Point(x, y);
 		Move m = new Move(currentPlayer, from);
@@ -65,6 +70,9 @@ public class Game {
 	}
 	
 	public void updateBoard(Move m) throws Exception {
+		if (m == null) {
+			return;
+		}
 		board.moveBall(m.getFrom(), m.getTo());
 	}
 	

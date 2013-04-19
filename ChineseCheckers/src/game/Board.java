@@ -112,7 +112,7 @@ public class Board {
 		setState(game.getPlayer(1), 16, 6);
 		setState(game.getPlayer(1), 15, 5); setState(game.getPlayer(1), 15, 6);
 		setState(game.getPlayer(1), 14, 5); setState(game.getPlayer(1), 14, 6); setState(game.getPlayer(1), 14, 7);
-		setState(game.getPlayer(1), 13, 4); setState(game.getPlayer(1), 13, 5); setState(game.getPlayer(1), 13, 6); setState(game.getPlayer(1), 3, 7);
+		setState(game.getPlayer(1), 13, 4); setState(game.getPlayer(1), 13, 5); setState(game.getPlayer(1), 13, 6); setState(game.getPlayer(1), 13, 7);
 		
 		//TODO: others left as null
 	}
@@ -126,7 +126,7 @@ public class Board {
 	}
 
 	public boolean onBoard(Point to) {
-		return board[to.y][to.x];
+		return board[to.x][to.y];
 	}
 
 	/*Directions returned as follows
@@ -136,22 +136,22 @@ public class Board {
 	 *		   4  3
 	 */
 	public int pointsAlign(Point from, Point to) {
-		if (from.y == to.y) { // they are on the same line
-			if (from.x - 2 == to.x) {
+		if (from.x == to.x) { // they are on the same line
+			if (from.y - 2 == to.y) {
 				return 5;
-			} else if (from.x + 2 == to.x) {
+			} else if (from.y + 2 == to.y) {
 				return 2;
 			}
-		} else if (from.y + 2 == to.y) {
-			if (from.x - 1 == to.x) {
+		} else if (from.x + 2 == to.x) {
+			if (from.y - 1 == to.y) {
 				return 4;
-			} else if (from.x + 1 == to.x) {
+			} else if (from.y + 1 == to.y) {
 				return 3;
 			}
-		} else if (from.y - 2 == to.y) {
-			if (from.x - 1 == to.x) {
+		} else if (from.x - 2 == to.x) {
+			if (from.y - 1 == to.y) {
 				return 0;
-			} else if (from.x + 1 == to.x) {
+			} else if (from.y + 1 == to.y) {
 				return 1;
 			}
 		}
@@ -163,28 +163,28 @@ public class Board {
 		int newI, newJ;
 		switch (direction) {
 		case 0:
-			newI = from.y + 2;
-			newJ = from.x - 1;
+			newI = from.x + 2;
+			newJ = from.y - 1;
 			break;
 		case 1:
-			newI = from.y + 2;
-			newJ = from.x + 1;
+			newI = from.x + 2;
+			newJ = from.y + 1;
 			break;
 		case 2:
-			newI = from.y;
-			newJ = from.x + 1;
+			newI = from.x;
+			newJ = from.y + 1;
 			break;
 		case 3:
-			newI = from.y - 2;
-			newJ = from.x + 1;
+			newI = from.x - 2;
+			newJ = from.y + 1;
 			break;
 		case 4:
-			newI = from.y - 2;
-			newJ = from.x - 1;
+			newI = from.x - 2;
+			newJ = from.y - 1;
 			break;
 		case 5:
-			newI = from.y;
-			newJ = from.x - 1;
+			newI = from.x;
+			newJ = from.y - 1;
 			break;
 		default:
 			//set to 00 b/c it will return false;
@@ -197,16 +197,50 @@ public class Board {
 	
 	
 	public boolean containsBall(Player p, Point pt) {
+		if (state[pt.y][pt.x] == null) {
+			return false;
+		}
 		return state[pt.y][pt.x].equals(p); 
 	}
 
 	public void moveBall(Point from, Point to) throws Exception {
-		if (state[from.y][from.x] == null || state[from.y][from.x].equals(empty)
-				|| !state[to.y][to.x].equals(empty)) {
+		if (state[from.x][from.y] == null || state[from.x][from.y].equals(empty)
+				|| !state[to.x][to.y].equals(empty)) {
 			throw new Exception("Tried to move from an empty spot or tried to move to a full spot.");
 		} else {
-			state[to.y][to.x] = state[from.y][from.x];
-			state[from.y][from.x] = empty;
+			state[to.x][to.y] = state[from.x][from.y];
+			state[from.x][from.y] = empty;
 		}
+	}
+	
+	public void printBoard() {
+		printIndex();
+		for (int i = 0; i < board.length; i++) {
+			for (int j = 0; j < board[0].length; j++) {
+				if (j % 2 == 1) {
+					System.out.print(" ");
+				}
+				if (board[i][j]) {
+					if (state[i][j] != null) {
+						System.out.print(state[i][j].getIndex() + " ");
+					} else {
+						System.out.print("-1 ");
+					}
+				} else {
+					System.out.print("  ");
+				}
+			}
+			System.out.println();
+		}
+	}
+	
+	public void printIndex() {
+		int numPlayers = game.getNumPlayers();
+		
+		System.out.println("-----------------------------------------------------------------------------------");
+		for (int i = 0; i < numPlayers; i++) {
+			System.out.println("|\t" + i + ": " + game.getPlayer(i).getUsername() + "\t\t|");
+		}
+		System.out.println("-----------------------------------------------------------------------------------");
 	}
 }

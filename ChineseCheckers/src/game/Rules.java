@@ -3,14 +3,10 @@ package game;
 import java.awt.Point;
 import java.util.ArrayList;
 
-public class Rules {
-	
-	private static ArrayList<ArrayList<Point>> winningPoints;
-	private static final int MAX_PLAYERS = 6;
-	
+public class Rules {	
 	private static final Point[][] winningPos = { 
-/*Player 0's winning Positions */	{ new Point(16, 6), new Point(15,5), new Point(15, 6), new Point(14, 5), new Point(14, 6), new Point(14, 7), new Point(13, 4), new Point(13, 5), new Point(13, 6), new Point(13, 7) },
-/*Player 1's winning Positions */	{ new Point(0, 6),  new Point(1,5),  new Point(1, 6),  new Point(2, 5),  new Point(2, 6),  new Point(2, 7),  new Point(3, 4),  new Point(3, 5),  new Point(3, 6),  new Point(3, 7)  }
+/*Player 0's winning Positions */	{ new Point(6, 16), new Point(5, 15), new Point(6, 15), new Point(5, 14), new Point(6, 14), new Point(7, 14), new Point(4, 13), new Point(5, 13), new Point(6, 13), new Point(7, 13) },
+/*Player 1's winning Positions */	{ new Point(6, 0),  new Point(5, 1),  new Point(6, 1),  new Point(5, 2),  new Point(6, 2),  new Point(7, 2),  new Point(4, 3),  new Point(5, 3),  new Point(6, 3),  new Point(7, 3)  }
 	};
 	
 	public static boolean checkMove(Player p, Board b, Move m) {
@@ -29,7 +25,7 @@ public class Rules {
 			}
 			from = to;
 		}
-		return false;
+		return true;
 	}
 	
 	public static boolean checkJump(Player p, Board b, Point from, Point to) {
@@ -51,24 +47,24 @@ public class Rules {
 	}
 	
 	public static boolean gameOver(Game g) throws Exception{
-		if (g.getNumPlayers() > winningPoints.size()) {
+		if (g.getNumPlayers() > winningPos.length) {
 			throw new Exception ("Unknown winning conditions. " +
-					g.getNumPlayers() + " Players and only " + winningPoints.size() + 
+					g.getNumPlayers() + " Players and only " + winningPos.length + 
 					" Conditions.");
 		}
 		
 		int currentIndex = g.getCurrentPlayerIndex();
 		Player p = g.getPlayer(currentIndex);
 		boolean thisPlayerWins = true;
-		for (Point pt : winningPoints.get(currentIndex)) {
-			if (g.getBoard().containsBall(p, pt)) {
+		//for every point the player needs to win, check if their ball fills that point
+		//if not set this player wins to false
+		for (Point pt : winningPos[currentIndex]) {
+			if (!g.getBoard().containsBall(p, pt)) {
 				thisPlayerWins = false;
+				break;
 			}
 		}
-		if (thisPlayerWins) {
-			return true;
-		}
 		
-		return false;
+		return thisPlayerWins;
 	}
 }
