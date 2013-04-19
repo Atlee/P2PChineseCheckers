@@ -137,7 +137,6 @@ public class Peer  {
     class newUserButtonListener implements ActionListener {
     	public void actionPerformed (ActionEvent e) {
     		//open a new gui for account creation
-    		System.out.println("YOU CLICKED NEW USER");
             new UserRegistrationProtocol();
     	}
     }
