@@ -11,15 +11,30 @@ import java.util.regex.Pattern;
 
 public class Constants {
 	
-	public static final int PORT_NUM = 4321;
+	// Protocol IDs
+	public static final int REGISTER = 0;
+	public static final int LOGIN = 1;
+	public static final int GET_HOSTS = 2;
+	public static final int NEW_HOST = 3;
+	public static final int JOIN_GAME = 4;
+	public static final int LOGOUT = 5;
+	
+	// Hub application constants
+	public static final String HUB_KS_FILENAME = "hub.private";
+	public static final String HUB_KS_PASSWORD = "hubpassword";
+	public static final String HUB_PW_FILENAME = "passwords.txt";
 	public static final int HUB_PORT = 4321;
-	public static final int LOGIN_SERVER_PORT = 4322;
-	public static final int NEW_USER_REG_PORT = 4322;
+	
+	// Password store constants
+	
+	
+	
+	
+	
 	public static final int CLIENT_HOST_PORT = 4444;
     
 	public static final String KEYGEN_ALGORITHM = "RSA";
 	public static final String SIGN_ALGORITHM = "SHA512withRSA";
-	public static final String KEYSTORE_FILE = "TheKeyStore";
 	public static final String RANDOM_ALGORITHM = "SHA1PRNG";
 	public static final String SHARED_ENCRYPT_ALG = "DES";
 	public static final String PUBLIC_ENCRYPT_ALG = "RSA";
@@ -30,36 +45,6 @@ public class Constants {
 	
 	public static final String LOGIN_SUCCESS = "SUCCESS_LOGIN";
 	public static final String LOGIN_FAILURE = "FAILURE_LOGIN";
-	
-	public static final String HUB_KEY_FILE = "public.key";
-	
-	// Protocol IDs
-	public static final int REGISTER = 0;
-	public static final int LOGIN = 1;
-	public static final int GET_HOSTS = 2;
-	public static final int NEW_HOST = 3;
-	public static final int JOIN_GAME = 4;
-	public static final int LOGOUT = 5;
-	
-	private static PublicKey hubKey = null;
-	
-	public static PublicKey getHubPublicKey() {
-		if (hubKey == null) {
-			hubKeyInit();
-		}
-		return hubKey;
-	}
-	
-	private static void hubKeyInit() {
-		try {
-			ObjectInputStream in = new ObjectInputStream(new FileInputStream(HUB_KEY_FILE));
-			hubKey = (PublicKey) in.readObject();
-			in.close();
-		} catch (IOException | ClassNotFoundException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}		
-	}
 	
 	public static boolean verifyUsername(String username) {
 		Pattern whitespacePattern = Pattern.compile("\\s");
@@ -92,4 +77,5 @@ public class Constants {
 		Arrays.fill(password, ' ');
 		return output;
 	}
+	
 }

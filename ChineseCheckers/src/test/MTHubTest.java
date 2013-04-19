@@ -14,7 +14,7 @@ import utils.KeyStoreUtils;
 import utils.NetworkUtils;
 
 
-public class JSSEPeerTest {
+public class MTHubTest {
 
 	public static void main(String[] args) throws GeneralSecurityException, IOException, ClassNotFoundException {
 		String uname = args[0];
@@ -30,12 +30,12 @@ public class JSSEPeerTest {
 		String pwRequest;
 
 		// Open an SSL connection to the login server and register a new user account
-		s = NetworkUtils.createSecureSocket(InetAddress.getLocalHost(), Constants.LOGIN_SERVER_PORT, ts, ks, password);
+		s = NetworkUtils.createSecureSocket(InetAddress.getLocalHost(), Constants.HUB_PORT, ts, ks, password);
 		
 		System.out.println("(Registering a new user...)");
 		
 		out = new ObjectOutputStream(s.getOutputStream());
-		out.writeObject("REGISTER");
+		out.writeObject(Constants.REGISTER);
 		
 		in = new ObjectInputStream(s.getInputStream());
 		unameRequest = (String)in.readObject();
@@ -60,7 +60,7 @@ public class JSSEPeerTest {
 		s.close();
 		
 		// Now open an SSL connection to the login server and login as the user just registered
-		s = NetworkUtils.createSecureSocket(InetAddress.getLocalHost(), Constants.LOGIN_SERVER_PORT, ts, ks, password);
+		s = NetworkUtils.createSecureSocket(InetAddress.getLocalHost(), Constants.HUB_PORT, ts, ks, password);
 		
 		System.out.println("(Attempting to login...)");
 		

@@ -11,7 +11,7 @@ import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
 
-import hub.Constants;
+import utils.Constants;
 
 
 public class MultiThreadedHub {
@@ -22,14 +22,9 @@ public class MultiThreadedHub {
 	private PasswordStore pwStore = new PasswordStore();
 	private OnlineUsers online = new OnlineUsers();
 
-	public static void main(String[] args) {
-		try {
-			MultiThreadedHub hub = new MultiThreadedHub(Constants.KS_FILENAME, Constants.KS_PASSWORD);
-			hub.openHub();
-		} catch(Exception e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
+	public static void main(String[] args) throws Exception {
+		MultiThreadedHub hub = new MultiThreadedHub(Constants.HUB_KS_FILENAME, Constants.HUB_KS_PASSWORD);
+		hub.openHub();
 	}
 
 	public MultiThreadedHub( String keyStoreFilename, String ksPassword ) throws Exception {

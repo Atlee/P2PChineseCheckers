@@ -18,7 +18,7 @@ public class OnlineUsers {
 		sRand.nextInt();
 	}
 	
-	protected synchronized Integer add(String uname) {
+	synchronized Integer add(String uname) {
 		if(unames.contains(uname)) {
 			unames.remove(uname);
 			sessionSecrets.remove(uname);
@@ -31,17 +31,17 @@ public class OnlineUsers {
 		return secret;
 	}
 	
-	protected synchronized void remove(String uname) {
+	synchronized void remove(String uname) {
 		unames.remove(uname);
 		sessionSecrets.remove(uname);
 	}
 	
-	protected synchronized boolean check(String uname, Integer secret) {
+	synchronized boolean check(String uname, Integer secret) {
 		Integer currentSecret = sessionSecrets.get(uname);
 		return secret.equals(currentSecret);
 	}
 	
-	protected synchronized List<String> list() {
+	synchronized List<String> list() {
 		return unames;
 	}
 
