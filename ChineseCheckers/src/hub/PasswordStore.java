@@ -130,7 +130,6 @@ public class PasswordStore {
 		
 		raf.seek(0);
 		int numEntries = raf.readInt();
-		System.out.println(numEntries);
 		numEntries++;
 		raf.seek(0);
 		raf.writeInt(numEntries);

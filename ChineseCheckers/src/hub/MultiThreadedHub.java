@@ -49,7 +49,7 @@ public class MultiThreadedHub {
 		SSLServerSocketFactory sf = sslContext.getServerSocketFactory();
 		SSLServerSocket ss = (SSLServerSocket) sf.createServerSocket(Constants.HUB_PORT);
 
-		// Begin accepting SSL client connections
+		// Begin accepting SSL client connections...
 		while(true) {
 			
 			if(verboseHub) {
