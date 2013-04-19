@@ -1,6 +1,5 @@
 package utils;
 
-import hub.HubCertificate;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -10,11 +9,8 @@ import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.security.InvalidKeyException;
 import java.security.Key;
-import java.security.KeyFactory;
 import java.security.KeyManagementException;
-import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -22,12 +18,8 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
-import java.security.spec.InvalidKeySpecException;
 import java.util.UUID;
 
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.DESKeySpec;
-import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
@@ -56,19 +48,6 @@ public class NetworkUtils {
 			e.printStackTrace();
 			System.exit(1);
 		}
-	}
-	
-	public static HubCertificate readCertificate(Socket s) {
-		HubCertificate cert = null;
-		try {
-			ObjectInputStream in = new ObjectInputStream(s.getInputStream());
-			cert = (HubCertificate) in.readObject();
-		} catch (ClassNotFoundException | IOException e) {
-			System.out.println("Error reading certificate received from Hub");
-			e.printStackTrace();
-			System.exit(1);
-		}
-		return cert;
 	}
  	
 	public static Socket handleCreateSocket() {
@@ -257,11 +236,6 @@ public class NetworkUtils {
 			System.exit(1);
 		}
 		return key;
-	}
-	
-	public static void sendCertificate(Socket s, HubCertificate cert) throws IOException {
-		ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-		out.writeObject(cert);
 	}
 	
 	public static void sendUUID(Socket s, UUID id) {

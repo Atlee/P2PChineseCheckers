@@ -11,7 +11,7 @@ import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
 
-import hub.HubConstants;
+import hub.Constants;
 
 
 public class MultiThreadedHub {
@@ -24,7 +24,7 @@ public class MultiThreadedHub {
 
 	public static void main(String[] args) {
 		try {
-			MultiThreadedHub hub = new MultiThreadedHub(HubConstants.KS_FILENAME, HubConstants.KS_PASSWORD);
+			MultiThreadedHub hub = new MultiThreadedHub(Constants.KS_FILENAME, Constants.KS_PASSWORD);
 			hub.openHub();
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -51,7 +51,7 @@ public class MultiThreadedHub {
 		kmf.init(keyStore, ksPassword);
 		sslContext.init(kmf.getKeyManagers(), null, null);
 		SSLServerSocketFactory sf = sslContext.getServerSocketFactory();
-		SSLServerSocket ss = (SSLServerSocket) sf.createServerSocket(HubConstants.HUB_PORT);
+		SSLServerSocket ss = (SSLServerSocket) sf.createServerSocket(Constants.HUB_PORT);
 
 		// Begin accepting SSL client connections
 		while(true) {
@@ -59,9 +59,9 @@ public class MultiThreadedHub {
 			ObjectOutputStream out = new ObjectOutputStream(client.getOutputStream());
 			ObjectInputStream in = new ObjectInputStream(client.getInputStream());
 
-			String serviceRequest = (String)in.readObject();
+			int serviceRequest = in.readInt();
 			
-			if(serviceRequest.equals("REGISTER")) {
+			if(serviceRequest == Constants.REGISTER) {
 				out.writeObject("Hub: Desired username, please?");
 				String uname = (String)in.readObject();
 				if(pwStore.containsEntry(uname)) {
@@ -73,7 +73,7 @@ public class MultiThreadedHub {
 					out.writeObject("Hub: Account registration successful!");
 				}
 				
-			} else if(serviceRequest.equals("LOGIN")) {
+			} else if(serviceRequest == Constants.LOGIN) {
 				out.writeObject("Hub: Username?");
 				String uname = (String)in.readObject();
 				out.writeObject("Hub: Password?");
