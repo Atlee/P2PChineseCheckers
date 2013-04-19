@@ -6,14 +6,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class AuthenticatedUsers {
+public class OnlineUsers {
 	
 	private List<String> unames = new ArrayList<String>();
 	private Map<String, Integer> sessionSecrets = new HashMap<String, Integer>();
 	
 	private SecureRandom sRand = new SecureRandom();
 	
-	public AuthenticatedUsers() {
+	public OnlineUsers() {
 		sRand.nextInt();
 	}
 	
