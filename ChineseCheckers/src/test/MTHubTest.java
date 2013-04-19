@@ -15,12 +15,14 @@ import utils.NetworkUtils;
 
 
 public class MTHubTest {
+	
+	public static final String uname = "emma";
+	public static final String password = "asdf";
 
+	// If you set this to false, the test user won't login -> Hub will not allow access to the HELLO service
 	public static final boolean doLogin = true;
 
 	public static void main(String[] args) throws GeneralSecurityException, IOException, ClassNotFoundException {
-		String uname = args[0];
-		String password = args[1];
 
 		KeyStore ks = KeyStoreUtils.genUserKeyStore(uname, password);
 		KeyStore ts = KeyStoreUtils.genUserTrustStore("hub.public");
