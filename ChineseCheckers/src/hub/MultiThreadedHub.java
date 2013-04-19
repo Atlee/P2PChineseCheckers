@@ -50,13 +50,16 @@ public class MultiThreadedHub {
 
 		// Begin accepting SSL client connections
 		while(true) {
+			
+			System.out.println("Online: " + online.list().toString());
+			
 			SSLSocket client = (SSLSocket)ss.accept();
 			ObjectOutputStream out = new ObjectOutputStream(client.getOutputStream());
 			ObjectInputStream in = new ObjectInputStream(client.getInputStream());
 
-			int serviceRequest = in.readInt();
+			Integer serviceRequest = (Integer)in.readObject();
 			
-			if(serviceRequest == Constants.REGISTER) {
+			if(serviceRequest.equals(Constants.REGISTER)) {
 				out.writeObject("Hub: Desired username, please?");
 				String uname = (String)in.readObject();
 				if(pwStore.containsEntry(uname)) {
@@ -68,7 +71,7 @@ public class MultiThreadedHub {
 					out.writeObject("Hub: Account registration successful!");
 				}
 				
-			} else if(serviceRequest == Constants.LOGIN) {
+			} else if(serviceRequest.equals(Constants.LOGIN)) {
 				out.writeObject("Hub: Username?");
 				String uname = (String)in.readObject();
 				out.writeObject("Hub: Password?");
@@ -82,8 +85,9 @@ public class MultiThreadedHub {
 				}
 				
 			} else {
+				out.writeObject("Hub: Username, please?");
 				String uname = (String)in.readObject();
-				out.writeObject("ACK");
+				out.writeObject("Hub: Session secret, please?");
 				Integer secret = (Integer)in.readObject();
 				if(!online.check(uname, secret)) {
 					out.writeObject("Hub: lolwut");
