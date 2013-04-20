@@ -6,6 +6,7 @@ import java.io.ObjectInputStream;
 import java.net.InetAddress;
 import java.security.PublicKey;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -76,16 +77,24 @@ public class Constants {
 	
 	public static boolean verifyPassword(char[] password) {
 		boolean output = true;
+		boolean hasCapital = false;
+		boolean hasSymbol = false;
 		
-		if (password.length == 0) {
+		if (password.length <= 8) {
 			output = false;
 		}
 		for (char c : password) {
 			if (Character.isWhitespace(c)) {
 				output = false;
-			}
+			} else if (Character.isUpperCase(c)) {
+				//make sure the password has a capital letter
+				hasCapital = true;
+			} else if (!Character.isAlphabetic(c)) {
+				//make sure the password has a non-alpha character
+				hasSymbol = true;
+			}			
 		}
 		Arrays.fill(password, ' ');
-		return output;
+		return output && hasCapital && hasSymbol;
 	}
 }

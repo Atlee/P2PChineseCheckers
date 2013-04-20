@@ -1,5 +1,10 @@
 package peer;
 
+import game.Game;
+import game.Interaction;
+import game.NetworkLayer;
+import game.Player;
+
 import java.awt.BorderLayout;
 import java.awt.Frame;
 import java.awt.Toolkit;
@@ -13,6 +18,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.security.Key;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -148,14 +154,30 @@ public class HubGui extends JPanel
             try {
 				InetAddress hostAddr = HubGuiProtocols.joinGame(hostname, sharedKey);
 				Socket s = new Socket(hostAddr, Constants.CLIENT_HOST_PORT);
-				Chat c = new Chat(s);
-				c.start();
+				//Chat c = new Chat(s);
+				//test
+				try {
+					Game g = createBasicGame(s, hostname, "local");
+				} catch (Exception ex) {
+					ex.printStackTrace();
+					System.exit(0);
+				}
+				//c.start();
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
 				System.out.println("unable to get address from hub");
 				e1.printStackTrace();
 				System.exit(1);
 			}
+        }
+        
+        private Game createBasicGame(Socket s, String hostname, String username) throws Exception {
+        	Player host = new Player(hostname, 0);
+        	Player me = new Player(username, 1);
+        	ArrayList<Player> l = new ArrayList<Player>();
+        	l.add(host); l.add(me);
+        	Interaction i = new NetworkLayer(s);
+        	return new Game(l, me, i);
         }
     }
  
@@ -185,8 +207,24 @@ public class HubGui extends JPanel
             updateHostList();
             //blocks waiting for peer, need this to happen in new thread
             Socket peer = displayWaitingWindow();
-            Chat c = new Chat(peer);
-            c.start();
+            try {
+            	Game g = createBasicGame(peer, "host", "peer");
+            } catch (Exception ex) {
+            	ex.printStackTrace();
+            	System.exit(1);
+            }
+            //test
+            //Chat c = new Chat(peer);
+            //c.start();
+        }
+        
+        private Game createBasicGame(Socket s, String hostname, String peerName) throws Exception {
+        	Player host = new Player(hostname, 0);
+        	Player peer = new Player(peerName, 1);
+        	ArrayList<Player> l = new ArrayList<Player>();
+        	l.add(host); l.add(peer);
+        	Interaction i = new NetworkLayer(s);
+        	return new Game(l, host, i);
         }
         
         private Socket displayWaitingWindow() {

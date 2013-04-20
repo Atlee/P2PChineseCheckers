@@ -16,7 +16,6 @@ public class GameTest {
 		Interaction i = new TestInteraction();
 		
 		Game g = new Game(l, local, i);
-		g.start();
 	}
 
 }

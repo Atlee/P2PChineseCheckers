@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 
-public class Game {
+public class Game implements Runnable{
 	//order of players in these lists are important
 	//These lists should be coming from the hub, therefore everyone will
 	//receive the same order list
@@ -22,31 +22,39 @@ public class Game {
 		board = new Board(this);
 		localPlayer = _localPlayer;
 		communication = _communication;
+		
+		Thread t = new Thread(this);
+		t.start();
 	}
 
-	public void start() throws Exception {
-		while (!Rules.gameOver(this)) {
-			board.printBoard();
-			Move m;
-			if (this.localPlayersTurn()) {
-				m = getMove();
-				if (m != null) { //test
-					while (!Rules.checkMove(localPlayer, board, m)) {
-						//prompt invalid
-						m = getMove();
+	@Override
+	public void run() {
+		try {
+			while (!Rules.gameOver(this)) {
+				board.printBoard();
+				Move m;
+				if (this.localPlayersTurn()) {
+					m = getMove();
+					if (m != null) { //test
+						while (!Rules.checkMove(localPlayer, board, m)) {
+							//prompt invalid
+							m = getMove();
+						}
+						communication.shareMove(m);
 					}
-					communication.shareMove(m);
+				} else {
+					m = communication.waitForOpponent();
 				}
-			} else {
-				m = communication.waitForOpponent();
+				updateBoard(m);
+				
+				rotationIndex++;
 			}
-			updateBoard(m);
-			
-			rotationIndex++;
+			board.printBoard();
+			System.out.println("Winner!");
+			communication.endGame(getPlayer(rotationIndex));
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-		board.printBoard();
-		System.out.println("Winner!");
-		communication.endGame(getPlayer(rotationIndex));
 	}
 	
 	private Move getMove() {
