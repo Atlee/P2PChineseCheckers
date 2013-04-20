@@ -15,6 +15,7 @@ public class Game {
 	private int rotationIndex = 0;
 	private Player localPlayer;
 	private Interaction communication;
+	private Scanner scn = new Scanner(System.in);
 	
 	public Game(List<Player> _players, Player _localPlayer, Interaction _communication) throws Exception {
 		players = extractPlayers(_players);
@@ -29,11 +30,13 @@ public class Game {
 			Move m;
 			if (this.localPlayersTurn()) {
 				m = getMove();
-				while (!Rules.checkMove(localPlayer, board, m)) {
-					//prompt invalid
-					m = getMove();
+				if (m != null) { //test
+					while (!Rules.checkMove(localPlayer, board, m)) {
+						//prompt invalid
+						m = getMove();
+					}
+					communication.shareMove(m);
 				}
-				communication.shareMove(m);
 			} else {
 				m = communication.waitForOpponent();
 			}
@@ -41,16 +44,24 @@ public class Game {
 			
 			rotationIndex++;
 		}
+		board.printBoard();
+		System.out.println("Winner!");
+		communication.endGame(getPlayer(rotationIndex));
 	}
 	
 	private Move getMove() {
 		Player currentPlayer = players.get(rotationIndex % players.size());
-		Scanner scn = new Scanner(System.in);
+		scn = new Scanner(System.in);
 		System.out.println("Please enter point you would like to move from as: row (from the top), index");
 		int x = scn.nextInt();
 		if (x == -2) {
-			//TODO:Remove this
-			
+			//test
+			try {
+				board.constructFinalBoard();
+				return null;
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 		int y = scn.nextInt();
 		Point from = new Point(x, y);
@@ -94,14 +105,6 @@ public class Game {
 			list.add(p);
 		}
 		return list;
-	}
-	
-	private HashMap<String, Integer> getPlayerIndex() {
-		HashMap<String, Integer> output = new HashMap<String, Integer>();
-		for (int i = 0; i < players.size(); i++) {
-			output.put(players.get(i).getUsername(), i);
-		}
-		return output;
 	}
 	
 	public int getNumPlayers() {

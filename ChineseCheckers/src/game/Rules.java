@@ -11,29 +11,39 @@ public class Rules {
 	
 	public static boolean checkMove(Player p, Board b, Move m) {
 		ArrayList<Point> jumps = m.getJumps();
-		if (jumps.size() < 2) {
+		if (jumps.size() < 2 || !b.isPlayer(p, jumps.get(0))) {
 			//doesn't make sense for a jump to only have 1 point
+			//or return false if the player is attempting to move a ball that is not theirs
 			return false;
 		}
 		
 		Point from = jumps.get(0);
-		for (int i = 1; i < jumps.size(); i++) {
-			Point to = jumps.get(i);
-			if (!checkJump(p, b, from, to)) {
-				//if any jump is invalid
+		Point to   = jumps.get(1);
+		if (b.longJump(from, to)) { 
+			// if the first jump is a long jump, assume they are all long
+			for (int i = 1; i < jumps.size(); i++) {
+				to = jumps.get(i);
+				if (!checkLongJump(p, b, from, to)) {
+					//if any jump is invalid
+					return false;
+				}
+				from = to;
+			}
+		} else {
+			if (jumps.size() != 2 || !checkShortJump(p, b, from, to)) {
 				return false;
 			}
-			from = to;
 		}
 		return true;
 	}
 	
-	public static boolean checkJump(Player p, Board b, Point from, Point to) {
-		if(!b.onBoard(to)) {
+	public static boolean checkLongJump(Player p, Board b, Point from, Point to) {
+		if(!b.onBoard(to) || !b.longJump(from, to)) {
+			//the point were going to is off the board
 			return false;
 		}
 		
-		int direction = b.pointsAlign(from, to);
+		int direction = b.pointsAlignLong(from, to);
 		
 		if (direction == -1) {
 			return false;
@@ -41,6 +51,19 @@ public class Rules {
 		
 		//check if a ball is in the middle hole
 		if (!b.checkMiddle(from, direction)) {
+			return false;
+		}
+		return true;
+	}
+	
+	public static boolean checkShortJump(Player p, Board b, Point from, Point to) {
+		if (!b.onBoard(to) || b.longJump(from, to)) {
+			return false;
+		}
+		
+		int direction = b.pointsAlignShort(from, to);
+		
+		if (direction == -1) {
 			return false;
 		}
 		return true;

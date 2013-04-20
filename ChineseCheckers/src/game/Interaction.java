@@ -15,4 +15,6 @@ public interface Interaction {
 	public Move waitForOpponent() throws IOException, Exception;
 	
 	public void shareMove(Move m) throws IOException;
+
+	public void endGame(Player player);
 }

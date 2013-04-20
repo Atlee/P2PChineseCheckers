@@ -46,7 +46,7 @@ public class Board {
 	
 	//valid places in the 2d array for any collor pegs to exist
 	private static final boolean[][] middle = {
-		{ false, false, false, false, false, false, false, false, false, false, false, false, false }, // 0
+	{ false, false, false, false, false, false, false, false, false, false, false, false, false }, // 0
 
 		{ false, false, false, false, false, false, false, false, false, false, false, false, false }, // 1
 
@@ -135,9 +135,9 @@ public class Board {
 	 *		 5	 *	2
 	 *		   4  3
 	 */
-	public int pointsAlign(Point from, Point to) {
+	public int pointsAlignLong(Point from, Point to) {
 		if (from.x == to.x) { // they are on the same line
-			if (from.y - 2 == to.y) {
+			if (from.y - 2 == to.y) { 
 				return 5;
 			} else if (from.y + 2 == to.y) {
 				return 2;
@@ -156,6 +156,41 @@ public class Board {
 			}
 		}
 		//return -1 if points do not align
+		return -1;
+	}
+	
+	public int pointsAlignShort(Point from, Point to) {
+		if  (from.x == to.x) {
+			if (from.y + 1 == to.y) {
+				return 2;
+			} else if (from.y - 1 == to.y) {
+				return 5;
+			}
+		} else if (from.x + 1 == to.x) {
+			if (from.y == to.y) {
+				if (from.x % 2 == 0) {//if were on an even line and the j coor doesn't differ
+					return 3;
+				} else {
+					return 4;
+				}				
+			} else if (from.y - 1 == to.y && from.x % 2 == 0) {
+				return 4;
+			} else if (from.y + 1 == to.y && from.x % 2 == 1) {
+				return 3;
+			}
+		} else if (from.x - 1 == to.x) {
+			if (from.y == to.y) {
+				if (from.x % 2 == 0) {//if were on an even line and the j coor doesn't differ
+					return 1;
+				} else {
+					return 0;
+				}				
+			} else if (from.y - 1 == to.y && from.x % 2 == 0) {
+				return 0;
+			} else if (from.y + 1 == to.y && from.x % 2 == 1) {
+				return 1;
+			}
+		}
 		return -1;
 	}
 
@@ -242,5 +277,37 @@ public class Board {
 			System.out.println("|\t" + i + ": " + game.getPlayer(i).getUsername() + "\t\t|");
 		}
 		System.out.println("-----------------------------------------------------------------------------------");
+	}
+
+	public void constructFinalBoard() throws Exception {
+		if (game.getNumPlayers() < 2) {
+			throw new Exception("Too few players");
+		}
+		//fill top with player 0
+		setState(game.getPlayer(1), 0, 6);
+		setState(game.getPlayer(1), 1, 5); setState(game.getPlayer(1), 1, 6);
+		setState(game.getPlayer(1), 2, 5); setState(game.getPlayer(1), 2, 6); setState(game.getPlayer(1), 2, 7);
+		setState(game.getPlayer(1), 3, 4); setState(game.getPlayer(1), 3, 5); setState(game.getPlayer(1), 3, 6); setState(game.getPlayer(1), 3, 7);
+		
+		//fill bot with player 1
+		setState(game.getPlayer(0), 16, 6);
+		setState(game.getPlayer(0), 15, 5); setState(game.getPlayer(0), 15, 6);
+		setState(game.getPlayer(0), 14, 5); setState(game.getPlayer(0), 14, 6); setState(game.getPlayer(0), 14, 7);
+		setState(game.getPlayer(0),  9, 4); setState(game.getPlayer(0), 13, 5); setState(game.getPlayer(0), 13, 6); setState(game.getPlayer(0), 13, 7);
+		
+		//TODO: others left as null
+	}
+
+	//return true if the jump is more than a single move else return false
+	public boolean longJump(Point from, Point to) {
+		if (from.x == to.x) {
+			return Math.abs(from.y - to.y) >= 2;
+		} else {
+			return (Math.abs(from.y - to.y) + Math.abs(from.x - to.x)) > 2;
+		}
+	}
+
+	public boolean isPlayer(Player p, Point from) {
+		return state[from.x][from.y].equals(p);
 	}
 }

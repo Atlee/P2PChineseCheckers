@@ -24,4 +24,10 @@ public class NetworkLayer implements Interaction {
 		NetworkUtils.sendMessage(opponent, m.serialize().getBytes());
 	}
 
+	@Override
+	public void endGame(Player winner) {
+		// add protocol for winner game end to hub
+		
+	}
+
 }
