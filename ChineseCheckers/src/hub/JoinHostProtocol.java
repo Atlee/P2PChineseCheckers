@@ -14,9 +14,14 @@ public class JoinHostProtocol implements HubProtocol {
 	public void execute(Socket s, Key sharedKey) {
 		try {
 			String hostname = new String(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG));
+			
 			HashMap<String, User> hosts = Hub.getUserHost();
 			NetworkUtils.sendEncryptedMessage(s, hosts.get(hostname).getAddr().getAddress(), sharedKey, Constants.SHARED_ENCRYPT_ALG);
 			GameDescription gd = Hub.getGameDescription(hostname);
+			
+			String player = Hub.getUser(s.getInetAddress()).getUsername();
+			gd.addPlayer(player);
+			
 			NetworkUtils.sendEncryptedMessage(s, gd.getKey().getEncoded(), sharedKey, Constants.SHARED_ENCRYPT_ALG);
 			hosts.remove(hostname);
 		} catch (IOException e) {
