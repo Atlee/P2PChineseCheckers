@@ -23,6 +23,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -47,6 +48,7 @@ public class Hub {
 	private static HashMap<String, User> hosts;
 	
 	private static HashMap<String, GameDescription> gamesByHost = new HashMap<String, GameDescription>();
+	private static HashSet<String> untrustworthy = new HashSet<String>();
 	
 	public static void main(String[] args) {		
 		ServerSocket hub = handleCreateServerSocket();
@@ -179,11 +181,20 @@ public class Hub {
 		return null;
 	}
 
-	public static void addGameDescription(String host, GameDescription gd) {
+	synchronized public static void addGameDescription(String host, GameDescription gd) {
 		gamesByHost.put(host, gd);
 	}
 	
-	public static GameDescription getGameDescription(String host) {
+	synchronized public static GameDescription getGameDescription(String host) {
 		return gamesByHost.get(host);
+	}
+
+	synchronized public static void removeGameDescription(String host) {
+		gamesByHost.remove(host);
+	}
+
+	synchronized public static void flagPlayers(String player1, String player2) {
+		untrustworthy.add(player1);
+		untrustworthy.add(player2);		
 	}
 }

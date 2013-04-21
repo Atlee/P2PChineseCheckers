@@ -1,24 +1,29 @@
 package hub;
 
 import java.security.Key;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.HashMap;
 
+import utils.Constants;
 import utils.EncryptUtils;
+import utils.NetworkUtils;
 
 public class GameDescription {
 	private String hostname;
-	private List<String> players;
+	//mapping from username to their log
+	private HashMap<String, String> players;
 	private String winner;
 	private Key k;
 
 	public GameDescription(String host) {
 		hostname = host;
-		players = new ArrayList<String>();
-		players.add(host);
+		players = new HashMap<String, String>();
+		players.put(host, null);
 		k = EncryptUtils.handleCreateSharedKey();
 		winner = null;
+	}
+	
+	public void addPlayer(String player) {
+		players.put(player, null);
 	}
 	
 	public String getWinner() {
@@ -35,5 +40,9 @@ public class GameDescription {
 	
 	public Key getKey() {
 		return k;
+	}
+
+	public void addLog(String playername, String playerLog) {
+		players.put(playername, playerLog);		
 	}
 }
