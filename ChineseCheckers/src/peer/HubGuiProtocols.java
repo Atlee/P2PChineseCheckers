@@ -5,6 +5,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.security.InvalidKeyException;
 import java.security.Key;
 import java.util.LinkedList;
 import java.util.List;
@@ -12,7 +13,9 @@ import java.util.List;
 import com.sun.corba.se.pept.transport.ContactInfo;
 
 import utils.Constants;
+import utils.EncryptUtils;
 import utils.NetworkUtils;
+import utils.Tuple;
 
 public class HubGuiProtocols {
 	
@@ -42,7 +45,7 @@ public class HubGuiProtocols {
      * @param sharedKey
      * @return the socket connection to a peer
      */
-    public static ServerSocket hostNewGame(Key sharedKey) {
+    public static Key hostNewGame(Key sharedKey) {
     	Socket s = NetworkUtils.handleCreateSocket();
     	
     	try {
@@ -53,25 +56,34 @@ public class HubGuiProtocols {
     	}
     	NetworkUtils.sendProtocolID(s, Constants.NEW_HOST);
     	
-    	ServerSocket peer = null;
     	try {
-    		peer = new ServerSocket(Constants.CLIENT_HOST_PORT);
-    	} catch (IOException e) {
-    		System.out.println("Could not listen on port " + Constants.CLIENT_HOST_PORT);
-    		e.printStackTrace();
-    		System.exit(1);
-    	}
-    	return peer;
+			Key k = EncryptUtils.getSharedKey(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG));
+			if (k != null) {
+				return k;
+			}
+		} catch (IOException | InvalidKeyException e1) {
+			e1.printStackTrace();
+			System.exit(1);
+		}
+    	
+    	return null;
     }
 
-	public static InetAddress joinGame(String hostname, Key sharedKey) throws IOException {
+	public static Tuple<InetAddress, Key> joinGame(String hostname, Key sharedKey) throws IOException {
 		Socket s = NetworkUtils.handleCreateSocket();
 		
 		NetworkUtils.sendEncryptedMessage(s, sharedKey.getEncoded(), Constants.getHubPublicKey(), Constants.PUBLIC_ENCRYPT_ALG);
 		NetworkUtils.sendProtocolID(s, Constants.JOIN_GAME);
 		NetworkUtils.sendEncryptedMessage(s, hostname.getBytes(), sharedKey, Constants.SHARED_ENCRYPT_ALG);
 		byte[] hostAddrBytes = NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG);
-		return InetAddress.getByAddress(hostAddrBytes);
+		Key gameKey = null;
+		try {
+			gameKey = EncryptUtils.getSharedKey(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG));
+		} catch (InvalidKeyException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+		return new Tuple<InetAddress, Key>(InetAddress.getByAddress(hostAddrBytes), gameKey);
 	}
 	
 	public static void logout(Key sharedKey) {

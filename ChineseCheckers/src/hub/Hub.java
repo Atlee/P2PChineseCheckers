@@ -25,6 +25,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -44,6 +45,8 @@ public class Hub {
 	private static HashMap<InetAddress, User> loggedInUsers;
 	//a list of all users currently hosting games
 	private static HashMap<String, User> hosts;
+	
+	private static HashMap<String, GameDescription> gamesByHost = new HashMap<String, GameDescription>();
 	
 	public static void main(String[] args) {		
 		ServerSocket hub = handleCreateServerSocket();
@@ -174,5 +177,13 @@ public class Hub {
 			System.exit(1);
 		}
 		return null;
+	}
+
+	public static void addGameDescription(String host, GameDescription gd) {
+		gamesByHost.put(host, gd);
+	}
+	
+	public static GameDescription getGameDescription(String host) {
+		return gamesByHost.get(host);
 	}
 }

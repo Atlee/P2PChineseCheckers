@@ -18,6 +18,8 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.DESKeySpec;
 
 public class EncryptUtils {
 	
@@ -123,5 +125,17 @@ public class EncryptUtils {
 			
 		}
 		return sharedKey;
+	}
+	
+	public static Key getSharedKey(byte[] encodedBytes) throws InvalidKeyException {
+		try {
+			SecretKeyFactory skf = SecretKeyFactory.getInstance(Constants.SHARED_ENCRYPT_ALG);
+			DESKeySpec keySpec = new DESKeySpec(encodedBytes);
+			return skf.generateSecret(keySpec);
+		} catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+		return null;
 	}
 }

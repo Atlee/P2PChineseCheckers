@@ -37,6 +37,9 @@ public class Constants {
 	public static final int NEW_HOST = 3;
 	public static final int JOIN_GAME = 4;
 	public static final int LOGOUT = 5;
+	private static final int MAX_PW_LEN = 100;
+	private static final int MIN_PW_LEN = 8;
+	private static final int MAX_USERNAME_LEN = 45;
 	
 	private static PublicKey hubKey = null;
 	
@@ -69,7 +72,7 @@ public class Constants {
 			return false;
 		}
 		System.out.println(username.length());
-		if (username.length() >= 30) {
+		if (username.length() >= MAX_USERNAME_LEN) {
 			return false;
 		}
 		return true;
@@ -80,7 +83,7 @@ public class Constants {
 		boolean hasCapital = false;
 		boolean hasSymbol = false;
 		
-		if (password.length <= 8) {
+		if (password.length <= MIN_PW_LEN || password.length > MAX_PW_LEN) {
 			output = false;
 		}
 		for (char c : password) {

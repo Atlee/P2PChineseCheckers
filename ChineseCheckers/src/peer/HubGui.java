@@ -45,6 +45,7 @@ import javax.swing.event.ListSelectionListener;
 import utils.Constants;
 import utils.EncryptUtils;
 import utils.NetworkUtils;
+import utils.Tuple;
  
 /* ListDemo.java requires no other files. */
 public class HubGui extends JPanel
@@ -152,12 +153,12 @@ public class HubGui extends JPanel
             String hostname = list.getSelectedValue();
             
             try {
-				InetAddress hostAddr = HubGuiProtocols.joinGame(hostname, sharedKey);
-				Socket s = new Socket(hostAddr, Constants.CLIENT_HOST_PORT);
+				Tuple<InetAddress, Key> pair = HubGuiProtocols.joinGame(hostname, sharedKey);
+				Socket s = new Socket(pair.first(), Constants.CLIENT_HOST_PORT);
 				//Chat c = new Chat(s);
 				//test
 				try {
-					Game g = createBasicGame(s, hostname, "local");
+					Game g = createBasicGame(s, pair.second(), hostname, "local");
 				} catch (Exception ex) {
 					ex.printStackTrace();
 					System.exit(0);
@@ -171,12 +172,12 @@ public class HubGui extends JPanel
 			}
         }
         
-        private Game createBasicGame(Socket s, String hostname, String username) throws Exception {
+        private Game createBasicGame(Socket s, Key gameKey, String hostname, String username) throws Exception {
         	Player host = new Player(hostname, 0);
         	Player me = new Player(username, 1);
         	ArrayList<Player> l = new ArrayList<Player>();
         	l.add(host); l.add(me);
-        	Interaction i = new NetworkLayer(s);
+        	Interaction i = new NetworkLayer(s, gameKey);
         	return new Game(l, me, i);
         }
     }
@@ -203,52 +204,14 @@ public class HubGui extends JPanel
                 return;
             }*/
             
-            hostSocket = HubGuiProtocols.hostNewGame(sharedKey);
+            Key gameKey = HubGuiProtocols.hostNewGame(sharedKey);
             updateHostList();
-            //blocks waiting for peer, need this to happen in new thread
-            Socket peer = displayWaitingWindow();
-            try {
-            	Game g = createBasicGame(peer, "host", "peer");
-            } catch (Exception ex) {
-            	ex.printStackTrace();
-            	System.exit(1);
-            }
+            (new Thread(new GameStart(gameKey))).start();
             //test
             //Chat c = new Chat(peer);
             //c.start();
         }
         
-        private Game createBasicGame(Socket s, String hostname, String peerName) throws Exception {
-        	Player host = new Player(hostname, 0);
-        	Player peer = new Player(peerName, 1);
-        	ArrayList<Player> l = new ArrayList<Player>();
-        	l.add(host); l.add(peer);
-        	Interaction i = new NetworkLayer(s);
-        	return new Game(l, host, i);
-        }
-        
-        private Socket displayWaitingWindow() {
-        	JFrame frame = new JFrame("Waiting for opponent");
-    		JLabel label = new JLabel("Waiting for opponent to join", SwingConstants.CENTER);
-    		
-    		//show success/failure window
-    		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    		frame.getContentPane().add(label, BorderLayout.CENTER);			
-    		frame.setSize(300, 100);
-    		frame.setVisible(true);
-    		
-    		Socket peer = null;
-    		try {
-				peer = hostSocket.accept();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				System.exit(1);
-			}
-    		frame.dispose();
-    		return peer;
-        }
- 
         //This method tests for string equality. You could certainly
         //get more sophisticated about the algorithm.  For example,
         //you might want to ignore white space and capitalization.
@@ -330,6 +293,69 @@ public class HubGui extends JPanel
             }
         });
     }*/
+}
+
+class GameStart implements Runnable {
+	
+	private Key gameKey;
+	
+	public GameStart(Key gameKey) {
+		this.gameKey = gameKey;
+	}
+
+	@Override
+	public void run() {
+		ServerSocket host = null;
+    	try {
+    		host = new ServerSocket(Constants.CLIENT_HOST_PORT);
+    	} catch (IOException e) {
+    		System.out.println("Could not listen on port " + Constants.CLIENT_HOST_PORT);
+    		e.printStackTrace();
+    		System.exit(1);
+    	}
+    	
+    	Socket peer = displayWaitingWindow(host);
+    	
+    	try {
+        	Game g = createBasicGame(peer, "host", "peer");
+        } catch (Exception ex) {
+        	ex.printStackTrace();
+        	System.exit(1);
+        }
+	}
+	
+    private Socket displayWaitingWindow(ServerSocket hostSocket) {
+    	JFrame frame = new JFrame("Waiting for opponent");
+		JLabel label = new JLabel("Waiting for opponent to join", SwingConstants.CENTER);
+		
+		//show success/failure window
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.getContentPane().add(label, BorderLayout.CENTER);			
+		frame.setSize(300, 100);
+		frame.setVisible(true);
+		
+		Socket peer = null;
+		try {
+			peer = hostSocket.accept();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			System.exit(1);
+		}
+		frame.dispose();
+		return peer;
+    }
+    
+    private Game createBasicGame(Socket s, String hostname, String peerName) throws Exception {
+    	Player host = new Player(hostname, 0);
+    	Player peer = new Player(peerName, 1);
+    	ArrayList<Player> l = new ArrayList<Player>();
+    	l.add(host); l.add(peer);
+    	Interaction i = new NetworkLayer(s, gameKey);
+    	return new Game(l, host, i);
+    }
+
+	
 }
 
 class CloseListener extends WindowAdapter {
