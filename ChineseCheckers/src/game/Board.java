@@ -58,15 +58,15 @@ public class Board {
 
 		{ false, false, false,  true,  true,  true,  true,  true,  true, false, false, false, false }, // 5
 
-	{ false, false, false,  true,  true,  true,  true,  true,  true,  true,  true, false, false }, // 6
+	{ false, false, false,  true,  true,  true,  true,  true,  true,  true,  false, false, false }, // 6
 
-		{ false, false,  true,  true,  true,  true,  true,  true,  true,  true,  true, false, false }, // 7
+		{ false, false,  true,  true,  true,  true,  true,  true,  true,  true,  false, false, false }, // 7
 
 	{ false, false,  true,  true,  true,  true,  true,  true,  true,  true,  true, false, false }, // 8 ----------------------
 
-		{ false, false,  true,  true,  true,  true,  true,  true,  true,  true,  true, false, false }, // 7
+		{ false, false,  true,  true,  true,  true,  true,  true,  true,  true,  false, false, false }, // 7
 
-	{ false, false, false,  true,  true,  true,  true,  true,  true,  true,  true, false, false }, // 6
+	{ false, false, false,  true,  true,  true,  true,  true,  true,  true,  false, false, false }, // 6
 
 		{ false, false, false,  true,  true,  true,  true,  true,  true, false, false, false, false }, // 5
 
@@ -251,19 +251,25 @@ public class Board {
 	public void printBoard() {
 		printIndex();
 		for (int i = 0; i < board.length; i++) {
+			if (i % 2 == 1) {
+				System.out.print("  ");
+			}
 			for (int j = 0; j < board[0].length; j++) {
-				if (j % 2 == 1) {
-					System.out.print(" ");
-				}
 				if (board[i][j]) {
 					if (state[i][j] != null) {
-						System.out.print(state[i][j].getIndex() + " ");
+						if (state[i][j].getIndex() == -1) {
+							//System.out.print(state[i][j].getIndex());
+							System.out.print("__");
+						} else {
+							System.out.print(" "+state[i][j].getIndex());
+						}
 					} else {
-						System.out.print("-1 ");
+						System.out.print("__");
 					}
 				} else {
 					System.out.print("  ");
 				}
+				System.out.print("  ");
 			}
 			System.out.println();
 		}
