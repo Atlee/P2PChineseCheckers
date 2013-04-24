@@ -75,6 +75,7 @@ class Compare implements Runnable {
 	@Override
 	public void run() {
 		String prev = null;
+		boolean valid = true;
 		for (String username : gd.getPlayers()) {
 			if (prev == null) {
 				prev = username;
@@ -82,9 +83,15 @@ class Compare implements Runnable {
 				String log1 = gd.getLog(prev);
 				String log2 = gd.getLog(username);
 				if (!log1.equals(log2)) {
+					valid = false;
 					Hub.flagPlayers(prev, username);
 				}
 			}
+		}
+		
+		if (valid) {
+			//get winner from log
+			//Hub.updateStats();
 		}
 	}
 }

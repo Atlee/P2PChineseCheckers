@@ -37,6 +37,7 @@ public class Constants {
 	public static final int NEW_HOST = 3;
 	public static final int JOIN_GAME = 4;
 	public static final int LOGOUT = 5;
+	public static final int GET_LOG = 6;
 	private static final int MAX_PW_LEN = 100;
 	private static final int MIN_PW_LEN = 8;
 	private static final int MAX_USERNAME_LEN = 45;

@@ -17,7 +17,7 @@ public class TestInteraction implements Interaction {
 	}
 
 	@Override
-	public void endGame(Player player) {
+	public void endGame(Player host, Player player) {
 		// TODO Auto-generated method stub
 		
 	}

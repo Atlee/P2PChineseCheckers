@@ -198,11 +198,11 @@ public class Board {
 		int newI, newJ;
 		switch (direction) {
 		case 0:
-			newI = from.x + 2;
+			newI = from.x - 2;
 			newJ = from.y - 1;
 			break;
 		case 1:
-			newI = from.x + 2;
+			newI = from.x - 2;
 			newJ = from.y + 1;
 			break;
 		case 2:
@@ -210,11 +210,11 @@ public class Board {
 			newJ = from.y + 1;
 			break;
 		case 3:
-			newI = from.x - 2;
+			newI = from.x + 2;
 			newJ = from.y + 1;
 			break;
 		case 4:
-			newI = from.x - 2;
+			newI = from.x + 2;
 			newJ = from.y - 1;
 			break;
 		case 5:

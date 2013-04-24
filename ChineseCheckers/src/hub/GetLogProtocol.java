@@ -7,7 +7,7 @@ import java.security.Key;
 import utils.Constants;
 import utils.NetworkUtils;
 
-public class GetStatsProtocol implements HubProtocol {
+public class GetLogProtocol implements HubProtocol {
 
 	@Override
 	public void execute(Socket s, Key sharedKey) {
@@ -21,7 +21,6 @@ public class GetStatsProtocol implements HubProtocol {
 			gd.addLog(playername, playerLog);
 			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		

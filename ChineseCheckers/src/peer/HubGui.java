@@ -57,14 +57,16 @@ public class HubGui extends JPanel
     private static final String JOIN_STRING = "Join";
     private static final String REFRESH_STRING = "Refresh";
     private static final String TEXT_FIELD_DEFAULT = "New Game Name";
+    private final String username;
     private JButton joinButton;
     private JButton refreshButton;
     private JTextField newGameName;
     private Key sharedKey;
  
-    public HubGui(Key sharedKey) {
+    public HubGui(Key sharedKey, String localUser) {
         super(new BorderLayout());
         this.sharedKey = sharedKey;
+        this.username = localUser;
         
         //get the list of hsots from the server and update
         //listModel to represent that list
@@ -172,12 +174,12 @@ public class HubGui extends JPanel
 			}
         }
         
-        private Game createBasicGame(Socket s, Key gameKey, String hostname, String username) throws Exception {
+        private Game createBasicGame(Socket peer, Key gameKey, String hostname, String username) throws Exception {
         	Player host = new Player(hostname, 0);
         	Player me = new Player(username, 1);
         	ArrayList<Player> l = new ArrayList<Player>();
         	l.add(host); l.add(me);
-        	Interaction i = new NetworkLayer(s, gameKey);
+        	Interaction i = new NetworkLayer(peer, gameKey, sharedKey);
         	return new Game(l, me, i);
         }
     }
@@ -206,7 +208,7 @@ public class HubGui extends JPanel
             
             Key gameKey = HubGuiProtocols.hostNewGame(sharedKey);
             updateHostList();
-            (new Thread(new GameStart(gameKey))).start();
+            (new Thread(new GameStart(gameKey, sharedKey))).start();
             //test
             //Chat c = new Chat(peer);
             //c.start();
@@ -267,16 +269,14 @@ public class HubGui extends JPanel
         }
     }
 
-    public static void createAndShowGUI(Key sharedKey) {
+    public static void createAndShowGUI(Key sharedKey, String username2) {
         //Create and set up the window.
         JFrame frame = new JFrame("ListDemo");
         frame.addWindowListener(new CloseListener(sharedKey));
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
  
         //Create and set up the content pane.
-        System.out.println("Creating HubGUI");
-        JComponent newContentPane = new HubGui(sharedKey);
-        System.out.println("Created HubGUI");
+        JComponent newContentPane = new HubGui(sharedKey, username2);
         newContentPane.setOpaque(true); //content panes must be opaque
         frame.setContentPane(newContentPane);
  
@@ -284,23 +284,16 @@ public class HubGui extends JPanel
         frame.pack();
         frame.setVisible(true);
     } 
-/*    public static void main(String[] args) {
-        //Schedule a job for the event-dispatching thread:
-        //creating and showing this application's GUI.
-        javax.swing.SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                createAndShowGUI();
-            }
-        });
-    }*/
 }
 
 class GameStart implements Runnable {
 	
 	private Key gameKey;
+	private Key hubKey;
 	
-	public GameStart(Key gameKey) {
+	public GameStart(Key gameKey, Key hubKey) {
 		this.gameKey = gameKey;
+		this.hubKey = hubKey;
 	}
 
 	@Override
@@ -351,7 +344,7 @@ class GameStart implements Runnable {
     	Player peer = new Player(peerName, 1);
     	ArrayList<Player> l = new ArrayList<Player>();
     	l.add(host); l.add(peer);
-    	Interaction i = new NetworkLayer(s, gameKey);
+    	Interaction i = new NetworkLayer(s, gameKey, hubKey);
     	return new Game(l, host, i);
     }
 

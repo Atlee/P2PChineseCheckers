@@ -16,5 +16,5 @@ public interface Interaction {
 	
 	public void shareMove(Move m) throws IOException;
 
-	public void endGame(Player player);
+	void endGame(Player host, Player winner);
 }

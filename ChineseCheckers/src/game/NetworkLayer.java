@@ -13,15 +13,18 @@ import utils.SignUtils;
 public class NetworkLayer implements Interaction {
 
 	Socket opponent;
+	Socket hub;
 	AuditLog log;
-	Key encryptKey;
+	Key gameKey;
+	Key hubKey;
 	PublicKey verifyKey;
 	PrivateKey signKey;
 	
-	public NetworkLayer(Socket s, Key gameKey) {
+	public NetworkLayer(Socket s, Key gameKey, Key hubKey) {
 		opponent = s;
 		log = new AuditLog();
-		encryptKey = gameKey;
+		this.gameKey = gameKey;
+		this.hubKey = hubKey;
 		verifyKey = null;
 		signKey = null;
 	}
@@ -29,7 +32,7 @@ public class NetworkLayer implements Interaction {
 	public NetworkLayer(Socket s, Key gameKey, PrivateKey signKey, PublicKey verifyKey) {
 		opponent = s;
 		log = new AuditLog();
-		encryptKey = gameKey;
+		this.gameKey = gameKey;
 		this.verifyKey = verifyKey;
 		this.signKey = signKey;
 	}
@@ -37,7 +40,7 @@ public class NetworkLayer implements Interaction {
 	@Override
 	public Move waitForOpponent() throws Exception {
 		System.out.println("Waiting for opponent move.");
-		String moveSerialized = new String(NetworkUtils.readEncryptedMessage(opponent, encryptKey, Constants.SHARED_ENCRYPT_ALG));
+		String moveSerialized = new String(NetworkUtils.readEncryptedMessage(opponent, gameKey, Constants.SHARED_ENCRYPT_ALG));
 		log.append(moveSerialized);
 		return Move.deSerialize(moveSerialized);
 	}
@@ -45,14 +48,28 @@ public class NetworkLayer implements Interaction {
 	@Override
 	public void shareMove(Move m) throws IOException {
 		String moveString = m.serialize();
-		NetworkUtils.sendEncryptedMessage(opponent, moveString.getBytes(), encryptKey, Constants.SHARED_ENCRYPT_ALG);
+		NetworkUtils.sendEncryptedMessage(opponent, moveString.getBytes(), gameKey, Constants.SHARED_ENCRYPT_ALG);
 		log.append(moveString);
 	}
 
 	@Override
-	public void endGame(Player winner) {
+	public void endGame(Player host, Player winner) {
 		// add protocol for winner game end to hub
-		log.append("winner:" + winner.getIndex() + ":" + winner.getUsername());
+		Socket hub = NetworkUtils.handleCreateSocket();
+		log.prepend("winner:"+ winner.getUsername());
+		
+    	try {
+    		NetworkUtils.sendEncryptedMessage(hub, this.hubKey.getEncoded(), Constants.getHubPublicKey(), Constants.PUBLIC_ENCRYPT_ALG);
+    		NetworkUtils.sendProtocolID(hub, Constants.GET_LOG);
+    		
+    		NetworkUtils.sendEncryptedMessage(hub, host.getUsername().getBytes(), hubKey, Constants.SHARED_ENCRYPT_ALG);
+        	
+        	NetworkUtils.sendEncryptedMessage(hub, log.getBytes(), hubKey, Constants.SHARED_ENCRYPT_ALG);
+    	} catch (IOException e) {
+    		e.printStackTrace();
+    		System.exit(1);
+    	}
+    	
 		//send log to hub
 	}
 	

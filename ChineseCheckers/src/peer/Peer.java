@@ -100,7 +100,7 @@ public class Peer  {
 	            	loginFrame.setVisible(false);
 	            	loginFrame.dispose();
 	            	//displayHub();
-	                HubGui.createAndShowGUI(sharedKey);
+	                HubGui.createAndShowGUI(sharedKey, username);
 	            } else {
 	            	displayFailWindow();
 	            }

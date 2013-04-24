@@ -51,7 +51,7 @@ public class Game implements Runnable{
 			}
 			board.printBoard();
 			System.out.println("Winner!");
-			communication.endGame(getPlayer(rotationIndex));
+			communication.endGame(getPlayer(0), getPlayer(rotationIndex));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
