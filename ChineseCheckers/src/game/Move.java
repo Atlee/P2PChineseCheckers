@@ -81,4 +81,21 @@ public class Move {
 	public ArrayList<Point> getJumps() {
 		return moves;
 	}
+	
+	@Override
+	public boolean equals(Object o) {
+		Move m = (Move) o;
+		
+		if (!this.player.equals(m.player)) {
+			return false;
+		}
+		
+		for (int i = 0; i < moves.size(); i++) {
+			if (!this.moves.get(i).equals(m.moves.get(i))) {
+				return false;
+			}
+		}
+		
+		return true;
+	}
 }

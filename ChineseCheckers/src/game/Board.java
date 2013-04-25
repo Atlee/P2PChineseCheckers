@@ -88,14 +88,14 @@ public class Board {
 	
 	public Board(Game g) throws Exception {
 		this.game = g;
-		this.fillEdges();
 		for (int i = 0; i < middle.length; i++) {
 			for (int j = 0; j < middle[0].length; j++) {
-				if (middle[i][j]) {
+				if (board[i][j]) {
 					state[i][j] = empty;
 				}
 			}
 		}
+		this.fillEdges();
 	}
 	
 	private void fillEdges() throws Exception {
@@ -198,24 +198,24 @@ public class Board {
 		int newI, newJ;
 		switch (direction) {
 		case 0:
-			newI = from.x - 2;
-			newJ = from.y - 1;
+			newI = from.x - 1;
+			newJ = (from.x % 2 == 0 ? from.y - 1 : from.y);
 			break;
 		case 1:
-			newI = from.x - 2;
-			newJ = from.y + 1;
+			newI = from.x - 1;
+			newJ = (from.x % 2 == 0 ? from.y : from.y + 1);
 			break;
 		case 2:
 			newI = from.x;
 			newJ = from.y + 1;
 			break;
 		case 3:
-			newI = from.x + 2;
-			newJ = from.y + 1;
+			newI = from.x + 1;
+			newJ = (from.x % 2 == 0 ? from.y : from.y + 1);
 			break;
 		case 4:
-			newI = from.x + 2;
-			newJ = from.y - 1;
+			newI = from.x + 1;
+			newJ = (from.x % 2 == 0 ? from.y - 1 : from.y);
 			break;
 		case 5:
 			newI = from.x;

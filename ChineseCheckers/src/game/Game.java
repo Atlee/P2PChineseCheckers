@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
+import java.net.SocketException;
 
 public class Game implements Runnable{
 	//order of players in these lists are important
@@ -17,11 +18,19 @@ public class Game implements Runnable{
 	private Interaction communication;
 	private Scanner scn = new Scanner(System.in);
 	
+	//test
+	private ArrayList<Point> points = new ArrayList<Point>();
+	private Move point;
+	
 	public Game(List<Player> _players, Player _localPlayer, Interaction _communication) throws Exception {
 		players = extractPlayers(_players);
 		board = new Board(this);
 		localPlayer = _localPlayer;
 		communication = _communication;
+		
+		//test
+		points.add(new Point(0,0));
+		point = new Move(getPlayer(0), points);
 		
 		Thread t = new Thread(this);
 		t.start();
@@ -35,13 +44,15 @@ public class Game implements Runnable{
 				Move m;
 				if (this.localPlayersTurn()) {
 					m = getMove();
-					if (m != null) { //test
-						while (!Rules.checkMove(localPlayer, board, m)) {
-							//prompt invalid
-							m = getMove();
-						}
-						communication.shareMove(m);
+					if (m.equals(point)) { 
+						//test
+						break;
 					}
+					while (!Rules.checkMove(localPlayer, board, m)) {
+						//prompt invalid
+						m = getMove();
+					}
+					communication.shareMove(m);
 				} else {
 					m = communication.waitForOpponent();
 				}
@@ -51,11 +62,57 @@ public class Game implements Runnable{
 			}
 			board.printBoard();
 			System.out.println("Winner!");
-			communication.endGame(getPlayer(0), getPlayer(rotationIndex));
+			communication.endGame(getPlayer(0), getPlayer(rotationIndex % players.size()));
+		} catch (SocketException e) {
+			System.out.println("Lost connection to other player");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
+	
+	/*private Move getMove() {
+		//test
+		if (rotationIndex == 0) {
+			ArrayList<Point> p = new ArrayList<Point>();
+			p.add(new Point(3, 4));
+			p.add(new Point(4, 4));
+			Move m = new Move(players.get(0), p);
+			return m;
+		}
+		
+		if (rotationIndex == players.size()) {
+			ArrayList<Point> p = new ArrayList<Point>();
+			p.add(new Point(1, 5));
+			p.add(new Point(3, 4));
+			p.add(new Point(5, 3));
+			Move m = new Move(players.get(0), p);
+		
+			return m;
+		}
+		
+		if (rotationIndex == 2 * players.size()) {
+			ArrayList<Point> p = new ArrayList<Point>();
+			p.add(new Point(2, 6));
+			p.add(new Point(4, 5));
+			p.add(new Point(4, 3));
+			p.add(new Point(6, 4));
+			Move m = new Move(players.get(0), p);
+			
+			return m;
+		}
+		
+		if (rotationIndex == 3* players.size()) {
+			ArrayList<Point> p = new ArrayList<Point>();
+			p.add(new Point(2, 5));
+			p.add(new Point(4, 6));
+			Move m = new Move(players.get(0), p);
+			
+			return m;
+		}
+		else {
+			while(true);
+		}
+	}*/
 	
 	private Move getMove() {
 		Player currentPlayer = players.get(rotationIndex % players.size());
@@ -70,6 +127,11 @@ public class Game implements Runnable{
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+		} else if (x == -3) {
+			//test
+			ArrayList<Point> p = new ArrayList<Point>();
+			p.add(new Point(0, 0));
+			return new Move(getPlayer(rotationIndex % players.size()), p);
 		}
 		int y = scn.nextInt();
 		Point from = new Point(x, y);

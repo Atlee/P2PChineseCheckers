@@ -8,7 +8,7 @@ public class StatisticsStore {
 
 	private static final String STATS_FILE = "stats.txt";
 	
-	public void addStats(String user, byte[] blob) throws IOException {
+	public void addStats(String user, int[] stats) throws IOException {
 		if (containsUser(user)) {
 			System.out.println("user already in file");
 			return;
@@ -17,20 +17,24 @@ public class StatisticsStore {
 		File f = getStatsFile();
 		RandomAccessFile raf = new RandomAccessFile(f, "rw");
 		
+		long emptyIndex = containsUserHelp(" ");
 		long nextEntryStart = raf.length() + StatsFileEntry.MAX_BLOB_SIZE - (raf.length() % StatsFileEntry.MAX_BLOB_SIZE);
+		if (emptyIndex != -1) {
+			nextEntryStart = emptyIndex;
+		}
 		
-		(new StatsFileEntry(user, blob)).writeToFile(raf, nextEntryStart);
+		(new StatsFileEntry(user, stats)).writeToFile(raf, nextEntryStart);
 		
 		raf.close();
 	}
 	
-	public byte[] getStats(String user) throws IOException {
+	public int[] getStats(String user) throws IOException {
 		long userOffset = containsUserHelp(user);
 		if (userOffset != -1) {
 			File f = getStatsFile();
 			RandomAccessFile raf = new RandomAccessFile(f, "rw");
 			StatsFileEntry entry = StatsFileEntry.readEntryFromStream(raf, userOffset);
-			return entry.blob;
+			return entry.stats;
 		}
 		return null;
 	}
@@ -65,15 +69,15 @@ public class StatisticsStore {
 		return -1;
 	}
 	
-	public void replaceEntry(String user, byte[] blob) throws IOException {
+	public void replaceEntry(String user, int[] stats) throws IOException {
 		long userOffset = containsUserHelp(user);
 		if (userOffset == -1) {
-			addStats(user, blob);
+			addStats(user, stats);
 		} else {
 			File f = getStatsFile();
 			RandomAccessFile raf = new RandomAccessFile(f, "rw");
 			raf.seek(userOffset);
-			new StatsFileEntry(user, blob).writeToFile(raf, userOffset);
+			new StatsFileEntry(user, stats).writeToFile(raf, userOffset);
 			raf.close();
 		}
 	}
@@ -86,7 +90,7 @@ public class StatisticsStore {
 			File f = getStatsFile();
 			RandomAccessFile raf = new RandomAccessFile(f, "rw");
 			raf.seek(userOffset);
-			new StatsFileEntry(" ", " ".getBytes()).writeToFile(raf, userOffset);
+			new StatsFileEntry(" ", new int[0]).writeToFile(raf, userOffset);
 			raf.close();
 		}
 	}
@@ -104,11 +108,11 @@ class StatsFileEntry {
 	
 	public static final int MAX_BLOB_SIZE = 512;
 	String username;
-	byte[] blob;
+	int[] stats;
 	
-	public StatsFileEntry(String username, byte[] blob) {
+	public StatsFileEntry(String username, int[] stats) {
 		this.username = username;
-		this.blob = blob;
+		this.stats = stats;
 	}
 	
 	public boolean equals(String username) {
@@ -133,15 +137,17 @@ class StatsFileEntry {
 			usernameChars[i] = raf.readChar();
 		}
 		len = raf.readInt();
-		byte[] blob = new byte[len];
+		int[] stats = new int[len];
 		for (int i = 0; i < len; i++) {
-			blob[i] = raf.readByte();
+			stats[i] = raf.readInt();
 		}
-		return new StatsFileEntry(new String(usernameChars), blob);
+		return new StatsFileEntry(new String(usernameChars), stats);
 	}
 	
 	public void writeToFile(RandomAccessFile raf, long nextEntryStart) throws IOException {
-		if (blob == null || blob.length > MAX_BLOB_SIZE) {
+		if (stats == null || (Integer.SIZE * 2 + username.length() + (Integer.SIZE * stats.length)) > MAX_BLOB_SIZE) {
+			//if the stats are null or the size of the stats plus the size of hte usernaem
+			//is greater than the maximum allowed size
 			throw new IOException("Invalid data blob"); 
 		}
 		
@@ -156,7 +162,9 @@ class StatsFileEntry {
 		
 		raf.writeInt(username.length());
 		raf.writeChars(username);
-		raf.writeInt(this.blob.length);
-		raf.write(blob);
+		raf.writeInt(this.stats.length);
+		for (int i = 0; i < this.stats.length; i++) {
+			raf.writeInt(this.stats[i]);
+		}
 	}
 }

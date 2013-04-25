@@ -54,7 +54,9 @@ public class GameDescription {
 
 	public synchronized void addLog(String playername, String playerLog) {
 		players.put(playername, playerLog);
-		logs++;
+		if (players.get(playername) == null) {
+			logs++;
+		}
 		
 		//we have collected all logs
 		if (logs == players.size()) {

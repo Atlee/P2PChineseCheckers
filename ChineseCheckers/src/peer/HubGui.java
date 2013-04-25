@@ -157,10 +157,12 @@ public class HubGui extends JPanel
             try {
 				Tuple<InetAddress, Key> pair = HubGuiProtocols.joinGame(hostname, sharedKey);
 				Socket s = new Socket(pair.first(), Constants.CLIENT_HOST_PORT);
+				//Send the username to the host so he knows who hes playing
+				NetworkUtils.sendEncryptedMessage(s, username.getBytes(), pair.second(), Constants.SHARED_ENCRYPT_ALG);
 				//Chat c = new Chat(s);
 				//test
 				try {
-					Game g = createBasicGame(s, pair.second(), hostname, "local");
+					Game g = createBasicGame(s, pair.second(), hostname, username);
 				} catch (Exception ex) {
 					ex.printStackTrace();
 					System.exit(0);
@@ -208,7 +210,7 @@ public class HubGui extends JPanel
             
             Key gameKey = HubGuiProtocols.hostNewGame(sharedKey);
             updateHostList();
-            (new Thread(new GameStart(gameKey, sharedKey))).start();
+            (new Thread(new GameStart(gameKey, sharedKey, username))).start();
             //test
             //Chat c = new Chat(peer);
             //c.start();
@@ -290,10 +292,12 @@ class GameStart implements Runnable {
 	
 	private Key gameKey;
 	private Key hubKey;
+	private String hostname;
 	
-	public GameStart(Key gameKey, Key hubKey) {
+	public GameStart(Key gameKey, Key hubKey, String hostname) {
 		this.gameKey = gameKey;
 		this.hubKey = hubKey;
+		this.hostname = hostname;
 	}
 
 	@Override
@@ -309,8 +313,16 @@ class GameStart implements Runnable {
     	
     	Socket peer = displayWaitingWindow(host);
     	
+    	String peername = null;
     	try {
-        	Game g = createBasicGame(peer, "host", "peer");
+    		peername = new String(NetworkUtils.readEncryptedMessage(peer, gameKey, Constants.SHARED_ENCRYPT_ALG));
+    	} catch (IOException ex) {
+    		ex.printStackTrace();
+    		System.exit(1);
+    	}
+    	
+    	try {
+        	Game g = createBasicGame(peer, hostname, peername);
         } catch (Exception ex) {
         	ex.printStackTrace();
         	System.exit(1);

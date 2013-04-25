@@ -140,6 +140,9 @@ public class Hub {
 		case Constants.LOGOUT:
 			p = new UserLogoutProtocol();
 			break;
+		case Constants.GET_LOG:
+			p = new GetLogProtocol();
+			break;
 		default:
 			System.out.println("Unrecognized protocol ID");
 		}
