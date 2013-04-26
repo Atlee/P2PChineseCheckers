@@ -8,18 +8,11 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 
-import java.net.InetAddress;
-import java.net.Socket;
-
-import java.security.Key;
-import java.security.KeyStore;
-import java.security.PrivateKey;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.JInternalFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
@@ -28,15 +21,13 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import utils.Constants;
-import utils.EncryptUtils;
-import utils.NetworkUtils;
-import utils.Protocol;
 
 
 public class Peer  {  
 
 	private JTextField usernameTxt;
 	private JPasswordField passwordTxt;
+	private String username;
 	
 	public static void main(String[] args) throws IOException {		
 		new Peer();
@@ -48,11 +39,8 @@ public class Peer  {
     
     private void displayLoginGui() {
     	JFrame mainFrame = new JFrame("Chinese Checkers");
-        mainFrame.setSize(385,200);
+        mainFrame.setSize(350,200);
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        
-        JInternalFrame loginFrame = new JInternalFrame("Login");
-        loginFrame.setSize(400,200);
         
         JPanel loginPanel = new JPanel();
         
@@ -75,46 +63,49 @@ public class Peer  {
         loginPanel.add(loginButton);
         loginPanel.add(newUserButton);
         
-        loginFrame.getContentPane().add(BorderLayout.CENTER,loginPanel);
-        mainFrame.getContentPane().add(BorderLayout.CENTER,loginFrame);
+        mainFrame.getContentPane().add(BorderLayout.CENTER,loginPanel);
   
-        loginFrame.setVisible(true);
         mainFrame.setVisible(true);
     }
     
     class loginButtonListener implements ActionListener {  
         public void actionPerformed(ActionEvent e) {
-            String username = usernameTxt.getText();
-        	Socket s = NetworkUtils.handleCreateSocket();
-            final Key sharedKey = EncryptUtils.handleCreateSharedKey();
-            
+            username = usernameTxt.getText();            
             char[] password = passwordTxt.getPassword();
-            UserLoginProtocol login = new UserLoginProtocol();
-            login.sendCredentials(s, sharedKey, username, password);
-            //eliminate the password from memory as fast as possible
-            Arrays.fill(password, '_');
             try {
-	            if (login.isAuthenticated(s, sharedKey)) {
-	            	//dispose of the gui for logging in and display the gui for the hub
-	            	JFrame loginFrame = (JFrame) SwingUtilities.getWindowAncestor(((JButton) e.getSource()));
-	            	loginFrame.setVisible(false);
-	            	loginFrame.dispose();
-	            	//displayHub();
-	                HubGui.createAndShowGUI(sharedKey, username);
-	            } else {
-	            	displayFailWindow();
-	            }
+            	if (HubGuiProtocols.login(username, password)) {
+            		JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(((JButton) e.getSource()));
+	            	
+            		displayHub(frame);
+            	} else {
+            		displayWindow("Login Unsuccessful", "Authentication Failed");
+            	}
             } catch (IOException ex) {
-            	System.out.println("Error getting authentication result from hub");
-            	ex.printStackTrace();
-            	System.exit(1);
+            	System.out.println("Exception during login");
+            	displayWindow("Login Unsuccessful", "Exception during login");
+            } finally {
+	            //eliminate the password from memory as fast as possible
+	            Arrays.fill(password, '_');
             }
         }
     }
     
-    private static void displayHub() {
-    	JFrame frame = new JFrame("Chinese Checkers");
-		JLabel label = new JLabel("Welcome to the hub", SwingConstants.CENTER);
+    private void displayHub(JFrame frame) {
+    	frame.getContentPane().removeAll();
+    	
+    	frame.addWindowListener(new CloseListener());
+    	
+    	JComponent newContentPane = new HubGui(username);
+    	newContentPane.setOpaque(true);
+    	frame.setContentPane(newContentPane);
+    	
+    	frame.pack();
+    	frame.setVisible(true);
+    }
+    
+    public static void displayWindow(String title, String labelString) {
+    	JFrame frame = new JFrame(title);
+		JLabel label = new JLabel(labelString, SwingConstants.CENTER);
 		
 		//show success/failure window
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -123,21 +114,52 @@ public class Peer  {
 		frame.setVisible(true);
     }
     
-    private static void displayFailWindow() {
-    	JFrame frame = new JFrame("Error");
-		JLabel label = new JLabel("Login Unsuccessful", SwingConstants.CENTER);
-		
-		//show success/failure window
-		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		frame.getContentPane().add(label, BorderLayout.CENTER);
-		frame.setSize(300, 100);
-		frame.setVisible(true);
-    }
-    
     class newUserButtonListener implements ActionListener {
     	public void actionPerformed (ActionEvent e) {
-    		//open a new gui for account creation
-            new UserRegistrationProtocol();
+    		String username = usernameTxt.getText();
+    		
+    		//if the username is invalid
+    		if (!Constants.verifyUsername(username)) {
+    			displayWindow("User Registration Failed", "Invalid Username");
+    			return;
+    		}
+    		char[] password = passwordTxt.getPassword();
+    		if (!Constants.verifyPassword(password)) {
+    			displayWindow("User Registration Failed", "Invalid Password");
+    			return;
+    		}
+    		
+			try {
+				int response = HubGuiProtocols.register(username, passwordTxt.getPassword());
+				
+	    		switch(response) {
+	    		case 0: //success
+	    			displayWindow("User Created", "User successfully registered");
+	    			break;
+	    		case 1: //in use
+	    			displayWindow("User Registration Failed", "Username already in use");
+	    			break;
+	    		case 2: //generic fail
+	    		default:
+	    			displayWindow("User Registration Failed", "Unknown response from server");
+	    		}
+			} catch (IOException ex) {
+				displayWindow("Registration Unsuccessful", "Exception during registration");
+			}
+    	}
+    }
+    
+    class CloseListener extends WindowAdapter {
+    	
+    	public void windowClosing(WindowEvent e) {
+    		try {
+				HubGuiProtocols.logout();
+			} catch (IOException ex) {
+				//try to send a logout, but if it doesn't work don't do anything
+				;
+			}
+    		Frame frame = (Frame) e.getSource();
+    		frame.dispose();
     	}
     }
 } 

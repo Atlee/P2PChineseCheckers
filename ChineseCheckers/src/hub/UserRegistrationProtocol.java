@@ -35,16 +35,19 @@ public class UserRegistrationProtocol extends Protocol implements HubProtocol {
 				
 				username = new String(usernameBytes);
 				password = NetworkUtils.bytesToChars(passwordBytes);
-				
-				if (!pws.containsEntry(username)) {
-					usernameAvailable = true;
-					if (pws.addEntry(username, password)) {
-						message = (Constants.REGISTRATION_SUCCESS+username).getBytes();
+				if (Constants.verifyUsername(username) && Constants.verifyPassword(password)) {
+					if (!pws.containsEntry(username)) {
+						usernameAvailable = true;
+						if (pws.addEntry(username, password)) {
+							message = (Constants.REGISTRATION_SUCCESS+username).getBytes();
+						} else {
+							message = (Constants.REGISTRATION_FAILURE+username).getBytes();
+						}
 					} else {
-						message = (Constants.REGISTRATION_FAILURE+username).getBytes();
+						message = (Constants.REGISTRATION_IN_USE+username).getBytes();
 					}
 				} else {
-					message = (Constants.REGISTRATION_IN_USE+username).getBytes();
+					message = (Constants.REGISTRATION_FAILURE+username).getBytes();
 				}
 				
 				NetworkUtils.sendEncryptedMessage(s, message, sharedKey, Constants.SHARED_ENCRYPT_ALG);

@@ -38,6 +38,21 @@ public class UserLoginProtocol extends Protocol {
 		}
 	}
 	
+	public boolean login(Socket s, Key sharedKey, String username, char[] password) throws IOException {
+		sendSharedKey(s, sharedKey);
+		NetworkUtils.sendProtocolID(s, Constants.LOGIN);		
+		boolean output = false;
+		
+		NetworkUtils.sendEncryptedMessage(s, username.getBytes(), sharedKey, Constants.SHARED_ENCRYPT_ALG);
+		NetworkUtils.sendEncryptedMessage(s, NetworkUtils.charsToBytes(password), sharedKey, Constants.SHARED_ENCRYPT_ALG);
+		
+		String response = new String(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG));
+		if (response.equals(Constants.LOGIN_SUCCESS)) {
+			output = true;
+		}
+		return output;
+	}
+	
 	private void sendSharedKey(Socket s, Key sharedKey) {
 		PublicKey hubPublic = Constants.getHubPublicKey();
 		

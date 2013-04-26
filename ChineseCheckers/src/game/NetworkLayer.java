@@ -7,6 +7,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 
 import utils.Constants;
+import utils.EncryptUtils;
 import utils.NetworkUtils;
 import utils.SignUtils;
 
@@ -16,15 +17,13 @@ public class NetworkLayer implements Interaction {
 	Socket hub;
 	AuditLog log;
 	Key gameKey;
-	Key hubKey;
 	PublicKey verifyKey;
 	PrivateKey signKey;
 	
-	public NetworkLayer(Socket s, Key gameKey, Key hubKey) {
+	public NetworkLayer(Socket s, Key gameKey) {
 		opponent = s;
 		log = new AuditLog();
 		this.gameKey = gameKey;
-		this.hubKey = hubKey;
 		verifyKey = null;
 		signKey = null;
 	}
@@ -56,10 +55,12 @@ public class NetworkLayer implements Interaction {
 	public void endGame(Player host, Player winner) {
 		// add protocol for winner game end to hub
 		Socket hub = NetworkUtils.handleCreateSocket();
+		Key hubKey = EncryptUtils.handleCreateSharedKey();
+		
 		log.prepend("winner:"+ winner.getUsername());
 		
     	try {
-    		NetworkUtils.sendEncryptedMessage(hub, this.hubKey.getEncoded(), Constants.getHubPublicKey(), Constants.PUBLIC_ENCRYPT_ALG);
+    		NetworkUtils.sendEncryptedMessage(hub, hubKey.getEncoded(), Constants.getHubPublicKey(), Constants.PUBLIC_ENCRYPT_ALG);
     		NetworkUtils.sendProtocolID(hub, Constants.GET_LOG);
     		
     		NetworkUtils.sendEncryptedMessage(hub, host.getUsername().getBytes(), hubKey, Constants.SHARED_ENCRYPT_ALG);

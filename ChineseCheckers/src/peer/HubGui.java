@@ -61,11 +61,9 @@ public class HubGui extends JPanel
     private JButton joinButton;
     private JButton refreshButton;
     private JTextField newGameName;
-    private Key sharedKey;
  
-    public HubGui(Key sharedKey, String localUser) {
+    public HubGui(String localUser) {
         super(new BorderLayout());
-        this.sharedKey = sharedKey;
         this.username = localUser;
         
         //get the list of hsots from the server and update
@@ -125,7 +123,7 @@ public class HubGui extends JPanel
     private void updateHostList() {
     	List<String> hosts = null;
     	try {
-    		hosts = HubGuiProtocols.getHostList(sharedKey);
+    		hosts = HubGuiProtocols.getHostList();
     	} catch (IOException e) {
     		System.out.println("Error getting host list from server");
     		e.printStackTrace();
@@ -151,16 +149,13 @@ public class HubGui extends JPanel
             //This method can be called only if
             //there's a valid selection
             //so go ahead and remove whatever's selected.
-            int index = list.getSelectedIndex();
             String hostname = list.getSelectedValue();
             
             try {
-				Tuple<InetAddress, Key> pair = HubGuiProtocols.joinGame(hostname, sharedKey);
+				Tuple<InetAddress, Key> pair = HubGuiProtocols.joinGame(hostname);
 				Socket s = new Socket(pair.first(), Constants.CLIENT_HOST_PORT);
 				//Send the username to the host so he knows who hes playing
 				NetworkUtils.sendEncryptedMessage(s, username.getBytes(), pair.second(), Constants.SHARED_ENCRYPT_ALG);
-				//Chat c = new Chat(s);
-				//test
 				try {
 					Game g = createBasicGame(s, pair.second(), hostname, username);
 				} catch (Exception ex) {
@@ -181,7 +176,7 @@ public class HubGui extends JPanel
         	Player me = new Player(username, 1);
         	ArrayList<Player> l = new ArrayList<Player>();
         	l.add(host); l.add(me);
-        	Interaction i = new NetworkLayer(peer, gameKey, sharedKey);
+        	Interaction i = new NetworkLayer(peer, gameKey);
         	return new Game(l, me, i);
         }
     }
@@ -199,21 +194,14 @@ public class HubGui extends JPanel
         //Required by ActionListener.
         public void actionPerformed(ActionEvent e) {
             String name = newGameName.getText();
- 
-            //User didn't type in a unique name...
-            /*if (name.equals("") || alreadyInList(name)) {
-                Toolkit.getDefaultToolkit().beep();
-                newGameName.requestFocusInWindow();
-                newGameName.selectAll();
-                return;
-            }*/
             
-            Key gameKey = HubGuiProtocols.hostNewGame(sharedKey);
-            updateHostList();
-            (new Thread(new GameStart(gameKey, sharedKey, username))).start();
-            //test
-            //Chat c = new Chat(peer);
-            //c.start();
+            try {
+	            Key gameKey = HubGuiProtocols.hostNewGame();
+	            updateHostList();
+	            (new Thread(new GameStart(gameKey, username))).start();
+            } catch (IOException ex) {
+            	Peer.displayWindow("Host Failed", "Error Connecting to Hub");
+            }
         }
         
         //This method tests for string equality. You could certainly
@@ -270,33 +258,15 @@ public class HubGui extends JPanel
             }
         }
     }
-
-    public static void createAndShowGUI(Key sharedKey, String username2) {
-        //Create and set up the window.
-        JFrame frame = new JFrame("ListDemo");
-        frame.addWindowListener(new CloseListener(sharedKey));
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
- 
-        //Create and set up the content pane.
-        JComponent newContentPane = new HubGui(sharedKey, username2);
-        newContentPane.setOpaque(true); //content panes must be opaque
-        frame.setContentPane(newContentPane);
- 
-        //Display the window.
-        frame.pack();
-        frame.setVisible(true);
-    } 
 }
 
 class GameStart implements Runnable {
 	
 	private Key gameKey;
-	private Key hubKey;
 	private String hostname;
 	
-	public GameStart(Key gameKey, Key hubKey, String hostname) {
+	public GameStart(Key gameKey, String hostname) {
 		this.gameKey = gameKey;
-		this.hubKey = hubKey;
 		this.hostname = hostname;
 	}
 
@@ -356,25 +326,7 @@ class GameStart implements Runnable {
     	Player peer = new Player(peerName, 1);
     	ArrayList<Player> l = new ArrayList<Player>();
     	l.add(host); l.add(peer);
-    	Interaction i = new NetworkLayer(s, gameKey, hubKey);
+    	Interaction i = new NetworkLayer(s, gameKey);
     	return new Game(l, host, i);
-    }
-
-	
-}
-
-class CloseListener extends WindowAdapter {
-	
-	Key sharedKey;
-	
-	public CloseListener(Key sharedKey) {
-		this.sharedKey = sharedKey;
-	}
-	
-	public void windowClosing(WindowEvent e) {
-		System.out.println("Sending logout");
-		HubGuiProtocols.logout(sharedKey);
-		Frame frame = (Frame) e.getSource();
-		frame.dispose();
-	}
+    }	
 }
