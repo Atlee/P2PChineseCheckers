@@ -1,22 +1,15 @@
 package hub;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
@@ -30,6 +23,8 @@ public class PasswordStore {
 	private static final String SECURE_RANDOM_ALG = "SHA1PRNG";
 	private static final int SALT_SIZE = 8;
 	private static final String PASSWORD_FILE_NAME = "passwords.txt";
+	
+	private Lock lock = new ReentrantLock();
 	
 	/**
 	 * @param args
@@ -46,20 +41,27 @@ public class PasswordStore {
 	}
 	
 	public boolean authenticate(String username, char[] passwordAttempt) {
-		PasswordFileEntry entry = null;
+		boolean output = false;
+		lock.lock();
 		try {
-			entry = getEntry(username);
-		} catch (IOException e) {
-			e.printStackTrace();
+			PasswordFileEntry entry = null;
+			try {
+				entry = getEntry(username);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			if (entry == null) {
+				return false;
+			}
+			
+			byte[] encryptedAttemptedPW = encrypt(passwordAttempt, entry.salt);
+			
+			output = Arrays.equals(entry.encryptedPW, encryptedAttemptedPW);
+		} finally {
+			lock.unlock();
 		}
-		
-		if (entry == null) {
-			return false;
-		}
-		
-		byte[] encryptedAttemptedPW = encrypt(passwordAttempt, entry.salt);
-		
-		return Arrays.equals(entry.encryptedPW, encryptedAttemptedPW);
+		return output;
 	}
 	
 	/** returns the object representing the entry for the username
@@ -126,77 +128,102 @@ public class PasswordStore {
 	}
 	
 	public boolean containsEntry(String username) throws IOException {
-		long index = getUserIndex(username);
-		if (index == -1) {
-			return false;
+		boolean output = false;
+		lock.lock();
+		try {
+			long index = getUserIndex(username);
+			if (index == -1) {
+				output = false;
+			} else {
+				output = true;
+			}
+		} finally {
+			lock.unlock();
 		}
-		return true;
+		return output;
 	}
 	
 	public boolean addEntry(String username, char[] password) {
+		boolean output = false;
+		lock.lock();
 		try {
 			if (containsEntry(username)) {
-				return false;
-			}
+				output = false;
+			} else {
 
-			byte[] salt = generateSalt();
-			byte[] encryptedPW = encrypt(password, salt);
-			Arrays.fill(password, ' ');
-			long index = getUserIndex(" ");
-			File f = getPasswordFile();
-			RandomAccessFile raf = new RandomAccessFile(f, "rw");
-			if (index == -1) {
-				index = raf.length() + PasswordFileEntry.MAX_ENTRY_SIZE - (raf.length() % PasswordFileEntry.MAX_ENTRY_SIZE);
+				byte[] salt = generateSalt();
+				byte[] encryptedPW = encrypt(password, salt);
+				Arrays.fill(password, ' ');
+				long index = getUserIndex(" ");
+				File f = getPasswordFile();
+				RandomAccessFile raf = new RandomAccessFile(f, "rw");
+				if (index == -1) {
+					index = raf.length() + PasswordFileEntry.MAX_ENTRY_SIZE - (raf.length() % PasswordFileEntry.MAX_ENTRY_SIZE);
+				}
+				
+				PasswordFileEntry entry = new PasswordFileEntry(username, salt, encryptedPW);
+				
+				entry.writeEntry(raf, index);
+				raf.close();
+				output = true;
 			}
-			
-			PasswordFileEntry entry = new PasswordFileEntry(username, salt, encryptedPW);
-			
-			entry.writeEntry(raf, index);
-			raf.close();
-			return true;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			output = false;
+		} finally {
+			lock.unlock();
 		}
-		return false;
+		return output;
 	}
 	
 	public void replaceEntry(String user, char[] password) throws IOException {
-		long userOffset = getUserIndex(user);
-		if (userOffset == -1) {
-			addEntry(user, password);
-		} else {
-			File f = getPasswordFile();
-			RandomAccessFile raf = new RandomAccessFile(f, "rw");
-			raf.seek(userOffset);
-			
-			byte[] salt = generateSalt();
-			byte[] encryptedPW = encrypt(password, salt);
-			Arrays.fill(password, ' ');
-			
-			new PasswordFileEntry(user, salt, encryptedPW).writeEntry(raf, userOffset);
-			raf.close();
+		lock.lock();
+		try {
+			long userOffset = getUserIndex(user);
+			if (userOffset == -1) {
+				addEntry(user, password);
+			} else {
+				File f = getPasswordFile();
+				RandomAccessFile raf = new RandomAccessFile(f, "rw");
+				raf.seek(userOffset);
+				
+				byte[] salt = generateSalt();
+				byte[] encryptedPW = encrypt(password, salt);
+				Arrays.fill(password, ' ');
+				
+				new PasswordFileEntry(user, salt, encryptedPW).writeEntry(raf, userOffset);
+				raf.close();
+			}
+		} finally {
+			lock.unlock();
 		}
 	}
 	
 	public boolean removeEntry(String username) {
+		boolean output = false;
+		lock.lock();
 		try {
 			long index = getUserIndex(username);
 			
 			if (index == -1) {
-				return true;
+				output = true;
+			} else {
+				File f = getPasswordFile();
+				RandomAccessFile raf = new RandomAccessFile(f, "rw");
+				
+				PasswordFileEntry emptyEntry = new PasswordFileEntry(" ", new byte[0], new byte[0]);
+				emptyEntry.writeEntry(raf, index);
+				raf.close();
+				output = true;
 			}
-			File f = getPasswordFile();
-			RandomAccessFile raf = new RandomAccessFile(f, "rw");
-			
-			PasswordFileEntry emptyEntry = new PasswordFileEntry(" ", new byte[0], new byte[0]);
-			emptyEntry.writeEntry(raf, index);
-			raf.close();
-			return true;
 		} catch(IOException ex) {
 			ex.printStackTrace();
+			output = false;
+		} finally {
+			lock.unlock();
 		}
-		return false;
+		return output;
 	}
 	
 	private static byte[] generateSalt() {
