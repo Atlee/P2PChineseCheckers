@@ -8,6 +8,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 
+import java.security.GeneralSecurityException;
 import java.util.Arrays;
 
 import javax.swing.JButton;
@@ -28,6 +29,7 @@ public class Peer  {
 	private JTextField usernameTxt;
 	private JPasswordField passwordTxt;
 	private String username;
+	private HubGuiProtocols comm;
 	
 	public static void main(String[] args) throws IOException {		
 		new Peer();
@@ -73,14 +75,15 @@ public class Peer  {
             username = usernameTxt.getText();            
             char[] password = passwordTxt.getPassword();
             try {
-            	if (HubGuiProtocols.login(username, password)) {
+            	comm = new HubGuiProtocols(username, password);
+            	if (comm.login(username, password)) {
             		JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(((JButton) e.getSource()));
 	            	
             		displayHub(frame);
             	} else {
             		displayWindow("Login Unsuccessful", "Authentication Failed");
             	}
-            } catch (IOException ex) {
+            } catch (IOException | GeneralSecurityException ex) {
             	System.out.println("Exception during login");
             	displayWindow("Login Unsuccessful", "Exception during login");
             } finally {
@@ -95,7 +98,7 @@ public class Peer  {
     	
     	frame.addWindowListener(new CloseListener());
     	
-    	JComponent newContentPane = new HubGui(username);
+    	JComponent newContentPane = new HubGui(username, comm);
     	newContentPane.setOpaque(true);
     	frame.setContentPane(newContentPane);
     	
@@ -130,7 +133,8 @@ public class Peer  {
     		}
     		
 			try {
-				int response = HubGuiProtocols.register(username, passwordTxt.getPassword());
+				comm = new HubGuiProtocols(username, passwordTxt.getPassword());
+				int response = comm.register(username, passwordTxt.getPassword());
 				
 	    		switch(response) {
 	    		case 0: //success
@@ -143,7 +147,7 @@ public class Peer  {
 	    		default:
 	    			displayWindow("User Registration Failed", "Unknown response from server");
 	    		}
-			} catch (IOException ex) {
+			} catch (IOException | GeneralSecurityException ex) {
 				displayWindow("Registration Unsuccessful", "Exception during registration");
 			}
     	}
@@ -153,7 +157,7 @@ public class Peer  {
     	
     	public void windowClosing(WindowEvent e) {
     		try {
-				HubGuiProtocols.logout();
+				comm.logout();
 			} catch (IOException ex) {
 				//try to send a logout, but if it doesn't work don't do anything
 				;

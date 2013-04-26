@@ -30,14 +30,9 @@ import javax.net.ssl.TrustManagerFactory;
 
 public class NetworkUtils {
 
-	public static void sendProtocolID(Socket s, int protocolID) {
-		try {
-			DataOutputStream out = new DataOutputStream(s.getOutputStream());
-			out.writeInt(protocolID);
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
+	public static void sendProtocolID(SSLSocket s, int protocolID) throws IOException {
+		ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+		out.writeInt(protocolID);
 	}
 	
 	public static void sendKey(Socket s, PublicKey key) {
@@ -82,6 +77,10 @@ public class NetworkUtils {
 			e.printStackTrace();
 		}
 		return ss;
+	}
+	
+	public static SSLSocket createSecureSocket(KeyStore truststore, KeyStore keystore, char[] passphrase) throws IOException {
+		return createSecureSocket(InetAddress.getLocalHost(), Constants.HUB_PORT, truststore, keystore, new String(passphrase));
 	}
 	
 	public static SSLSocket createSecureSocket( InetAddress host, int port , KeyStore truststore, KeyStore keystore, String passphrase ) {

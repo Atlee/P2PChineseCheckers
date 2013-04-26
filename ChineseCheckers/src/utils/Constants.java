@@ -50,6 +50,9 @@ public class Constants {
 	private static final int MIN_PW_LEN = 8;
 	private static final int MAX_USERNAME_LEN = 45;
 	
+	public static final String VERIFY_SUCCESS = "VERIFY_SUCCESS";
+	public static final String VERIFY_FAILURE = "VERIFY_FAILURE";
+	
 	private static PublicKey hubKey = null;
 	
 	public static PublicKey getHubPublicKey() {

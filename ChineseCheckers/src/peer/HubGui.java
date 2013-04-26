@@ -57,14 +57,16 @@ public class HubGui extends JPanel
     private static final String JOIN_STRING = "Join";
     private static final String REFRESH_STRING = "Refresh";
     private static final String TEXT_FIELD_DEFAULT = "New Game Name";
+    private final HubGuiProtocols comm;
     private final String username;
     private JButton joinButton;
     private JButton refreshButton;
     private JTextField newGameName;
  
-    public HubGui(String localUser) {
+    public HubGui(String username, HubGuiProtocols comm) {
         super(new BorderLayout());
-        this.username = localUser;
+        this.username = username;
+        this.comm = comm;
         
         //get the list of hsots from the server and update
         //listModel to represent that list
@@ -123,7 +125,7 @@ public class HubGui extends JPanel
     private void updateHostList() {
     	List<String> hosts = null;
     	try {
-    		hosts = HubGuiProtocols.getHostList();
+    		hosts = comm.getHostList();
     	} catch (IOException e) {
     		System.out.println("Error getting host list from server");
     		e.printStackTrace();
@@ -152,7 +154,7 @@ public class HubGui extends JPanel
             String hostname = list.getSelectedValue();
             
             try {
-				Tuple<InetAddress, Key> pair = HubGuiProtocols.joinGame(hostname);
+				Tuple<InetAddress, Key> pair = comm.joinGame(hostname);
 				Socket s = new Socket(pair.first(), Constants.CLIENT_HOST_PORT);
 				//Send the username to the host so he knows who hes playing
 				NetworkUtils.sendEncryptedMessage(s, username.getBytes(), pair.second(), Constants.SHARED_ENCRYPT_ALG);
@@ -193,7 +195,7 @@ public class HubGui extends JPanel
         //Required by ActionListener.
         public void actionPerformed(ActionEvent e) {
             try {
-	            Key gameKey = HubGuiProtocols.hostNewGame();
+	            Key gameKey = comm.hostNewGame();
 	            updateHostList();
 	            (new Thread(new GameStart(gameKey, username))).start();
             } catch (IOException ex) {
