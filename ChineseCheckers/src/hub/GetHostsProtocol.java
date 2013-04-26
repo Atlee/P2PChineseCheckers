@@ -1,29 +1,36 @@
 package hub;
 
 import java.io.IOException;
-import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.security.Key;
-import java.util.HashMap;
+import java.util.Set;
 
-import utils.Constants;
-import utils.NetworkUtils;
+import javax.net.ssl.SSLSocket;
 
-public class GetHostsProtocol implements HubProtocol {
+public class GetHostsProtocol extends HubProtocol {
+
+	public GetHostsProtocol(SSLSocket client) throws IOException {
+		super(client);
+	}
 
 	@Override
-	public void execute(Socket s, Key sharedKey) {
-		HashMap<String, User> hosts = Hub.getUserHost();
-		byte[] listLenBytes = ByteBuffer.allocate(4).putInt(hosts.size()).array();
+	public void run() {
+		Set<String> hosts = Hub.getHosts();
 		try {
-			NetworkUtils.sendEncryptedMessage(s, listLenBytes, sharedKey, Constants.SHARED_ENCRYPT_ALG);
+			out.writeInt(hosts.size());
 			
-			for (String hostname : hosts.keySet()) {
-				NetworkUtils.sendEncryptedMessage(s, hostname.getBytes(), sharedKey, Constants.SHARED_ENCRYPT_ALG);
+			for (String hostname : hosts) {
+				out.writeUTF(hostname);
 			}
 		} catch (IOException e) {
 			System.out.println("Error GetHostProtocol");
 			e.printStackTrace();
+		}
+		
+		try {
+			out.close();
+			in.close();
+			client.close();
+		} catch (IOException ex) {
+			;
 		}
 	}
 }

@@ -1,69 +1,76 @@
 package hub;
 
 import java.io.DataInputStream;
-import java.io.FileDescriptor;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.security.InvalidKeyException;
 import java.security.Key;
-import java.security.KeyFactory;
-import java.security.KeyPair;
 import java.security.KeyStore;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.SecureRandom;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.UUID;
+import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.DESKeySpec;
-import javax.crypto.spec.SecretKeySpec;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLSocket;
 
 import utils.Constants;
-import utils.EncryptUtils;
-import utils.NetworkUtils;
-import utils.Protocol;
 
 
 public class Hub {
-
-	//a list of all users currently logged in
-	private static HashMap<InetAddress, User> loggedInUsers;
-	//a list of all users currently hosting games
-	private static HashMap<String, User> hosts;
 	
-	private static HashMap<String, GameDescription> gamesByHost = new HashMap<String, GameDescription>();
-	private static HashSet<String> untrustworthy = new HashSet<String>();
+	private final KeyStore keyStore;
+	private final char[] ksPassword;
 	
-	public static void main(String[] args) {		
-		ServerSocket hub = handleCreateServerSocket();
+	private static HashMap<String, Integer> sessionKeyMap = new HashMap<String, Integer>();
+	private static Lock sessionKeyLock = new ReentrantLock();
+	private static HashMap<String, InetAddress> addrMap = new HashMap<String, InetAddress>();
+	private static Lock addrMapLock = new ReentrantLock();
+	//games that have not had their stats collected
+	private static HashMap<String, GameDescription> games = new HashMap<String, GameDescription>();
+	private static Lock gamesLock = new ReentrantLock();
+	//users who are currently hosting
+	private static HashSet<String> hosts = new HashSet<String>();
+	private static Lock hostsLock = new ReentrantLock();
+	
+	public static void main(String[] args) throws Exception {
+		Hub hub = new Hub(Constants.HUB_KS_FILENAME, Constants.HUB_KS_PASSWORD);
+		hub.openHub();
+	}
+	
+	public Hub( String keyStoreFilename, String ksPassword ) throws Exception {
+		// Load the keystore containing the Hub's private key
+		this.ksPassword = ksPassword.toCharArray();
+		this.keyStore = KeyStore.getInstance("JKS");
+		FileInputStream ksFile = new FileInputStream(keyStoreFilename);
+		try {
+			keyStore.load(ksFile, this.ksPassword);
+		} finally {
+			ksFile.close();
+		}
+	}
+	
+	protected void openHub() throws Exception {
+		SSLContext sslContext = SSLContext.getInstance("TLS");
+		KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+		kmf.init(keyStore, ksPassword);
+		sslContext.init(kmf.getKeyManagers(), null, null);
+		SSLServerSocketFactory sf = sslContext.getServerSocketFactory();
+		SSLServerSocket ss = (SSLServerSocket) sf.createServerSocket(Constants.HUB_PORT);
 		
 		while (true) {
 			try {
 				// wait for a peer to connect
-				Socket peer = handleCreateSocket(hub);
+				SSLSocket peer = (SSLSocket) ss.accept();
 				if (peer != null) {
-					Key sharedKey = handleGetSharedKey(peer);
 					HubProtocol p = selectProtocol(peer);
 					if(p != null) {
-						p.execute(peer, sharedKey);
+						new Thread(p).start();
 					}
-					closeSocket(peer);
 				}
 			} catch (IOException e) {
 				System.out.println("Error processing client protocol");
@@ -71,49 +78,7 @@ public class Hub {
 		}
 	}
 	
-	public static User getUser(InetAddress i) {
-		if (loggedInUsers == null || !loggedInUsers.containsKey(i)) {
-			loggedInUsers = new HashMap<InetAddress, User>();
-			return null;
-		}
-		
-		return loggedInUsers.get(i);
-	}
-	
-	public static HashMap<String, User> getUserHost() {
-		if (hosts == null) {
-			hosts = new HashMap<String, User>();
-		}
-		return hosts;
-	}
-	
-	public static void addUserLogin(User u) {
-		if (loggedInUsers == null) {
-			loggedInUsers = new HashMap<InetAddress, User>();
-		}
-		loggedInUsers.put(u.getAddr(), u);
-	}
-	
-	public static void addUserHost(User u) {
-		if (hosts == null) {
-			hosts = new HashMap<String, User>();
-		}
-		hosts.put(u.getUsername(), u);
-	}
-	
-	public static void removeUserLogin(InetAddress addr) {
-		if (loggedInUsers == null) {
-			return;
-		}
-		loggedInUsers.remove(addr);
-	}
-	
-	private static void closeSocket(Socket s) throws IOException {
-			s.getOutputStream().close();
-			s.close();
-	}
-	
-	private static HubProtocol selectProtocol(Socket s) throws IOException {
+	private static HubProtocol selectProtocol(SSLSocket s) throws IOException {
 		DataInputStream in = null;
 		int id = -1;
 		HubProtocol p = null;
@@ -123,25 +88,25 @@ public class Hub {
 
 		switch (id) {
 		case Constants.REGISTER:
-			p = new UserRegistrationProtocol();
+			p = new UserRegistrationProtocol(s);
 			break;
 		case Constants.LOGIN:
-			p = new UserLoginProtocol();
+			p = new UserLoginProtocol(s);
 			break;
 		case Constants.GET_HOSTS:
-			p = new GetHostsProtocol();
+			p = new GetHostsProtocol(s);
 			break;
 		case Constants.NEW_HOST:
-			p = new NewHostProtocol();
+			p = new NewHostProtocol(s);
 			break;
 		case Constants.JOIN_GAME:
-			p = new JoinHostProtocol();
+			p = new JoinHostProtocol(s);
 			break;
 		case Constants.LOGOUT:
-			p = new UserLogoutProtocol();
+			p = new UserLogoutProtocol(s);
 			break;
 		case Constants.GET_LOG:
-			p = new GetLogProtocol();
+			p = new GetLogProtocol(s);
 			break;
 		default:
 			System.out.println("Unrecognized protocol ID");
@@ -149,55 +114,120 @@ public class Hub {
 		return p;
 	}
 	
-	private static ServerSocket handleCreateServerSocket() {
-		// start Hub listening on port 4321
-		ServerSocket hub = null;
+	public static void loginUser(InetAddress addr, String username, int sessionKey) {
+		sessionKeyLock.lock();
+		addrMapLock.lock();
 		try {
-			hub = new ServerSocket(Constants.HUB_PORT);
-		} catch (IOException e) {
-			System.out.println("Could not listen on port " + Constants.HUB_PORT);
-			e.printStackTrace();
-			System.exit(-1);
+			sessionKeyMap.put(username, sessionKey);
+			addrMap.put(username, addr);
+		} finally {
+			sessionKeyLock.unlock();
+			addrMapLock.unlock();
 		}
-		return hub;
 	}
 	
-	private static Socket handleCreateSocket(ServerSocket server) throws IOException {
-		Socket peer = null;
-		// accept a peer connection
-		peer = server.accept();
-		return peer;
-	}
-	
-	private static Key handleGetSharedKey(Socket s) throws IOException {
+	public static InetAddress getAddr(String username) {
+		InetAddress output = null;
+		addrMapLock.lock();
 		try {
-			PrivateKey hubPrivate = HubConstants.getHubPrivate();
-			byte[] sharedKeyBytes = NetworkUtils.readEncryptedMessage(s, hubPrivate, Constants.PUBLIC_ENCRYPT_ALG);
+			output = addrMap.get(username);
+		} finally {
+			addrMapLock.unlock();
+		}
+		return output;
+	}
+	
+	public static void logoutUser(String username) {
+		sessionKeyLock.lock();
+		addrMapLock.lock();
+		hostsLock.lock();
+		try {
+			sessionKeyMap.remove(username);
+			addrMap.remove(username);
 			
-			SecretKeyFactory skf = SecretKeyFactory.getInstance(Constants.SHARED_ENCRYPT_ALG);
-			DESKeySpec keySpec = new DESKeySpec(sharedKeyBytes);
-			return skf.generateSecret(keySpec);
-		} catch (InvalidKeySpecException | NoSuchAlgorithmException | InvalidKeyException e) {
-			e.printStackTrace();
-			System.exit(1);
+		} finally {
+			sessionKeyLock.unlock();
+			addrMapLock.unlock();
+			hostsLock.unlock();
 		}
-		return null;
-	}
-
-	synchronized public static void addGameDescription(String host, GameDescription gd) {
-		gamesByHost.put(host, gd);
 	}
 	
-	synchronized public static GameDescription getGameDescription(String host) {
-		return gamesByHost.get(host);
+
+	public static void hostNewGame(String host) {
+		GameDescription gd = new GameDescription(host);
+		gamesLock.lock();
+		hostsLock.lock();
+		try {
+			games.put(host, gd);
+			hosts.add(host);
+		} finally {
+			gamesLock.unlock();
+			hostsLock.unlock();
+		}
+	}
+	
+	public static Key getGameKey(String host) {
+		Key output = null;
+		gamesLock.lock();
+		hostsLock.lock();
+		try {
+			GameDescription gd = games.get(host);
+			output = gd.getKey();
+		} finally {
+			gamesLock.unlock();
+			hostsLock.unlock();
+		}
+		return output;
+	}
+	
+	public static void addPlayerToGame(String host, String player) {
+		gamesLock.lock();
+		try {
+			games.get(host).addPlayer(player);
+		} finally {
+			gamesLock.unlock();
+		}
 	}
 
-	synchronized public static void removeGameDescription(String host) {
-		gamesByHost.remove(host);
+	public static void removeGameDescription(String host) {
+		gamesLock.lock();
+		try {
+			games.remove(host);
+		} finally {
+			gamesLock.unlock();
+		}
+	}
+	
+	public static final Set<String> getHosts() {
+		Set<String> output = null;
+		hostsLock.lock();
+		try {
+			output = hosts;
+		} finally {
+			hostsLock.unlock();
+		}
+		return output;
+	}
+	
+	public static void removeHost(String host) {
+		hostsLock.lock();
+		try {
+			hosts.remove(host);
+		} finally {
+			hostsLock.unlock();
+		}
 	}
 
-	synchronized public static void flagPlayers(String player1, String player2) {
-		untrustworthy.add(player1);
-		untrustworthy.add(player2);		
+	public static boolean verifySession(String username, int sessionKey) {
+		boolean output = false;
+		sessionKeyLock.lock();
+		try {
+			if (sessionKey == sessionKeyMap.get(username)) {
+				output = true;
+			}
+		} finally {
+			sessionKeyLock.unlock();
+		}
+		return output;
 	}
 }

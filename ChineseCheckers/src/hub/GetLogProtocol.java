@@ -4,13 +4,19 @@ import java.io.IOException;
 import java.net.Socket;
 import java.security.Key;
 
+import javax.net.ssl.SSLSocket;
+
 import utils.Constants;
 import utils.NetworkUtils;
 
-public class GetLogProtocol implements HubProtocol {
+public class GetLogProtocol extends HubProtocol {
+
+	public GetLogProtocol(SSLSocket client) throws IOException {
+		super(client);
+	}
 
 	@Override
-	public void execute(Socket s, Key sharedKey) {
+	public void run() {
 		try {
 			String host = new String(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG));
 			String playerLog = new String(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG));

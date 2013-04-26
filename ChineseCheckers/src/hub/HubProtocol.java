@@ -1,10 +1,37 @@
 package hub;
 
-import java.net.Socket;
-import java.security.Key;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
-public interface HubProtocol {
+import javax.net.ssl.SSLSocket;
+
+public abstract class HubProtocol implements Runnable {
+	protected SSLSocket client;
+	protected ObjectOutputStream out;
+	protected ObjectInputStream in;
+	protected String username;
+	protected int sessionKey;
 	
-	public void execute(Socket s, Key sharedKey);
-
+	public HubProtocol(SSLSocket client) throws IOException {
+		this.client = client;
+		this.out = new ObjectOutputStream(client.getOutputStream());
+		this.in = new ObjectInputStream(client.getInputStream());
+	}
+	
+	abstract public void run();
+	
+	public boolean verifySession() {
+		boolean output = false;
+		try {
+			username = in.readUTF();
+			sessionKey = in.readInt();
+			if (Hub.verifySession(username, sessionKey)) {
+				output = true;
+			}
+		} catch (IOException ex) {
+			;
+		}
+		return output;
+	}
 }

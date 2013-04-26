@@ -1,33 +1,42 @@
 package hub;
 
 import java.io.IOException;
-import java.net.Socket;
-import java.security.Key;
-import java.util.HashMap;
+import java.net.InetAddress;
+import javax.net.ssl.SSLSocket;
 
 import utils.Constants;
-import utils.NetworkUtils;
 
-public class JoinHostProtocol implements HubProtocol {
+public class JoinHostProtocol extends HubProtocol {
+
+	public JoinHostProtocol(SSLSocket client) throws IOException {
+		super(client);
+	}
 
 	@Override
-	public void execute(Socket s, Key sharedKey) {
+	public void run() {
 		try {
-			String hostname = new String(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG));
+			if (verifySession()) {
+				out.writeUTF(Constants.VERIFY_SUCCESS+username);
+				
+				String hostname = in.readUTF();
+				
+				InetAddress addr = Hub.getAddr(hostname);
+				
+				out.writeObject(addr);
+				out.writeObject(Hub.getGameKey(hostname));
+				
+				Hub.addPlayerToGame(hostname, username);
+				Hub.removeHost(hostname);
+			} else {
+				out.writeUTF(Constants.VERIFY_FAILURE+username);				
+			}
 			
-			HashMap<String, User> hosts = Hub.getUserHost();
-			NetworkUtils.sendEncryptedMessage(s, hosts.get(hostname).getAddr().getAddress(), sharedKey, Constants.SHARED_ENCRYPT_ALG);
-			GameDescription gd = Hub.getGameDescription(hostname);
-			
-			String player = Hub.getUser(s.getInetAddress()).getUsername();
-			gd.addPlayer(player);
-			
-			NetworkUtils.sendEncryptedMessage(s, gd.getKey().getEncoded(), sharedKey, Constants.SHARED_ENCRYPT_ALG);
-			hosts.remove(hostname);
+			out.close();
+			in.close();
+			client.close();
 		} catch (IOException e) {
 			
 		}
-		
 	}
 
 }

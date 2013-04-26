@@ -1,28 +1,21 @@
 package hub;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
 import java.net.SocketException;
-import java.nio.ByteBuffer;
-import java.security.Key;
-import java.security.KeyStore;
-import java.security.PublicKey;
+import javax.net.ssl.SSLSocket;
 
 import utils.Constants;
-import utils.EncryptUtils;
-import utils.NetworkUtils;
-import utils.Protocol;
 
 
-public class UserRegistrationProtocol extends Protocol implements HubProtocol {
+public class UserRegistrationProtocol extends HubProtocol {
 	
-	public void execute(Socket s, Key sharedKey) {
+	public UserRegistrationProtocol(SSLSocket client) throws IOException {
+		super(client);
+	}
+
+	public void run() {
 		try {			
-			byte[] message;
-			byte[] usernameBytes;
-			byte[] passwordBytes;
+			String message;
 			PasswordStore pws = new PasswordStore();
 			
 			boolean usernameAvailable = false;
@@ -30,35 +23,39 @@ public class UserRegistrationProtocol extends Protocol implements HubProtocol {
 			char[] password = null;
 			
 			while(!usernameAvailable) {
-				usernameBytes = NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG);
-				passwordBytes = NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG);
-				
-				username = new String(usernameBytes);
-				password = NetworkUtils.bytesToChars(passwordBytes);
+				username = in.readUTF();
+				password = in.readUTF().toCharArray();
 				if (Constants.verifyUsername(username) && Constants.verifyPassword(password)) {
 					if (!pws.containsEntry(username)) {
 						usernameAvailable = true;
 						if (pws.addEntry(username, password)) {
-							message = (Constants.REGISTRATION_SUCCESS+username).getBytes();
+							message = (Constants.REGISTRATION_SUCCESS+username);
 						} else {
-							message = (Constants.REGISTRATION_FAILURE+username).getBytes();
+							message = (Constants.REGISTRATION_FAILURE+username);
 						}
 					} else {
-						message = (Constants.REGISTRATION_IN_USE+username).getBytes();
+						message = (Constants.REGISTRATION_IN_USE+username);
 					}
 				} else {
-					message = (Constants.REGISTRATION_FAILURE+username).getBytes();
+					message = (Constants.REGISTRATION_FAILURE+username);
 				}
 				
-				NetworkUtils.sendEncryptedMessage(s, message, sharedKey, Constants.SHARED_ENCRYPT_ALG);
+				out.writeUTF(message);
 			}
 			
 		} catch (SocketException e) {
-			return;
+			;
 		} catch (IOException e) {
 			System.out.println("Error executing UserRegistrationProtocol");
 			e.printStackTrace();
-			System.exit(1);
+		} finally {
+			try {
+				out.close();
+				in.close();
+				client.close();
+			} catch (IOException ex) {
+				;
+			}
 		}
 	}
 }

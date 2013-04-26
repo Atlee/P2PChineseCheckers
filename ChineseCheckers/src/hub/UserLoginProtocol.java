@@ -1,31 +1,46 @@
 package hub;
 
 import java.io.IOException;
-import java.net.Socket;
-import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+
+import javax.net.ssl.SSLSocket;
 
 import utils.Constants;
-import utils.NetworkUtils;
 
-public class UserLoginProtocol implements HubProtocol {
+public class UserLoginProtocol extends HubProtocol {
+
+	public UserLoginProtocol(SSLSocket client) throws IOException {
+		super(client);
+		// TODO Auto-generated constructor stub
+	}
 
 	@Override
-	public void execute(Socket s, Key sharedKey) {
+	public void run() {
 		PasswordStore pws = new PasswordStore();
 		try {
-			String username = new String(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG));
-			char[] password = NetworkUtils.bytesToChars(NetworkUtils.readEncryptedMessage(s, sharedKey, Constants.SHARED_ENCRYPT_ALG));
+			String username = in.readUTF();
+			char[] password = in.readUTF().toCharArray();
 			
-			byte[] authenticateResponse = null;
+			String authenticateResponse = null;
 			if (pws.authenticate(username, password)) {
-				Hub.addUserLogin(new User(s.getInetAddress(), username));
-				authenticateResponse = Constants.LOGIN_SUCCESS.getBytes(); 
+				//create a session key for this user
+				SecureRandom rand = SecureRandom.getInstance(Constants.RANDOM_ALGORITHM);
+				rand.setSeed((username + new String(password)).getBytes());
+				
+				int sessionKey = rand.nextInt();
+				out.writeInt(sessionKey);
+				
+				Hub.loginUser(client.getInetAddress(), username, sessionKey);
+				authenticateResponse = Constants.LOGIN_SUCCESS; 
 			} else {
-				authenticateResponse = Constants.LOGIN_FAILURE.getBytes();
+				authenticateResponse = Constants.LOGIN_FAILURE;
 			}
-			NetworkUtils.sendEncryptedMessage(s, authenticateResponse, sharedKey, Constants.SHARED_ENCRYPT_ALG);
+			out.writeUTF(authenticateResponse);
 		} catch (IOException e) {
 			System.out.println("Error reading credentials from user");
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		}
 	}

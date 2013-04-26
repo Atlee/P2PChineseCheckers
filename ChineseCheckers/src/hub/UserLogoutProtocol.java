@@ -1,14 +1,18 @@
 package hub;
 
-import java.net.InetAddress;
-import java.net.Socket;
-import java.security.Key;
+import java.io.IOException;
+import javax.net.ssl.SSLSocket;
 
-public class UserLogoutProtocol implements HubProtocol {
+public class UserLogoutProtocol extends HubProtocol {
+
+	public UserLogoutProtocol(SSLSocket client) throws IOException {
+		super(client);
+	}
 
 	@Override
-	public void execute(Socket s, Key sharedKey) {
-		InetAddress addr = s.getInetAddress();
-		Hub.removeUserLogin(addr);
+	public void run() {
+		if (verifySession()) {
+			Hub.logoutUser(username);
+		}
 	}
 }

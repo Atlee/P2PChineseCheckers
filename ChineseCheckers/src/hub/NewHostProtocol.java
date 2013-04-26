@@ -1,32 +1,38 @@
 package hub;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.security.Key;
+import javax.net.ssl.SSLSocket;
 
 import utils.Constants;
-import utils.NetworkUtils;
 
-public class NewHostProtocol implements HubProtocol {
+public class NewHostProtocol extends HubProtocol {
+
+	public NewHostProtocol(SSLSocket client) throws IOException {
+		super(client);
+	}
 
 	@Override
-	public void execute(Socket s, Key sharedKey) {
-		//TODO: add a success/failure response
-		InetAddress addr = s.getInetAddress();
-		User u = Hub.getUser(addr);
-		
-		GameDescription gd = new GameDescription(u.getUsername());
-		
-		Hub.addGameDescription(gd.getHost(), gd);
+	public void run() {
 		try {
-			System.out.println("Sending game key");
-			NetworkUtils.sendEncryptedMessage(s, gd.getKey().getEncoded(), sharedKey, Constants.SHARED_ENCRYPT_ALG);
+			if (verifySession()) {
+				out.writeUTF(Constants.VERIFY_SUCCESS+username);
+				Hub.hostNewGame(username);
+				out.writeObject(Hub.getGameKey(username));
+			} else {
+				out.writeUTF(Constants.VERIFY_FAILURE+username);
+			}
 		} catch (IOException e) {
-			
+			System.out.println("Error writing GameKey");
+			//if the write fails, remove the user from the host lists
+			Hub.logoutUser(username);
 		}
-		
-		Hub.addUserHost(u);
+		try {
+			in.close();
+			out.close();
+			client.close();
+		} catch (IOException ex) {
+			;
+		}
 	}
 
 }
