@@ -1,14 +1,15 @@
 package hub;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.Set;
 
 import javax.net.ssl.SSLSocket;
 
 public class GetHostsProtocol extends HubProtocol {
 
-	public GetHostsProtocol(SSLSocket client) throws IOException {
-		super(client);
+	public GetHostsProtocol(SSLSocket client, ObjectInputStream in) throws IOException {
+		super(client, in);
 	}
 
 	@Override

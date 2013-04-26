@@ -21,6 +21,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
+import test.MTHubTest;
 import utils.Constants;
 
 
@@ -133,8 +134,7 @@ public class Peer  {
     		}
     		
 			try {
-				comm = new HubGuiProtocols(username, passwordTxt.getPassword());
-				int response = comm.register(username, passwordTxt.getPassword());
+				int response = HubGuiProtocols.register(username, new String(passwordTxt.getPassword()));
 				
 	    		switch(response) {
 	    		case 0: //success
@@ -149,6 +149,9 @@ public class Peer  {
 	    		}
 			} catch (IOException | GeneralSecurityException ex) {
 				displayWindow("Registration Unsuccessful", "Exception during registration");
+			} catch (ClassNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
 			}
     	}
     }

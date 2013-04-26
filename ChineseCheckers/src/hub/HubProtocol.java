@@ -13,10 +13,10 @@ public abstract class HubProtocol implements Runnable {
 	protected String username;
 	protected int sessionKey;
 	
-	public HubProtocol(SSLSocket client) throws IOException {
+	public HubProtocol(SSLSocket client, ObjectInputStream in) throws IOException {
 		this.client = client;
 		this.out = new ObjectOutputStream(client.getOutputStream());
-		this.in = new ObjectInputStream(client.getInputStream());
+		this.in = in;
 	}
 	
 	abstract public void run();

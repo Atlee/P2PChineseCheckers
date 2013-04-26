@@ -1,6 +1,7 @@
 package hub;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.Socket;
 import java.security.Key;
 
@@ -11,8 +12,8 @@ import utils.NetworkUtils;
 
 public class GetLogProtocol extends HubProtocol {
 
-	public GetLogProtocol(SSLSocket client) throws IOException {
-		super(client);
+	public GetLogProtocol(SSLSocket client, ObjectInputStream in) throws IOException {
+		super(client, in);
 	}
 
 	@Override

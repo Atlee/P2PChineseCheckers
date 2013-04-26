@@ -1,7 +1,9 @@
 package hub;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.net.InetAddress;
 import java.security.KeyStore;
 
 import javax.net.ssl.KeyManagerFactory;
@@ -50,8 +52,7 @@ public class MultiThreadedHub {
 		SSLServerSocket ss = (SSLServerSocket) sf.createServerSocket(Constants.HUB_PORT);
 
 		// Begin accepting SSL client connections...
-		while(true) {
-			
+		while(true) {			
 			if(verboseHub) {
 				System.out.println("Online: " + online.list().toString());
 				System.out.println("Ready to accept an SSL client connection...");
@@ -87,9 +88,7 @@ public class MultiThreadedHub {
 			}
 
 			handler.run();
-			
 		}
 
 	}
-	
 }

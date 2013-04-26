@@ -34,35 +34,7 @@ public class MTHubTest {
 		String pwRequest;
 		Integer sessionSecret = 123456789;
 
-		// Open an SSL connection to the Hub and register a new user account
-		s = NetworkUtils.createSecureSocket(InetAddress.getLocalHost(), Constants.HUB_PORT, ts, ks, password);
-
-		System.out.println("(Registering a new user...)");
-
-		out = new ObjectOutputStream(s.getOutputStream());
-		out.writeObject(Constants.REGISTER);
-
-		in = new ObjectInputStream(s.getInputStream());
-		unameRequest = (String)in.readObject();
-		System.out.println(unameRequest);
-
-		System.out.println("(Sending username...)");
-		out.writeObject(uname);
-
-		pwRequest = (String)in.readObject();
-		System.out.println(pwRequest);
-
-		if(pwRequest.equals("Hub: Password, please?")) {
-			System.out.println("(Sending password...)");
-			out.writeObject(password);
-
-			String regStatus = (String)in.readObject();
-			System.out.println(regStatus + "\n");
-		}
-
-		in.close();
-		out.close();
-		s.close();
+		register(uname, password);
 
 		if(doLogin) {
 			// Now open an SSL connection to the Hub and login as the user just registered
@@ -124,6 +96,46 @@ public class MTHubTest {
 			s.close();
 		}
 		
+	}
+	
+	public static void register(String uname, String pw) throws GeneralSecurityException, IOException, ClassNotFoundException {
+		KeyStore ks = KeyStoreUtils.genUserKeyStore(uname, password);
+		KeyStore ts = KeyStoreUtils.genUserTrustStore("hub.public");
+
+		SSLSocket s;
+		ObjectOutputStream out;
+		ObjectInputStream in;
+		String unameRequest;
+		String pwRequest;
+		// Open an SSL connection to the Hub and register a new user account
+		s = NetworkUtils.createSecureSocket(InetAddress.getLocalHost(), Constants.HUB_PORT, ts, ks, password);
+
+		System.out.println("(Registering a new user...)");
+
+		out = new ObjectOutputStream(s.getOutputStream());
+		out.writeObject(Constants.REGISTER);
+
+		in = new ObjectInputStream(s.getInputStream());
+		unameRequest = (String)in.readObject();
+		System.out.println(unameRequest);
+
+		System.out.println("(Sending username...)");
+		out.writeObject(uname);
+
+		pwRequest = (String)in.readObject();
+		System.out.println(pwRequest);
+
+		if(pwRequest.equals("Hub: Password, please?")) {
+			System.out.println("(Sending password...)");
+			out.writeObject(password);
+
+			String regStatus = (String)in.readObject();
+			System.out.println(regStatus + "\n");
+		}
+
+		in.close();
+		out.close();
+		s.close();
 	}
 
 }

@@ -33,11 +33,16 @@ public class HubGuiProtocols {
 	private final char[] password;
 	
 	public HubGuiProtocols(String username, char[] password) throws GeneralSecurityException, IOException {
-		ks = KeyStoreUtils.genUserKeyStore(username, new String(password));
-		ts = KeyStoreUtils.genUserTrustStore(TS_FILE);
-		
-		this.username = username;
-		this.password = password;
+		try {
+			ks = KeyStoreUtils.genUserKeyStore(username, new String(password));
+			ts = KeyStoreUtils.genUserTrustStore(TS_FILE);
+			
+			this.username = username;
+			this.password = password;
+		} catch (GeneralSecurityException ex) {
+			System.out.println("GenSecEx");
+			throw ex;
+		}
 	}
 	
 	public List<String> getHostList() throws IOException {
@@ -54,7 +59,6 @@ public class HubGuiProtocols {
     	int len = in.readInt();
     	List<String> list = new LinkedList<String>();
     	for (int i = 0; i < len; i++) {
-    		System.out.println(i);
     		list.add(in.readUTF());
     	}
     	return list;
@@ -139,39 +143,53 @@ public class HubGuiProtocols {
 		return NetworkUtils.createSecureSocket(ts, ks, password);
 	}
 
-	public int register(String username, char[] password) throws IOException {		
-		SSLSocket s = createSecureSocket();
-		
-        ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-        ObjectInputStream in   = new ObjectInputStream(s.getInputStream());
-        
-        NetworkUtils.sendProtocolID(s, Constants.REGISTER);		
-		
-		out.writeUTF(username);
-		out.writeUTF(new String(password));
-		//get rid of password after using
-		Arrays.fill(password, ' ');
-		
-		String response = in.readUTF();
-		
-		int output = 3;
-		if (response.equals(Constants.REGISTRATION_SUCCESS + username)) {
-			output = 0;
-		} else if (response.equals(Constants.REGISTRATION_IN_USE + username)) {
+	public static int register(String uname, String password) throws IOException, GeneralSecurityException, ClassNotFoundException {
+		KeyStore ks = KeyStoreUtils.genUserKeyStore(uname, password);
+		KeyStore ts = KeyStoreUtils.genUserTrustStore("hub.public");
+
+		SSLSocket s;
+		ObjectOutputStream out;
+		ObjectInputStream in;
+		String unameRequest;
+		String pwRequest;
+		int output;
+		// Open an SSL connection to the Hub and register a new user account
+		s = NetworkUtils.createSecureSocket(InetAddress.getLocalHost(), Constants.HUB_PORT, ts, ks, password);
+
+		System.out.println("(Registering a new user...)");
+
+		out = new ObjectOutputStream(s.getOutputStream());
+		out.writeObject(Constants.REGISTER);
+
+		in = new ObjectInputStream(s.getInputStream());
+		unameRequest = (String)in.readObject();
+		System.out.println(unameRequest);
+
+		System.out.println("(Sending username...)");
+		out.writeObject(uname);
+
+		pwRequest = (String)in.readObject();
+		System.out.println(pwRequest);
+
+		if(pwRequest.equals(Constants.REGISTRATION_PASSWORD)) {
+			System.out.println("(Sending password...)");
+			out.writeObject(password);
+
+			String regStatus = (String)in.readObject();
+			if (regStatus.equals(Constants.REGISTRATION_SUCCESS)) {
+				output = 0;
+			} else {
+				output = 2;
+			}
+		} else if (pwRequest.equals(Constants.REGISTRATION_IN_USE)) {
 			output = 1;
-		} else if (response.equals(Constants.REGISTRATION_FAILURE + username)){
-			output = 2;
 		} else {
-			output = 3;
+			output = 2;
 		}
-		try {
-			out.close();
-			in.close();
-			s.close();
-		} catch (IOException ex) {
-			//if closing doesn't work they were closed on the hub side
-			;
-		}
+		
+		in.close();
+		out.close();
+		s.close();
 		return output;
 	}
 	

@@ -1,6 +1,7 @@
 package hub;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.SocketException;
 import javax.net.ssl.SSLSocket;
 
@@ -9,8 +10,8 @@ import utils.Constants;
 
 public class UserRegistrationProtocol extends HubProtocol {
 	
-	public UserRegistrationProtocol(SSLSocket client) throws IOException {
-		super(client);
+	public UserRegistrationProtocol(SSLSocket client, ObjectInputStream in) throws IOException {
+		super(client, in);
 	}
 
 	public void run() {
@@ -18,44 +19,36 @@ public class UserRegistrationProtocol extends HubProtocol {
 			String message;
 			PasswordStore pws = new PasswordStore();
 			
-			boolean usernameAvailable = false;
+			System.out.println("Inside User Reg");
+			
 			String username = null;
 			char[] password = null;
 			
-			while(!usernameAvailable) {
-				username = in.readUTF();
-				password = in.readUTF().toCharArray();
-				if (Constants.verifyUsername(username) && Constants.verifyPassword(password)) {
-					if (!pws.containsEntry(username)) {
-						usernameAvailable = true;
-						if (pws.addEntry(username, password)) {
-							message = (Constants.REGISTRATION_SUCCESS+username);
-						} else {
-							message = (Constants.REGISTRATION_FAILURE+username);
-						}
+			username = in.readUTF();
+			password = in.readUTF().toCharArray();
+			if (Constants.verifyUsername(username) && Constants.verifyPassword(password)) {
+				if (!pws.containsEntry(username)) {
+					if (pws.addEntry(username, password)) {
+						message = (Constants.REGISTRATION_SUCCESS+username);
 					} else {
-						message = (Constants.REGISTRATION_IN_USE+username);
+						message = (Constants.REGISTRATION_FAILURE+username);
 					}
 				} else {
-					message = (Constants.REGISTRATION_FAILURE+username);
+					message = (Constants.REGISTRATION_IN_USE+username);
 				}
-				
-				out.writeUTF(message);
+			} else {
+				message = (Constants.REGISTRATION_FAILURE+username);
 			}
+			
+			out.writeUTF(message);
+			
+			client.close();
 			
 		} catch (SocketException e) {
 			;
 		} catch (IOException e) {
 			System.out.println("Error executing UserRegistrationProtocol");
 			e.printStackTrace();
-		} finally {
-			try {
-				out.close();
-				in.close();
-				client.close();
-			} catch (IOException ex) {
-				;
-			}
 		}
 	}
 }

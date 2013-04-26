@@ -3,6 +3,7 @@ package hub;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.InetAddress;
 import java.security.Key;
 import java.security.KeyStore;
@@ -79,34 +80,36 @@ public class Hub {
 	}
 	
 	private static HubProtocol selectProtocol(SSLSocket s) throws IOException {
-		DataInputStream in = null;
+		ObjectInputStream in = null;
 		int id = -1;
 		HubProtocol p = null;
 		
-		in = new DataInputStream(s.getInputStream());
+		InetAddress i = s.getInetAddress();
+		
+		in = new ObjectInputStream(s.getInputStream());
 		id = in.readInt();
 
 		switch (id) {
 		case Constants.REGISTER:
-			p = new UserRegistrationProtocol(s);
+			p = new UserRegistrationProtocol(s, in);
 			break;
 		case Constants.LOGIN:
-			p = new UserLoginProtocol(s);
+			p = new UserLoginProtocol(s, in);
 			break;
 		case Constants.GET_HOSTS:
-			p = new GetHostsProtocol(s);
+			p = new GetHostsProtocol(s, in);
 			break;
 		case Constants.NEW_HOST:
-			p = new NewHostProtocol(s);
+			p = new NewHostProtocol(s, in);
 			break;
 		case Constants.JOIN_GAME:
-			p = new JoinHostProtocol(s);
+			p = new JoinHostProtocol(s, in);
 			break;
 		case Constants.LOGOUT:
-			p = new UserLogoutProtocol(s);
+			p = new UserLogoutProtocol(s, in);
 			break;
 		case Constants.GET_LOG:
-			p = new GetLogProtocol(s);
+			p = new GetLogProtocol(s, in);
 			break;
 		default:
 			System.out.println("Unrecognized protocol ID");

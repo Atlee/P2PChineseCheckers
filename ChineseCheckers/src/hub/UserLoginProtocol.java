@@ -1,6 +1,7 @@
 package hub;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
@@ -10,8 +11,8 @@ import utils.Constants;
 
 public class UserLoginProtocol extends HubProtocol {
 
-	public UserLoginProtocol(SSLSocket client) throws IOException {
-		super(client);
+	public UserLoginProtocol(SSLSocket client, ObjectInputStream in) throws IOException {
+		super(client, in);
 		// TODO Auto-generated constructor stub
 	}
 

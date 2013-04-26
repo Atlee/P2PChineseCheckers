@@ -5,6 +5,8 @@ import java.io.ObjectInputStream;
 
 import javax.net.ssl.SSLSocket;
 
+import utils.Constants;
+
 
 public class RegisterHandler extends HubHandler {
 
@@ -16,16 +18,20 @@ public class RegisterHandler extends HubHandler {
 	public void run() {
 		try {
 			
+			System.out.println("Hello");
 			out.writeObject("Hub: Desired username, please?");
 
 			String uname = (String)in.readObject();
 			if(this.hub.pwStore.containsEntry(uname)) {
-				out.writeObject("Hub: That username is already in use. Please try again.\n");
+				out.writeObject(Constants.REGISTRATION_IN_USE);
 			} else {
-				out.writeObject("Hub: Password, please?");
+				out.writeObject(Constants.REGISTRATION_PASSWORD);
 				String password = (String)in.readObject();
-				hub.pwStore.addEntry(uname, password.toCharArray());
-				out.writeObject("Hub: Account registration successful!");
+				if (hub.pwStore.addEntry(uname, password.toCharArray())) {
+					out.writeObject(Constants.REGISTRATION_SUCCESS);
+				} else {
+					out.writeObject(Constants.REGISTRATION_FAILURE);
+				}
 			}
 
 			client.close();

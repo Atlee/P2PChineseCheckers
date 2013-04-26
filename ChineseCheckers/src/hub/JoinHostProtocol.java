@@ -1,6 +1,7 @@
 package hub;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.InetAddress;
 import javax.net.ssl.SSLSocket;
 
@@ -8,8 +9,8 @@ import utils.Constants;
 
 public class JoinHostProtocol extends HubProtocol {
 
-	public JoinHostProtocol(SSLSocket client) throws IOException {
-		super(client);
+	public JoinHostProtocol(SSLSocket client, ObjectInputStream in) throws IOException {
+		super(client, in);
 	}
 
 	@Override
