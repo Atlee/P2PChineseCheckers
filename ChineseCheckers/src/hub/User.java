@@ -1,23 +1,20 @@
 package hub;
 
 import java.net.InetAddress;
-import java.net.Socket;
 
 public class User {
 	
-	private InetAddress addr;
-	private String username;
-	
-	public User(InetAddress addr, String username) {
-		this.addr = addr;
-		this.username = username;
-	}
-	
+	String username;
+	int token;
+	InetAddress addr;
 	public InetAddress getAddr() {
-		return this.addr;
+		// TODO Auto-generated method stub
+		return null;
+	}
+	public String getUsername() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
-	public String getUsername() {
-		return this.username;
-	}
+
 }

@@ -185,7 +185,6 @@ public class HubGui extends JPanel
     class HostListener implements ActionListener, DocumentListener {
         private boolean alreadyEnabled = false;
         private JButton button;
-        private ServerSocket hostSocket = null;
  
         public HostListener(JButton button) {
             this.button = button;
@@ -193,8 +192,6 @@ public class HubGui extends JPanel
  
         //Required by ActionListener.
         public void actionPerformed(ActionEvent e) {
-            String name = newGameName.getText();
-            
             try {
 	            Key gameKey = HubGuiProtocols.hostNewGame();
 	            updateHostList();

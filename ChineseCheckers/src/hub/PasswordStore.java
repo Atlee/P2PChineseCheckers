@@ -14,6 +14,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
+
 public class PasswordStore {
 
 	private static final String ENCRYPTION_ALG = "PBKDF2WithHmacSHA1";
@@ -110,7 +111,7 @@ public class PasswordStore {
 	private long getUserIndex(String user) throws IOException {
 		File f = getPasswordFile();
 		RandomAccessFile raf = new RandomAccessFile(f, "r");
-		
+
 		while(raf.getFilePointer() < raf.length()) {
 			long entryStart = raf.getFilePointer();
 			

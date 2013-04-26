@@ -3,7 +3,6 @@ package utils;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.net.InetAddress;
 import java.security.PublicKey;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -12,11 +11,19 @@ import java.util.regex.Pattern;
 
 public class Constants {
 	
+	// Hub <-> Client protocol IDs
+	public static final int REGISTER = 0;
+	public static final int LOGIN = 1;
+	public static final int HELLO = 2;
+	
+	// Hub application constants
+	public static final String HUB_KS_FILENAME = "hub.private";
+	public static final String HUB_KS_PASSWORD = "hubpassword";
 	public static final int HUB_PORT = 4321;
 	public static final int CLIENT_HOST_PORT = 4322;
+
 	public static final String KEYGEN_ALGORITHM = "RSA";
 	public static final String SIGN_ALGORITHM = "SHA512withRSA";
-	public static final String KEYSTORE_FILE = "TheKeyStore";
 	public static final String RANDOM_ALGORITHM = "SHA1PRNG";
 	public static final String SHARED_ENCRYPT_ALG = "DES";
 	public static final String PUBLIC_ENCRYPT_ALG = "RSA";
@@ -28,11 +35,12 @@ public class Constants {
 	public static final String LOGIN_SUCCESS = "SUCCESS_LOGIN";
 	public static final String LOGIN_FAILURE = "FAILURE_LOGIN";
 	
+  //-------------old hub constants--------------------
 	public static final String HUB_KEY_FILE = "public.key";
 	
 	// Protocol IDs
-	public static final int REGISTER = 0;
-	public static final int LOGIN = 1;
+	//public static final int REGISTER = 0;
+	//public static final int LOGIN = 1;
 	public static final int GET_HOSTS = 2;
 	public static final int NEW_HOST = 3;
 	public static final int JOIN_GAME = 4;
@@ -61,7 +69,8 @@ public class Constants {
 			System.exit(1);
 		}		
 	}
-	
+	//----------------------end old hub constants-----------------------------
+  
 	public static boolean verifyUsername(String username) {
 		Pattern whitespacePattern = Pattern.compile("\\s");
 		Matcher whitespaceMatcher = whitespacePattern.matcher(username);
@@ -101,4 +110,5 @@ public class Constants {
 		Arrays.fill(password, ' ');
 		return output && hasCapital && hasSymbol;
 	}
+	
 }
