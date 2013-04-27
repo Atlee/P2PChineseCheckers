@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 
 /* Monitor instantiated by the multi-threaded hub to track status of
@@ -14,43 +15,40 @@ import java.util.Map;
 public class GameTracker {
 	
 	// Invariant: Iff host H is in 'activeHosts', then there is EXACTLY ONE active
-	// GameRecord for host H and it is included in EXACTLY ONE of the sets 'joinable' 
+	// GameRecord for host H and it is included in EXACTLY ONE of the sets 'joinable'
 	// or 'inProgress'.
 	
 	// The host usernames for all currently active games
-	private List<String> activeHosts = new ArrayList<String>();
+	private List<UUID> activeHosts = new ArrayList<UUID>();
 	// Map: {host username -> GameRecord}
-	private Map<String, GameRecord> joinable = new HashMap<String, GameRecord>();
-	private Map<String, GameRecord> inProgress = new HashMap<String, GameRecord>();
+	private Map<UUID, GameRecord> joinable = new HashMap<UUID, GameRecord>();
+	private Map<UUID, GameRecord> inProgress = new HashMap<UUID, GameRecord>();
 	
 	synchronized void createGame(String gameName, int numPlayers, String hostName, PublicKey hostKey) {
 		//TODO: implement me!
 	}
 	
-	synchronized Map<String, PublicKey> startGame() {
-		//TODO: implement me!
-		return new HashMap<String, PublicKey>();
-	}
-	
-	synchronized void killGame() {
+	synchronized void killGame(UUID gameID) {
 		//TODO: implement me!
 	}
 	
-	synchronized boolean addPlayer() {
+	synchronized boolean addPlayer(UUID gameID, String playerName, PublicKey playerKey) {
 		//TODO: implement me!
 		return false;
 	}
 	
-	synchronized boolean removePlayer() {
+	synchronized boolean removePlayer(UUID gameID, String playerName) {
 		//TODO: implement me!
 		return false;
 	}
 	
-	synchronized void submitLog() {
+	synchronized GameKeys playerReady(UUID gameID, String playerName) {
+		//TODO: implement me!
+		return null;
+	}
+	
+	synchronized void submitLog(UUID gameID, String playerName, String log) {
 		//TODO: implement me!
 	}
 	
-	private void checkLogs() {
-		//TODO: implement me!
-	}
 }
