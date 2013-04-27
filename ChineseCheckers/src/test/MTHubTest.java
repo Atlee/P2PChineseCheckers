@@ -16,7 +16,7 @@ import utils.NetworkUtils;
 
 public class MTHubTest {
 	
-	public static final String uname = "emma";
+	public static final String uname = "kigobi";
 	public static final String password = "asdf";
 
 	// If you set this to false, the test user won't login -> Hub will not allow access to the HELLO service

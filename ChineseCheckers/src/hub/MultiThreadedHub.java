@@ -20,8 +20,10 @@ public class MultiThreadedHub {
 	private KeyStore keyStore;
 	private char[] ksPassword;
 
+    UserTracker online = new UserTracker();
 	PasswordStore pwStore = new PasswordStore();
-    OnlineUsers online = new OnlineUsers();
+	StatStore statStore = new StatStore();
+	
 
 	public static void main(String[] args) throws Exception {
 		MultiThreadedHub hub = new MultiThreadedHub(Constants.HUB_KS_FILENAME, Constants.HUB_KS_PASSWORD);
@@ -80,7 +82,7 @@ public class MultiThreadedHub {
                 handler = new HelloHandler(this, client, in);
 			} else {
 				if(verboseHub) {
-					System.out.println("    Connection accepted! But the client fucked up...");
+					System.out.println("    Connection accepted! But the client messed up...");
 				}
 				client.close();
 				continue;
