@@ -55,7 +55,7 @@ public class MultiThreadedHub {
 		while(true) {
 			
 			if(verboseHub) {
-				System.out.println("Online: " + online.list().toString());
+				System.out.println("Online: " + online.listOnline().toString());
 				System.out.println("Ready to accept an SSL client connection...");
 			}
 			
@@ -88,7 +88,7 @@ public class MultiThreadedHub {
 				continue;
 			}
 
-			handler.run();
+			new Thread(handler).start();
 			
 		}
 

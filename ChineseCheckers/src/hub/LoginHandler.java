@@ -23,7 +23,7 @@ public class LoginHandler extends HubHandler {
 			String password = (String)in.readObject();
 			
 			if(hub.pwStore.authenticate(uname, password.toCharArray())) {
-				Integer secret = hub.online.add(uname);
+				Integer secret = hub.online.add(uname, client.getInetAddress());
 				out.writeObject("Hub: Welcome to P2P Chinese Checkers, " + uname + "!");
 				out.writeObject(secret);
 			} else {
