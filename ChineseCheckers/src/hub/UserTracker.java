@@ -88,7 +88,7 @@ public class UserTracker {
 	 * whose status is IDLE and whose time of last contact with the hub was more than
 	 * 30 minutes ago. Return a list of the usernames of all reaped users.
 	 */
-	synchronized List<String> reapIdle() {
+	synchronized List<String> reapIdleUsers() {
 		List<String> reaped = new ArrayList<String>();
 		for(int i=0; i < online.size(); i++) {
 			String uname = online.get(i);

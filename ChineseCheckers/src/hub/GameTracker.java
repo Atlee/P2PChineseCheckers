@@ -14,18 +14,19 @@ import java.util.UUID;
  */
 public class GameTracker {
 	
-	// Invariant: Iff host H is in 'activeHosts', then there is EXACTLY ONE active
-	// GameRecord for host H and it is included in EXACTLY ONE of the sets 'joinable'
+	// Invariant: Iff UUID x is in 'activeGames', then there is EXACTLY ONE active
+	// GameRecord with UUID x and it is included in EXACTLY ONE of the sets 'joinable'
 	// or 'inProgress'.
 	
-	// The host usernames for all currently active games
-	private List<UUID> activeHosts = new ArrayList<UUID>();
-	// Map: {host username -> GameRecord}
+	// The UUIDs for all currently active games
+	private List<UUID> activeGames = new ArrayList<UUID>();
+	// Map: {UUID -> GameRecord}
 	private Map<UUID, GameRecord> joinable = new HashMap<UUID, GameRecord>();
 	private Map<UUID, GameRecord> inProgress = new HashMap<UUID, GameRecord>();
 	
-	synchronized void createGame(String gameName, int numPlayers, String hostName, PublicKey hostKey) {
+	synchronized UUID createGame(String gameName, int numPlayers, String hostName, PublicKey hostKey) {
 		//TODO: implement me!
+		return null;
 	}
 	
 	synchronized void killGame(UUID gameID) {
@@ -48,6 +49,15 @@ public class GameTracker {
 	}
 	
 	synchronized void submitLog(UUID gameID, String playerName, String log) {
+		//TODO: implement me!
+	}
+	
+	synchronized Map<UUID, String> listGames() {
+		//TODO: implement me!
+		return null;
+	}
+	
+	synchronized void reapDeadGames() {
 		//TODO: implement me!
 	}
 	
