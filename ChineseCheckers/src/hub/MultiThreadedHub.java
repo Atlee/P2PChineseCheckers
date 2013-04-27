@@ -21,9 +21,9 @@ public class MultiThreadedHub {
 	private char[] ksPassword;
 
     UserTracker online = new UserTracker();
+	GameTracker games = new GameTracker();
 	PasswordStore pwStore = new PasswordStore();
 	StatisticsStore statStore = new StatisticsStore();
-	GameTracker games = new GameTracker();	
 
 	public static void main(String[] args) throws Exception {
 		MultiThreadedHub hub = new MultiThreadedHub(Constants.HUB_KS_FILENAME, Constants.HUB_KS_PASSWORD);
@@ -50,7 +50,11 @@ public class MultiThreadedHub {
 		sslContext.init(kmf.getKeyManagers(), null, null);
 		SSLServerSocketFactory sf = sslContext.getServerSocketFactory();
 		SSLServerSocket ss = (SSLServerSocket) sf.createServerSocket(Constants.HUB_PORT);
-
+		
+		// Start the reaper threads
+		new Thread(new IdleUserReaper(this)).start();
+		new Thread(new DeadGameReaper(this)).start();
+		
 		// Begin accepting SSL client connections...
 		while(true) {
 			
