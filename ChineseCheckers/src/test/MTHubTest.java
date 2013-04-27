@@ -17,7 +17,7 @@ import utils.NetworkUtils;
 public class MTHubTest {
 	
 	public static final String uname = "kigobi";
-	public static final String password = "asdf";
+	public static final String password = "asdfVALID12345";
 
 	// If you set this to false, the test user won't login -> Hub will not allow access to the HELLO service
 	public static final boolean doLogin = true;
@@ -52,7 +52,7 @@ public class MTHubTest {
 		pwRequest = (String)in.readObject();
 		System.out.println(pwRequest);
 
-		if(pwRequest.equals("Hub: Password, please?")) {
+		if(pwRequest.equals(Constants.REGISTRATION_PASSWORD)) {
 			System.out.println("(Sending password...)");
 			out.writeObject(password);
 
@@ -74,14 +74,9 @@ public class MTHubTest {
 			out.writeObject(Constants.LOGIN);
 
 			in = new ObjectInputStream(s.getInputStream());
-			unameRequest = (String)in.readObject();
-			System.out.println(unameRequest);
 
 			System.out.println("(Sending username...)");
 			out.writeObject(uname);
-
-			pwRequest = (String)in.readObject();
-			System.out.println(pwRequest);
 
 			System.out.println("(Sending password...)");
 			out.writeObject(password);
@@ -89,7 +84,7 @@ public class MTHubTest {
 			String loginStatus = (String)in.readObject();
 			System.out.println(loginStatus + "\n");
 
-			if(loginStatus.equals("Hub: Welcome to P2P Chinese Checkers, " + uname + "!")) {
+			if(loginStatus.equals(Constants.LOGIN_SUCCESS)) {
 				sessionSecret = (Integer)in.readObject();
 			}
 		}

@@ -22,8 +22,8 @@ public class MultiThreadedHub {
 
     UserTracker online = new UserTracker();
 	PasswordStore pwStore = new PasswordStore();
-	StatStore statStore = new StatStore();
-	
+	StatisticsStore statStore = new StatisticsStore();
+	GameTracker games = new GameTracker();	
 
 	public static void main(String[] args) throws Exception {
 		MultiThreadedHub hub = new MultiThreadedHub(Constants.HUB_KS_FILENAME, Constants.HUB_KS_PASSWORD);
