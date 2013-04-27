@@ -5,6 +5,8 @@ import java.io.ObjectInputStream;
 
 import javax.net.ssl.SSLSocket;
 
+import utils.Constants;
+
 
 public class LoginHandler extends HubHandler {
 
@@ -16,18 +18,15 @@ public class LoginHandler extends HubHandler {
 	public void run() {
 		try {
 
-			out.writeObject("Hub: Username?");
 			String uname = (String)in.readObject();
-			
-			out.writeObject("Hub: Password?");
 			String password = (String)in.readObject();
 			
 			if(hub.pwStore.authenticate(uname, password.toCharArray())) {
 				Integer secret = hub.online.add(uname);
-				out.writeObject("Hub: Welcome to P2P Chinese Checkers, " + uname + "!");
+				out.writeObject(Constants.LOGIN_SUCCESS);
 				out.writeObject(secret);
 			} else {
-				out.writeObject("Hub: Incorrect username or password. Please try again.");
+				out.writeObject(Constants.LOGIN_FAILURE);
 			}
 			
 			client.close();

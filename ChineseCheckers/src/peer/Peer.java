@@ -77,17 +77,17 @@ public class Peer  {
             char[] password = passwordTxt.getPassword();
             try {
             	comm = new HubGuiProtocols(username, password);
-            	if (comm.login(username, password)) {
+            	if (comm.login(username, new String(password)) != -1) {
             		JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(((JButton) e.getSource()));
 	            	
             		displayHub(frame);
             	} else {
             		displayWindow("Login Unsuccessful", "Authentication Failed");
             	}
-            } catch (IOException | GeneralSecurityException ex) {
+            } catch (IOException | GeneralSecurityException | ClassNotFoundException ex) {
             	System.out.println("Exception during login");
             	displayWindow("Login Unsuccessful", "Exception during login");
-            } finally {
+			} finally {
 	            //eliminate the password from memory as fast as possible
 	            Arrays.fill(password, '_');
             }

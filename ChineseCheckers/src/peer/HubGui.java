@@ -125,7 +125,7 @@ public class HubGui extends JPanel
     private void updateHostList() {
     	List<String> hosts = null;
     	try {
-    		hosts = comm.getHostList();
+    		hosts = HubGuiProtocols.getHostList();
     	} catch (IOException e) {
     		System.out.println("Error getting host list from server");
     		e.printStackTrace();

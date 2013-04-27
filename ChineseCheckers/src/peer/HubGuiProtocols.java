@@ -26,27 +26,10 @@ import utils.Tuple;
 
 public class HubGuiProtocols {	
 	private static final String TS_FILE = "hub.public";
-	private final KeyStore ks;
-	private final KeyStore ts;
 	private int sessionKey;
-	private final String username;
-	private final char[] password;
 	
-	public HubGuiProtocols(String username, char[] password) throws GeneralSecurityException, IOException {
-		try {
-			ks = KeyStoreUtils.genUserKeyStore(username, new String(password));
-			ts = KeyStoreUtils.genUserTrustStore(TS_FILE);
-			
-			this.username = username;
-			this.password = password;
-		} catch (GeneralSecurityException ex) {
-			System.out.println("GenSecEx");
-			throw ex;
-		}
-	}
-	
-	public List<String> getHostList() throws IOException {
-		SSLSocket s = createSecureSocket();
+	public static List<String> getHostList() throws IOException {
+		SSLSocket s = getSSLSocket("getHost", "getHost");
 		
 		NetworkUtils.sendProtocolID(s, Constants.GET_HOSTS);
 		
@@ -54,7 +37,7 @@ public class HubGuiProtocols {
 		return hosts;
 	}
 	
-    private List<String> getHostList(SSLSocket s) throws IOException {
+    private static List<String> getHostList(SSLSocket s) throws IOException {
     	ObjectInputStream in = new ObjectInputStream(s.getInputStream());
     	int len = in.readInt();
     	List<String> list = new LinkedList<String>();
@@ -120,32 +103,43 @@ public class HubGuiProtocols {
 		return output;
 	}
 	
-	public boolean login(String username, char[] password) throws IOException {
-		SSLSocket s = createSecureSocket();
-        ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-        ObjectInputStream in   = new ObjectInputStream(s.getInputStream());
+	public int login(String uname, String password) throws IOException, ClassNotFoundException, GeneralSecurityException {
+		KeyStore ks = KeyStoreUtils.genUserKeyStore(uname, new String(password));
+		KeyStore ts = KeyStoreUtils.genUserTrustStore(TS_FILE);
+
+		SSLSocket s;
+		ObjectOutputStream out;
+		ObjectInputStream in;
+		Integer sessionSecret = -1;
 		
-		NetworkUtils.sendProtocolID(s, Constants.LOGIN);		
-		boolean output = false;
-		
-		out.writeUTF(username);
-		out.writeUTF(new String(password));
-		
-		String response = in.readUTF();
-		if (response.equals(Constants.LOGIN_SUCCESS)) {
-			sessionKey = in.readInt();
-			output = true;
+		// Now open an SSL connection to the Hub and login as the user just registered
+		s = NetworkUtils.createSecureSocket(InetAddress.getLocalHost(), Constants.HUB_PORT, ts, ks, password);
+
+		System.out.println("(Attempting to login...)");
+
+		out = new ObjectOutputStream(s.getOutputStream());
+		out.writeObject(Constants.LOGIN);
+
+		in = new ObjectInputStream(s.getInputStream());
+
+		System.out.println("(Sending username...)");
+		out.writeObject(uname);
+
+		System.out.println("(Sending password...)");
+		out.writeObject(password);
+
+		String loginStatus = (String)in.readObject();
+		System.out.println(loginStatus + "\n");
+
+		if(loginStatus.equals(Constants.LOGIN_SUCCESS)) {
+			sessionSecret = (Integer)in.readObject();
 		}
-		return output;
-	}
-	
-	private SSLSocket createSecureSocket() throws IOException {
-		return NetworkUtils.createSecureSocket(ts, ks, password);
+		return sessionSecret;
 	}
 
 	public static int register(String uname, String password) throws IOException, GeneralSecurityException, ClassNotFoundException {
 		KeyStore ks = KeyStoreUtils.genUserKeyStore(uname, password);
-		KeyStore ts = KeyStoreUtils.genUserTrustStore("hub.public");
+		KeyStore ts = KeyStoreUtils.genUserTrustStore(TS_FILE);
 
 		SSLSocket s;
 		ObjectOutputStream out;
@@ -193,13 +187,24 @@ public class HubGuiProtocols {
 		return output;
 	}
 	
-	public void logout() throws IOException{
-		SSLSocket s = createSecureSocket();
-        ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-        
-        NetworkUtils.sendProtocolID(s, Constants.REGISTER);		
+	private static SSLSocket getSSLSocket(String uname, String pw) throws GeneralSecurityException, IOException {		
+		KeyStore ks = KeyStoreUtils.genUserKeyStore(uname, pw);
+		KeyStore ts = KeyStoreUtils.genUserTrustStore(TS_FILE);
+
+		// Open an SSL connection to the Hub and register a new user account
+		return NetworkUtils.createSecureSocket(InetAddress.getLocalHost(), Constants.HUB_PORT, ts, ks, pw);
+	}
+	
+	public static void logout(String uname, int sessionKey) throws IOException, GeneralSecurityException{
+		SSLSocket s = getSSLSocket("logout", "logout");
+
+		System.out.println("(Registering a new user...)");
+
+		ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+		out.writeObject(Constants.LOGOUT);
+
 		
-		out.writeUTF(username);
+		out.writeObject(uname);
 		out.writeInt(sessionKey);
 	}
 

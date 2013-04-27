@@ -22,6 +22,7 @@ public class MultiThreadedHub {
 	private KeyStore keyStore;
 	private char[] ksPassword;
 
+	//Data Structures
 	PasswordStore pwStore = new PasswordStore();
     OnlineUsers online = new OnlineUsers();
 
@@ -74,11 +75,11 @@ public class MultiThreadedHub {
 					System.out.println("    Connection accepted! Handling a LOGIN request...");
 				}
                 handler = new LoginHandler(this, client, in);			
-			} else if(serviceRequest.equals(Constants.HELLO)) {
+			} else if(serviceRequest.equals(Constants.GET_HOSTS)) {
 				if(verboseHub) {
 					System.out.println("    Connection accepted! Handling a HELLO request...");
 				}
-                handler = new HelloHandler(this, client, in);
+                handler = new GetHostHandler(this, client, in);
 			} else {
 				if(verboseHub) {
 					System.out.println("    Connection accepted! But the client fucked up...");
