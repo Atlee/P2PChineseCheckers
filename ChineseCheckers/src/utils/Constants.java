@@ -36,6 +36,7 @@ public class Constants {
 	public static final String LOGIN_FAILURE = "FAILURE_LOGIN";
 	
 	public static final String INVALID_SECRET = "INVALID_SECRET";
+	public static final String VALID_SECRET   = "VALID_SECRET";
 	
 	public static boolean verifyUsername(String username) {
 		Pattern whitespacePattern = Pattern.compile("\\s");

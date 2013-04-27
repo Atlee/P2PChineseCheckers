@@ -1,5 +1,6 @@
 package hub;
 
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -36,8 +37,11 @@ public abstract class HubHandler implements Runnable {
 		int secret  = in.readInt();
 		
 		if (hub.online.check(uname, secret)) {
+			out.writeUTF(Constants.VALID_SECRET);
+			hub.online.setActive(uname);
 			return true;
 		} else {
+			out.writeUTF(Constants.INVALID_SECRET);
 			return false;
 		}
 	}

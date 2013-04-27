@@ -1,5 +1,6 @@
 package hub;
 
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 
@@ -34,6 +35,7 @@ public class LoginHandler extends HubHandler {
 			
 			client.close();
 			
+			hub.online.setIdle(uname);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
