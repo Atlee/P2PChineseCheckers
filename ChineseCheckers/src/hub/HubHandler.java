@@ -6,6 +6,8 @@ import java.io.ObjectOutputStream;
 
 import javax.net.ssl.SSLSocket;
 
+import utils.Constants;
+
 
 public abstract class HubHandler implements Runnable {
 	
@@ -27,6 +29,16 @@ public abstract class HubHandler implements Runnable {
 			client.close();
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+	}
+	
+	public boolean checkCredentials(String uname) throws IOException {
+		int secret  = in.readInt();
+		
+		if (hub.online.check(uname, secret)) {
+			return true;
+		} else {
+			return false;
 		}
 	}
 

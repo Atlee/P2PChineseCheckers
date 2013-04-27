@@ -5,6 +5,8 @@ import java.io.ObjectInputStream;
 
 import javax.net.ssl.SSLSocket;
 
+import utils.Constants;
+
 
 public class RegisterHandler extends HubHandler {
 
@@ -19,19 +21,29 @@ public class RegisterHandler extends HubHandler {
 			out.writeObject("Hub: Desired username, please?");
 
 			String uname = (String)in.readObject();
-			if(this.hub.pwStore.containsEntry(uname)) {
-				out.writeObject("Hub: That username is already in use. Please try again.\n");
+			if (Constants.verifyUsername(uname)) {
+				if(this.hub.pwStore.containsEntry(uname)) {
+					out.writeObject(Constants.REGISTRATION_IN_USE);
+				} else {
+					out.writeObject(Constants.REGISTRATION_PASSWORD);
+					String password = (String)in.readObject();
+					if (Constants.verifyPassword(password.toCharArray())) {
+						if (hub.pwStore.addEntry(uname, password.toCharArray())) {
+							out.writeObject(Constants.REGISTRATION_SUCCESS);
+						} else {
+							out.writeObject(Constants.REGISTRATION_FAILURE);
+						}
+					} else {
+						out.writeObject(Constants.REGISTRATION_FAILURE);
+					}
+				}
 			} else {
-				out.writeObject("Hub: Password, please?");
-				String password = (String)in.readObject();
-				hub.pwStore.addEntry(uname, password.toCharArray());
-				out.writeObject("Hub: Account registration successful!");
+				out.writeObject(Constants.REGISTRATION_FAILURE);
 			}
 
 			client.close();
-
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (IOException | ClassNotFoundException ex) {
+			System.out.println("Error registering user");
 		}
 	}
 
