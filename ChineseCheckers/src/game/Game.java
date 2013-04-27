@@ -55,6 +55,9 @@ public class Game implements Runnable{
 					communication.shareMove(m);
 				} else {
 					m = communication.waitForOpponent();
+					if (!Rules.checkMove(players.get(rotationIndex % players.size()), board, m)) {
+						System.out.println("Cheater Detected");
+					}
 				}
 				updateBoard(m);
 				

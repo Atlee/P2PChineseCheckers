@@ -14,5 +14,9 @@ public class AuditLog {
 	public byte[] getBytes() {
 		return contents.getBytes();
 	}
+	
+	public String getLog() {
+		return contents;
+	}
 
 }

@@ -3,74 +3,69 @@ package hub;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class StatisticsStore {
 
 	private static final String STATS_FILE = "stats.txt";
-	private Lock lock = new ReentrantLock();
+	private static final String FLAGGED_FILE = "flagged.txt";
 	
-	public void addStats(String user, int[] stats) throws IOException {
-		lock.lock();
-		try {
-			if (containsUser(user)) {
-				System.out.println("user already in file");
-				return;
-			}
-			
+	synchronized private File getFile(String filename) throws IOException {
+		File f = new File(filename);
+		if (!f.exists()) {
+			f.createNewFile();
+		}
+		return f;
+	}
+	
+	synchronized private File getStatsFile() throws IOException {
+		return getFile(STATS_FILE);
+	}
+	
+	synchronized public void addStats(String user, int[] stats) throws IOException {
+		if (containsUser(user)) {
+			System.out.println("user already in file");
+			return;
+		}
+		
+		File f = getStatsFile();
+		RandomAccessFile raf = new RandomAccessFile(f, "rw");
+		
+		long emptyIndex = containsUserHelp(" ");
+		long nextEntryStart = raf.length() + StatsFileEntry.MAX_BLOB_SIZE - (raf.length() % StatsFileEntry.MAX_BLOB_SIZE);
+		if (emptyIndex != -1) {
+			nextEntryStart = emptyIndex;
+		}
+		
+		(new StatsFileEntry(user, stats)).writeToFile(raf, nextEntryStart);
+		
+		raf.close();
+	}
+	
+	synchronized public int[] getStats(String user) throws IOException {
+		int[] output = null;
+		long userOffset = containsUserHelp(user);
+		if (userOffset != -1) {
 			File f = getStatsFile();
 			RandomAccessFile raf = new RandomAccessFile(f, "rw");
-			
-			long emptyIndex = containsUserHelp(" ");
-			long nextEntryStart = raf.length() + StatsFileEntry.MAX_BLOB_SIZE - (raf.length() % StatsFileEntry.MAX_BLOB_SIZE);
-			if (emptyIndex != -1) {
-				nextEntryStart = emptyIndex;
-			}
-			
-			(new StatsFileEntry(user, stats)).writeToFile(raf, nextEntryStart);
-			
-			raf.close();
-		} finally {
-			lock.unlock();
-		}
-	}
-	
-	public int[] getStats(String user) throws IOException {
-		int[] output = null;
-		lock.lock();
-		try {
-			long userOffset = containsUserHelp(user);
-			if (userOffset != -1) {
-				File f = getStatsFile();
-				RandomAccessFile raf = new RandomAccessFile(f, "rw");
-				StatsFileEntry entry = StatsFileEntry.readEntryFromStream(raf, userOffset);
-				output = entry.stats;
-			}
-		} finally {
-			lock.unlock();
+			StatsFileEntry entry = StatsFileEntry.readEntryFromStream(raf, userOffset);
+			output = entry.stats;
 		}
 		return output;
 	}
 	
-	public boolean containsUser(String user) throws IOException {
+	synchronized public boolean containsUser(String user) throws IOException {
 		boolean output = false;
-		lock.lock();
-		try {
-			long offset = containsUserHelp(user);
-			
-			if (offset != -1) {
-				output = true;
-			} else {
-				output = false;
-			}
-		} finally {
-			lock.unlock();
+		long offset = containsUserHelp(user);
+		
+		if (offset != -1) {
+			output = true;
+		} else {
+			output = false;
 		}
 		return output;
 	}
 	
-	private long containsUserHelp(String user) throws IOException {
+	synchronized private long containsUserHelp(String user) throws IOException {
 		File f = getStatsFile();
 		RandomAccessFile raf = new RandomAccessFile(f, "r");
 		
@@ -90,48 +85,30 @@ public class StatisticsStore {
 		return -1;
 	}
 	
-	public void replaceEntry(String user, int[] stats) throws IOException {
-		lock.lock();
-		try {
-			long userOffset = containsUserHelp(user);
-			if (userOffset == -1) {
-				addStats(user, stats);
-			} else {
-				File f = getStatsFile();
-				RandomAccessFile raf = new RandomAccessFile(f, "rw");
-				raf.seek(userOffset);
-				new StatsFileEntry(user, stats).writeToFile(raf, userOffset);
-				raf.close();
-			}
-		} finally {
-			lock.unlock();
+	synchronized public void replaceEntry(String user, int[] stats) throws IOException {
+		long userOffset = containsUserHelp(user);
+		if (userOffset == -1) {
+			addStats(user, stats);
+		} else {
+			File f = getStatsFile();
+			RandomAccessFile raf = new RandomAccessFile(f, "rw");
+			raf.seek(userOffset);
+			new StatsFileEntry(user, stats).writeToFile(raf, userOffset);
+			raf.close();
 		}
 	}
 	
-	public void removeUser(String user) throws IOException {
-		lock.lock();
-		try {
-			long userOffset = containsUserHelp(user);
-			if (userOffset == -1) {
-				return;
-			} else {
-				File f = getStatsFile();
-				RandomAccessFile raf = new RandomAccessFile(f, "rw");
-				raf.seek(userOffset);
-				new StatsFileEntry(" ", new int[0]).writeToFile(raf, userOffset);
-				raf.close();
-			}
-		} finally {
-			lock.unlock();
+	synchronized public void removeUser(String user) throws IOException {
+		long userOffset = containsUserHelp(user);
+		if (userOffset == -1) {
+			return;
+		} else {
+			File f = getStatsFile();
+			RandomAccessFile raf = new RandomAccessFile(f, "rw");
+			raf.seek(userOffset);
+			new StatsFileEntry(" ", new int[0]).writeToFile(raf, userOffset);
+			raf.close();
 		}
-	}
-	
-	private File getStatsFile() throws IOException {
-		File f = new File(STATS_FILE);
-		if (!f.exists()) {
-			f.createNewFile();
-		}
-		return f;
 	}
 }
 

@@ -26,7 +26,7 @@ public class Move {
 	}
 	
 	public String serialize() {
-		String output = player.getIndex() + ":" + player.getUsername() + ":";
+		String output = player.getIndex() + "\t" + player.getUsername() + "\t";
 		for (Point p : moves) {
 			output = output + p.x + "," + p.y + ";";
 		}
@@ -34,7 +34,7 @@ public class Move {
 	}
 	
 	public static Move deSerialize(String m) throws Exception {
-		String[] strings = m.split(":");
+		String[] strings = m.split("\t");
 		if (strings.length < 3) {
 			throw new Exception("deserialization failed: " + m);
 		}
