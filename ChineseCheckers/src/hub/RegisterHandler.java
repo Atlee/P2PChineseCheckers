@@ -1,5 +1,6 @@
 package hub;
 
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 
@@ -17,18 +18,21 @@ public class RegisterHandler extends HubHandler {
 	@Override
 	public void run() {
 		try {
-			
 			out.writeObject("Hub: Desired username, please?");
 
 			String uname = (String)in.readObject();
 			if (Constants.verifyUsername(uname)) {
+				//if the username is allowed
 				if(this.hub.pwStore.containsEntry(uname)) {
+					//if the username is already in use
 					out.writeObject(Constants.REGISTRATION_IN_USE);
 				} else {
 					out.writeObject(Constants.REGISTRATION_PASSWORD);
 					String password = (String)in.readObject();
 					if (Constants.verifyPassword(password.toCharArray())) {
+						//if the password is allowed
 						if (hub.pwStore.addEntry(uname, password.toCharArray())) {
+							//if the add was successful
 							out.writeObject(Constants.REGISTRATION_SUCCESS);
 						} else {
 							out.writeObject(Constants.REGISTRATION_FAILURE);

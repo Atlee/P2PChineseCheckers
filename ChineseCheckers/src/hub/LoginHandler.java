@@ -18,7 +18,6 @@ public class LoginHandler extends HubHandler {
 	@Override
 	public void run() {
 		try {
-
 			String uname = (String)in.readObject();
 			String password = (String)in.readObject();
 			
