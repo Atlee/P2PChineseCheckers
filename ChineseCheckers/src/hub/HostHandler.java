@@ -30,6 +30,8 @@ public class HostHandler extends HubHandler {
 				Integer gameID = hub.games.createGame(gameName, numPlayers, uname, hostKey);
 				
 				out.writeObject(gameID);
+				
+				hub.online.setInGame(uname, gameID);
 			}
 		} catch (IOException | ClassNotFoundException e) {
 			;

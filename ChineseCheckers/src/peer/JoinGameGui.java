@@ -167,7 +167,8 @@ public class JoinGameGui extends JPanel implements ListSelectionListener {
     	@Override
     	public void run() {
     		try {
-				HubGuiProtocols.ready(id, username, secret);
+				GameInfo gi = HubGuiProtocols.ready(id, username, secret);
+				System.out.println("Game Start!");
 			} catch (ClassNotFoundException | GeneralSecurityException
 					| IOException e) {
 				Peer.displayWindow("Ready Error", "Error communicating with the hub");

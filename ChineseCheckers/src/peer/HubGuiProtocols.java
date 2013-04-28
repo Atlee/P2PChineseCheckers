@@ -279,7 +279,7 @@ public class HubGuiProtocols {
 		}
 	}
 
-	public static void ready(Integer id, String username, int secret) throws GeneralSecurityException, IOException, ClassNotFoundException {
+	public static GameInfo ready(Integer id, String username, int secret) throws GeneralSecurityException, IOException, ClassNotFoundException {
 		KeyStore ks = KeyStoreUtils.genUserKeyStore(username, "GetGames");
 		KeyStore ts = KeyStoreUtils.genUserTrustStore(TS_FILE);
 
@@ -300,17 +300,26 @@ public class HubGuiProtocols {
 		in = new ObjectInputStream(s.getInputStream());
 		String validResponse = (String) in.readObject();
 		
+		GameInfo gi = null;
 		if (validResponse.equals(Constants.VALID_SECRET)) {
 			out.writeObject(id);
 			
-			Key encryptKey = (Key) in.readObject();
-			Map<String, PublicKey> peerKeys = new HashMap<String, PublicKey>();
 			int len = (Integer) in.readObject();
-			for (int i = 0; i < len; i++) {
-				String pname = (String) in.readObject();
-				peerKeys.put(pname, (PublicKey) in.readObject());
+			if (len > 0) {
+				Key encryptKey = (Key) in.readObject();
+				List<String> players = new ArrayList<String>();
+				Map<String, PublicKey> peerKeys = new HashMap<String, PublicKey>();
+				Map<String, InetAddress> peerAddrs = new HashMap<String, InetAddress>(); 
+				for (int i = 0; i < len; i++) {
+					String pname = (String) in.readObject();
+					players.add(pname);
+					peerKeys.put(pname, (PublicKey) in.readObject());
+					peerAddrs.put(pname, (InetAddress) in.readObject());
+				}
+				gi = new GameInfo(id, encryptKey, peerKeys, peerAddrs, players);
 			}
 		}
+		return gi;
 	}
 
 }

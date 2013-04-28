@@ -2,6 +2,7 @@ package hub;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.util.List;
 
 import javax.net.ssl.SSLSocket;
 
@@ -18,15 +19,23 @@ public class ReadyHandler extends HubHandler {
 		try {
 			String uname = (String) in.readObject();
 			if (checkCredentials(uname)) {
-				out.writeObject(Constants.VALID_SECRET);
 				Integer gameID = (Integer) in.readObject();
 				
 				//blocks until all players have called
 				GameKeys gk = hub.games.playerReady(gameID, uname);
-				if (gk != null) {
+				List<String> players = hub.games.getPlayers(gameID);
+				if (gk != null || players == null) {
+					out.writeObject(players.size());
 					out.writeObject(gk.encryptKey);
-					out.writeObject(gk.signKeys.size());
-				}				
+					
+					for (String player : players) {
+						out.writeObject(player);
+						out.writeObject(gk.signKeys.get(player));
+						out.writeObject(hub.online.getInetAddr(player));
+					}
+				} else {
+					out.writeObject(0);
+				}
 			} else {
 				out.writeObject(Constants.INVALID_SECRET);
 			}
