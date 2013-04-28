@@ -85,8 +85,7 @@ public class OnlineUserTracker {
 	}
 	
 	/* Indicate that a specified user is currently a player in a game with the
-	 * specified game ID. If 'gameID' is null, then indicate that the user is not
-	 * currently a player in any game.
+	 * specified game ID.
 	 * Note: If uname is not currently online, nothing happens.
 	 */
 	synchronized void setInGame(String uname, int gameID) {
