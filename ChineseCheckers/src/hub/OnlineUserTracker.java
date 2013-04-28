@@ -111,7 +111,7 @@ public class OnlineUserTracker {
 		List<String> reaped = new ArrayList<String>();
 		for(String uname : online) {
 			OnlineUserRecord record = records.get(uname);
-			if((record.inGame == null) && (!record.connected) 
+			if((record.inGame == null) && (!record.connected)
 					&& (record.lastContact + 1800000 < System.currentTimeMillis())) {
 				reaped.add(uname);
 				records.remove(uname);

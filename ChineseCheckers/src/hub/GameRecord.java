@@ -27,7 +27,7 @@ public class GameRecord {
 	// Map: {username -> audit log}, contains a mapping for key u iff u in 'players'
 	Map<String, String> playerLogs = new HashMap<String, String>();
 	
-	int readyCount = 0;
+	List<String> ready = new ArrayList<String>();
 	
 	public GameRecord( int gameID, String gameName, int numPlayers, String hostName, PublicKey hostKey ) {
 		this.gameID = gameID;

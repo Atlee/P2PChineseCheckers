@@ -24,7 +24,7 @@ public class ReadyHandler extends HubHandler {
 				//blocks until all players have called
 				GameKeys gk = hub.games.playerReady(gameID, uname);
 				List<String> players = hub.games.getPlayers(gameID);
-				if (gk != null || players == null) {
+				if (gk != null && players != null) {
 					out.writeObject(players.size());
 					out.writeObject(gk.encryptKey);
 					

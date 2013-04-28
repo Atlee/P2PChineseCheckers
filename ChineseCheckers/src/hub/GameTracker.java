@@ -16,8 +16,8 @@ public class GameTracker {
 	
 	private int nextID = 0;
 
-	// Invariant: Iff UUID x is in 'activeGames', then there is EXACTLY ONE active
-	// GameRecord with UUID x and it is included in EXACTLY ONE of the sets 'joinable'
+	// Invariant: Iff ID x is in 'activeGames', then there is EXACTLY ONE active
+	// GameRecord with ID x and it is included in EXACTLY ONE of the sets 'joinable'
 	// or 'inProgress'.
 
 	// The IDs for all currently active games
@@ -68,6 +68,7 @@ public class GameTracker {
 		if(joinable.containsKey(gameID)) {
 			GameRecord record = joinable.get(gameID);
 			record.players.remove(playerName);
+			record.ready.remove(playerName);
 			record.playerKeys.remove(playerName);
 			record.playerLogs.remove(playerName);
 			if(record.players.size() < 1) {
@@ -93,11 +94,13 @@ public class GameTracker {
 		if(joinable.containsKey(gameID)) {
 			GameRecord record = joinable.get(gameID);
 			if(record.players.contains(playerName)) {
-				record.readyCount += 1;
-				if(record.readyCount == record.numPlayers) {
+				record.ready.add(playerName);
+				if(record.ready.size() == record.numPlayers) {
+					joinable.remove(gameID);
+					inProgress.put(gameID, record);
 					notifyAll();
 				} else {
-					while(record.readyCount < record.numPlayers) {
+					while(record.ready.size() < record.numPlayers) {
 						try {
 							wait();
 						} catch(InterruptedException e) {
@@ -118,11 +121,6 @@ public class GameTracker {
 			}
 		}
 		return keys;
-	}
-	
-	/* TODO: write comment */
-	synchronized void forfeit(int gameID, String playerName) {
-		// TODO: implement me!
 	}
 
 	/* TODO: write comment */

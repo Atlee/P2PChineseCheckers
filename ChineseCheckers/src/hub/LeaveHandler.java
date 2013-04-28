@@ -19,6 +19,7 @@ public class LeaveHandler extends HubHandler {
 				Integer gameID = (Integer) in.readObject();
 				
 				hub.games.leaveGame(gameID, uname);
+				hub.online.setInGame(uname, null);
 			}
 			
 		} catch (IOException | ClassNotFoundException e) {
