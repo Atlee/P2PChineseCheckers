@@ -74,20 +74,29 @@ public class OnlineUserTracker {
 	}
 	
 	/* Set the status of a specified user to 'active', which means that the user
-	 * currently has an SSL connection open to the hub OR that the user is currently
-	 * listed as a player in some active GameRecord (see GameTracker).
+	 * currently has an SSL connection open to the hub OR that the user is a player
+	 * listed in some currently active GameRecord (see GameTracker).
 	 * Note: If uname is not currently online, nothing happens.
 	 */
-	synchronized void setActive(String uname, Integer gameID) {
+	synchronized void setActive(String uname) {
 		if(online.contains(uname)) {
-			OnlineUserRecord record = records.get(uname);
-			record.active = true;
-			record.inGame = gameID;
+			records.get(uname).active = true;
 		}
 	}
 	
-	/* Set the status of a specified user to 'inactive', which means that the user
-	 * does NOT currently have an SSL connection open to the hub AND that the user is
+	/* Indicate that a specified user is currently a player in a game with the
+	 * specified game ID. If 'gameID' is null, then indicate that the user is not
+	 * currently a player in any game.
+	 * Note: If uname is not currently online, nothing happens.
+	 */
+	synchronized void setInGame(String uname, int gameID) {
+		if(online.contains(uname)) {
+			records.get(uname).inGame = gameID;
+		}
+	}
+	
+	/* Set the status of a specified user to 'idle', which means that the user does
+	 * NOT currently have an SSL connection open to the hub AND that the user is
 	 * NOT currently listed as a player in any active GameRecord (see GameTracker).
 	 * Note: If uname is not currently online, nothing happens.
 	 * */
