@@ -212,6 +212,7 @@ public class JoinGameGui extends JPanel implements ListSelectionListener {
 	    		}
 			} catch (ClassNotFoundException | GeneralSecurityException
 					| IOException e) {
+				System.out.println("ERROR");
 				Peer.displayWindow("Ready Error", "Error communicating with the hub");
 			}
     		if (stillReady()) {
