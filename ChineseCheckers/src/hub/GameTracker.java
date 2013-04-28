@@ -77,18 +77,22 @@ public class GameTracker {
 			GameRecord record = joinable.get(gameID);
 			if(record.players.contains(playerName)) {
 				record.readyCount += 1;
-				while(record.readyCount < record.numPlayers) {
-					try {
-						wait();
-					} catch(InterruptedException e) {
-						return null;
-					}
-					if(!joinable.containsKey(gameID)) {
-						return null;
-					}
-					record = joinable.get(gameID);
-					if(!record.players.contains(playerName)) {
-						return null;
+				if(record.readyCount == record.numPlayers) {
+					notifyAll();
+				} else {
+					while(record.readyCount < record.numPlayers) {
+						try {
+							wait();
+						} catch(InterruptedException e) {
+							return null;
+						}
+						if(!joinable.containsKey(gameID)) {
+							return null;
+						}
+						record = joinable.get(gameID);
+						if(!record.players.contains(playerName)) {
+							return null;
+						}
 					}
 				}
 				Key encryptKey = record.gameEncryptKey;
@@ -100,19 +104,19 @@ public class GameTracker {
 	}
 
 	/* TODO: write comment */
-	synchronized Map<String, String> submitLog(UUID gameID, String playerName, String log) {
-		Map<String, String> allLogs = null;
+	synchronized GameRecord submitLog(UUID gameID, String playerName, String log) {
+		GameRecord completeRecord = null;
 		if(inProgress.containsKey(gameID)) {
 			GameRecord record = inProgress.get(gameID);
 			if(record.players.contains(playerName)) {
 				record.playerLogs.remove(playerName);
 				record.playerLogs.put(playerName, log);
 				if(!record.playerLogs.values().contains(null)) {
-					allLogs = record.playerLogs;
+					completeRecord = record;
 				}
 			}
 		}
-		return allLogs;
+		return completeRecord;
 	}
 
 	/* TODO: write comment */
@@ -124,7 +128,7 @@ public class GameTracker {
 		}
 		return joinableGames;
 	}
-	
+
 	/* TODO: write comment */
 	synchronized List<String> getPlayers(UUID gameID) {
 		List<String> players = null;
