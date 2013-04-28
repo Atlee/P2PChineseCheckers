@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import utils.EncryptUtils;
 
@@ -16,7 +15,7 @@ import utils.EncryptUtils;
  */
 public class GameRecord {
 	
-	final UUID gameID;		  // unique identifier for this game
+	final int gameID;		  // unique identifier for this game
 	final String gameName;    // name of this game
 	final int numPlayers;     // total number of players required to start this game
 	final Key gameEncryptKey; // shared encryption key for this game
@@ -30,9 +29,9 @@ public class GameRecord {
 	
 	int readyCount = 0;
 	
-	public GameRecord( String gameName, int numPlayers, String hostName, PublicKey hostKey ) {
+	public GameRecord( int gameID, String gameName, int numPlayers, String hostName, PublicKey hostKey ) {
+		this.gameID = gameID;
 		this.gameName = gameName;
-		this.gameID = UUID.randomUUID();
 		this.numPlayers = numPlayers;
 		
 		this.players.add(hostName);
