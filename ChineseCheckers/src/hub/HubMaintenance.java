@@ -1,10 +1,10 @@
 package hub;
 
-public class DeadGameReaper implements Runnable {
+public class HubMaintenance implements Runnable {
 
 	MultiThreadedHub hub;
 	
-	public DeadGameReaper( MultiThreadedHub hub ) {
+	public HubMaintenance( MultiThreadedHub hub ) {
 		this.hub = hub;
 	}
 	

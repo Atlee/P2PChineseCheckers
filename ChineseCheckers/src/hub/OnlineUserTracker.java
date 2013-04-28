@@ -2,10 +2,10 @@ package hub;
 
 import java.net.InetAddress;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.HashMap;
 
 
 /* Monitor instantiated by the multi-threaded hub to track status of users
@@ -62,6 +62,17 @@ public class OnlineUserTracker {
 		return sessionID.equals(currentID);
 	}
 	
+	/* Return the InetAddress of a specified user, or null if that user is not
+	 * currently online.
+	 */
+	synchronized InetAddress getInetAddr(String uname) {
+		InetAddress inetAddr = null;
+		if(online.contains(uname)) {
+			inetAddr = records.get(uname).inetAddr;
+		}
+		return inetAddr;
+	}
+	
 	/* Set the status of a specified user to 'active', which means that the user
 	 * currently has an SSL connection open to the hub OR that the user is currently
 	 * listed as a player in some active GameRecord (see GameTracker).
@@ -76,6 +87,7 @@ public class OnlineUserTracker {
 	/* Set the status of a specified user to 'inactive', which means that the user
 	 * does NOT currently have an SSL connection open to the hub AND that the user is
 	 * NOT currently listed as a player in any active GameRecord (see GameTracker).
+	 * Note: If uname is not currently online, nothing happens.
 	 * */
 	synchronized void setIdle(String uname) {
 		if(online.contains(uname)) {
@@ -86,38 +98,29 @@ public class OnlineUserTracker {
 	}
 	
 	/* Reap idle users (i.e. log them out of the system). An idle user is any user
-	 * whose status is IDLE and whose time of last contact with the hub was more than
-	 * 30 minutes ago. Return a list of the usernames of all reaped users.
+	 * whose status is inactive and whose time of last contact with the hub was more
+	 * than 30 minutes ago.
 	 */
-	synchronized List<String> reapIdleUsers() {
+	synchronized void reapIdleUsers() {
 		List<String> reaped = new ArrayList<String>();
-		for(int i=0; i < online.size(); i++) {
-			String uname = online.get(i);
+		for(String uname : online) {
 			OnlineUserRecord record = records.get(uname);
 			if((!record.active) && (record.lastContact + 1800000 < System.currentTimeMillis())) {
 				reaped.add(uname);
 				records.remove(uname);
 			}
 		}
-		for(int i=0; i < reaped.size(); i++) {
-			online.remove(reaped.get(i));
+		for(String uname : reaped) {
+			online.remove(uname);
 		}
-		return reaped;
 	}
 	
-	/* Return the InetAddress of a specified user, or null if that user is not
-	 * currently online.
-	 */
-	synchronized InetAddress getInetAddr(String uname) {
-		InetAddress inetAddr = null;
-		if(online.contains(uname)) {
-			inetAddr = records.get(uname).inetAddr;
+	/* Return a map {username -> session ID} for all currently online users. */
+	synchronized Map<String, Integer> listOnlineUsers() {
+		Map<String, Integer> online = new HashMap<String, Integer>();
+		for(String uname : this.online) {
+			online.put(uname, records.get(uname).sessionID);
 		}
-		return inetAddr;
-	}
-	
-	/* Return a list of the usernames of all currently online users. */
-	synchronized List<String> listOnline() {
 		return online;
 	}
 

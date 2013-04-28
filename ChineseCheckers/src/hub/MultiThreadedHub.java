@@ -52,15 +52,14 @@ public class MultiThreadedHub {
 		SSLServerSocketFactory sf = sslContext.getServerSocketFactory();
 		SSLServerSocket ss = (SSLServerSocket) sf.createServerSocket(Constants.HUB_PORT);
 		
-		// Start the reaper threads
-		new Thread(new IdleUserReaper(this)).start();
-		new Thread(new DeadGameReaper(this)).start();
+		// Start the hub maintenance thread
+		new Thread(new HubMaintenance(this)).start();
 		
 		// Begin accepting SSL client connections...
 		while(true) {
 			try {	
 				if(verboseHub) {
-					System.out.println("Online: " + online.listOnline().toString());
+					System.out.println("Online: " + online.listOnlineUsers().toString());
 					System.out.println("Ready to accept an SSL client connection...");
 				}
 				
