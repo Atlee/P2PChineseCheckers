@@ -215,8 +215,7 @@ public class JoinGameGui extends JPanel implements ListSelectionListener {
 					for (String player : gi.players) {
 						sockets.put(player, new Socket(gi.playerAddrs.get(player), Constants.CLIENT_HOST_PORT));
 					}
-					NetworkLayer l = new NetworkLayer(sockets, gi.encryptKey, signKey, 
-							gi.playerKeys, gi.players);
+					NetworkLayer l = new NetworkLayer(gi.encryptKey, signKey, gi.playerKeys, gi.players);
 					ArrayList<Player> playerObjs = new ArrayList<Player>();
 					Player localPlayer = null;
 					for (int i = 0; i < gi.players.size(); i++) {
