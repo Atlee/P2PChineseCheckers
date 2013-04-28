@@ -55,6 +55,7 @@ public class GameTracker {
 				record.players.add(playerName);
 				record.playerKeys.put(playerName, playerKey);
 				record.playerLogs.put(playerName, null);
+				success = true;
 			}
 		}
 		return success;
@@ -94,6 +95,7 @@ public class GameTracker {
 		if(joinable.containsKey(gameID)) {
 			GameRecord record = joinable.get(gameID);
 			if(record.players.contains(playerName)) {
+				record.ready.remove(playerName);
 				record.ready.add(playerName);
 				if(record.ready.size() == record.numPlayers) {
 					joinable.remove(gameID);
@@ -104,6 +106,7 @@ public class GameTracker {
 						try {
 							wait();
 						} catch(InterruptedException e) {
+							record.ready.remove(playerName);
 							return null;
 						}
 						if(!joinable.containsKey(gameID)) {
