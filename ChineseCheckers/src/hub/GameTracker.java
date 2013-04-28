@@ -46,7 +46,7 @@ public class GameTracker {
 	/* Add a player with public key 'playerKey' to the specified game. This will only work
 	 * if the game exists, is currently 'joinable', and is not already full. Return true
 	 * iff the player was successfully added. */
-	synchronized boolean addPlayer(int gameID, String playerName, PublicKey playerKey) {
+	synchronized boolean joinGame(int gameID, String playerName, PublicKey playerKey) {
 		boolean success = false;
 		if(joinable.containsKey(gameID)) {
 			GameRecord record = joinable.get(gameID);
@@ -63,7 +63,7 @@ public class GameTracker {
 	 * game exists and is currently 'joinable', not 'inProgress'. Also, if 'playerName' is
 	 * not actually a player in this game, then do nothing.
 	 */
-	synchronized void removePlayer(int gameID, String playerName) {
+	synchronized void leaveGame(int gameID, String playerName) {
 		if(joinable.containsKey(gameID)) {
 			GameRecord record = joinable.get(gameID);
 			record.players.remove(playerName);
@@ -107,6 +107,11 @@ public class GameTracker {
 			}
 		}
 		return keys;
+	}
+	
+	/* TODO: write comment */
+	synchronized void forfeit(int gameID, String playerName) {
+		// TODO: implement me!
 	}
 
 	/* TODO: write comment */

@@ -18,7 +18,7 @@ public class LeaveHandler extends HubHandler {
 			if (checkCredentials(uname)) {
 				Integer gameID = (Integer) in.readObject();
 				
-				hub.games.removePlayer(gameID, uname);
+				hub.games.leaveGame(gameID, uname);
 			}
 			
 		} catch (IOException | ClassNotFoundException e) {
