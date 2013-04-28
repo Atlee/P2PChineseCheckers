@@ -25,6 +25,10 @@ public class Move {
 		}
 	}
 	
+	public String getPlayer() {
+		return player.getUsername();
+	}
+	
 	public String serialize() {
 		String output = player.getIndex() + "\t" + player.getUsername() + "\t";
 		for (Point p : moves) {

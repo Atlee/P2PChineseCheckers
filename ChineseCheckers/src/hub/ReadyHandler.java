@@ -34,6 +34,7 @@ public class ReadyHandler extends HubHandler {
 						out.writeObject(gk.signKeys.get(player));
 						out.writeObject(hub.online.getInetAddr(player));
 					}
+					
 				} else {
 					out.writeObject(0);
 				}

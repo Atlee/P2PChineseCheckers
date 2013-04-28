@@ -175,7 +175,7 @@ public class HubGui extends JPanel
     	frame.getContentPane().removeAll();
     	frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     	
-    	JComponent newContentPane = new JoinGameGui(frame, gameID, signKeys.getPublic(), username, secret);
+    	JComponent newContentPane = new JoinGameGui(frame, gameID, signKeys, username, secret);
     	newContentPane.setOpaque(true);
     	frame.setContentPane(newContentPane);
     	

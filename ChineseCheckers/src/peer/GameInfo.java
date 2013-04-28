@@ -24,4 +24,12 @@ public class GameInfo {
 		this.playerAddrs = playerAddrs;
 		this.players = players;
 	}
+	
+	public void print() {
+		System.out.println("GAME INFO:");
+		System.out.println("Game ID: " + gameID);
+		for (String player : players) {
+			System.out.println(player);
+		}
+	}
 }
