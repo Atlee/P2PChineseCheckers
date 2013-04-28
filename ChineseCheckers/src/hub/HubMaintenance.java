@@ -17,19 +17,19 @@ public class HubMaintenance implements Runnable {
 		while(true) {
 			try {
 				Thread.sleep(300000); // sleep for 5 minutes
-				// First, log out idle users
+				// First, boot idle users
 				hub.online.reapIdleUsers();
 				// Now check for dead games
 				Map<String, Integer> online = hub.online.allOnlineUsers();
 				Set<Integer> games = hub.games.allInProgressGames();
 				for(int gameID : games) {
-					boolean dead = false;
 					Map<String, Integer> players = hub.games.getPlayers(gameID);
 					if(players != null) {
 						for(String uname : players.keySet()) {
 							int currentSessionID = hub.online.getSessionID(uname);
 							if(players.get(uname) != currentSessionID) {
-								
+								hub.games.killGame(gameID);
+								break;
 							}
 						}
 					}

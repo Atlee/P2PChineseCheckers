@@ -118,13 +118,20 @@ public class GameTracker {
 							wait();
 						} catch(InterruptedException e) {
 							record.ready.remove(playerName);
+							System.out.println("lolwat 1");
 							return null;
 						}
-						if(!joinable.containsKey(gameID)) {
+						if(!activeGames.contains(gameID)) {
+							System.out.println("lolwat 2");
 							return null;
 						}
-						record = joinable.get(gameID);
+						if(inProgress.containsKey(gameID)) {
+							record = inProgress.get(gameID);
+						} else {
+							record = joinable.get(gameID);
+						}
 						if(!record.players.containsKey(playerName)) {
+							System.out.println("lolwat 3");
 							return null;
 						}
 					}
