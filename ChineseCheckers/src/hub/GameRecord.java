@@ -28,6 +28,8 @@ public class GameRecord {
 	// Map: {username -> audit log}, contains a mapping for key u iff u in 'players'
 	Map<String, String> playerLogs = new HashMap<String, String>();
 	
+	int readyCount = 0;
+	
 	public GameRecord( String gameName, int numPlayers, String hostName, PublicKey hostKey ) {
 		this.gameName = gameName;
 		this.gameID = UUID.randomUUID();
@@ -35,6 +37,7 @@ public class GameRecord {
 		
 		this.players.add(hostName);
 		this.playerKeys.put(hostName, hostKey);
+		this.playerLogs.put(hostName, null);
 		
 		gameEncryptKey = EncryptUtils.handleCreateSharedKey();
 	}
