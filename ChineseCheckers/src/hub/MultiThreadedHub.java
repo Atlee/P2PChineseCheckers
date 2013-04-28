@@ -21,7 +21,7 @@ public class MultiThreadedHub {
 	private KeyStore keyStore;
 	private char[] ksPassword;
 
-    UserTracker online = new UserTracker();
+    OnlineUserTracker online = new OnlineUserTracker();
 	GameTracker games = new GameTracker();
 	PasswordStore pwStore = new PasswordStore();
 	StatisticsStore statStore = new StatisticsStore();

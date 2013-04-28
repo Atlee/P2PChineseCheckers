@@ -9,25 +9,25 @@ import java.util.Map;
 
 
 /* Monitor instantiated by the multi-threaded hub to track status of users
- * authenticated in the system.
+ * currently authenticated in the system.
  * @author Emma
  */
-public class UserTracker {
+public class OnlineUserTracker {
 	
 	private SecureRandom sRand = new SecureRandom();
 	
 	// All users that are currently online
 	private List<String> online = new ArrayList<String>();
-	// Map: {username -> UserRecord}, contains a mapping for key u iff u in 'online'
-	private Map<String, UserRecord> records = new HashMap<String, UserRecord>();
+	// Map: {username -> OnlineUserRecord}, contains a mapping for key u iff u in 'online'
+	private Map<String, OnlineUserRecord> records = new HashMap<String, OnlineUserRecord>();
 
-	public UserTracker() {
+	public OnlineUserTracker() {
 		// do initialization overhead now
 		sRand.nextInt();
 	}
 	
 	/* Add a username to the list of currently online users and return a fresh
-	 * session secret for that user. Obviously, the hub should only call this after
+	 * random session ID for that user. Obviously, the hub should only call this after
 	 * it has authenticated a user's login credentials!
 	 */
 	synchronized Integer add(String uname, InetAddress inetAddr) {
@@ -36,13 +36,13 @@ public class UserTracker {
 		} else {
 			online.add(uname);
 		}
-		Integer secret = (Integer)sRand.nextInt();
-		records.put(uname, new UserRecord(uname, inetAddr, secret));
-		return secret;
+		Integer sessionID = (Integer)sRand.nextInt();
+		records.put(uname, new OnlineUserRecord(uname, inetAddr, sessionID));
+		return sessionID;
 	}
 	
 	/* Remove a username from the list of currently online users and invalidate
-	 * the current session secret for that user (i.e. log him out of the system).
+	 * the current session ID for that user (i.e. log him out of the system).
 	 * Note: If uname is not currently online, nothing happens.
 	 */
 	synchronized void remove(String uname) {
@@ -50,15 +50,16 @@ public class UserTracker {
 		records.remove(uname);
 	}
 	
-	/* Check whether a given secret matches the current session secret for a
-	 * specified user. Return true iff uname is online and there is a match.
+	/* Check whether the given ID matches the current, valid session ID for a 
+	 * specified specified user. Return true iff that user is online and there is 
+	 * a session ID match.
 	 */
-	synchronized boolean check(String uname, Integer secret) {
-		Integer currentSecret = null;
+	synchronized boolean check(String uname, Integer sessionID) {
+		Integer currentID = null;
 		if(online.contains(uname)) {
-			currentSecret = records.get(uname).sessionSecret;
+			currentID = records.get(uname).sessionID;
 		}
-		return secret.equals(currentSecret);
+		return sessionID.equals(currentID);
 	}
 	
 	/* Set the status of a specified user to 'active', which means that the user
@@ -78,7 +79,7 @@ public class UserTracker {
 	 * */
 	synchronized void setIdle(String uname) {
 		if(online.contains(uname)) {
-			UserRecord record = records.get(uname);
+			OnlineUserRecord record = records.get(uname);
 			record.lastContact = System.currentTimeMillis();
 			record.active = false;
 		}
@@ -92,7 +93,7 @@ public class UserTracker {
 		List<String> reaped = new ArrayList<String>();
 		for(int i=0; i < online.size(); i++) {
 			String uname = online.get(i);
-			UserRecord record = records.get(uname);
+			OnlineUserRecord record = records.get(uname);
 			if((!record.active) && (record.lastContact + 1800000 < System.currentTimeMillis())) {
 				reaped.add(uname);
 				records.remove(uname);
