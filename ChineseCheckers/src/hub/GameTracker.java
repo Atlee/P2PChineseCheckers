@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 
 /* Monitor instantiated by the multi-threaded hub to track status of
@@ -133,7 +132,7 @@ public class GameTracker {
 	}
 
 	/* TODO: write comment */
-	synchronized List<String> getPlayers(Integer gameID) {
+	synchronized List<String> getPlayers(int gameID) {
 		List<String> players = null;
 		if(joinable.containsKey(gameID)) {
 			GameRecord record = joinable.get(gameID);
