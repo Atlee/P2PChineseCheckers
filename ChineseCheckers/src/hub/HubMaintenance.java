@@ -20,7 +20,6 @@ public class HubMaintenance implements Runnable {
 				// First, boot idle users
 				hub.online.reapIdleUsers();
 				// Now check for dead games
-				Map<String, Integer> online = hub.online.allOnlineUsers();
 				Set<Integer> games = hub.games.allInProgressGames();
 				for(int gameID : games) {
 					Map<String, Integer> players = hub.games.getPlayers(gameID);
