@@ -22,6 +22,7 @@ public class GameGui {
 	private static JFrame window = new JFrame("Chinese Checkers");
 	private Board b;
 	
+	@SuppressWarnings("static-access")
 	GameGui(List<Player> players, Board b) {
 		this.b = b;
 		
@@ -98,6 +99,7 @@ public class GameGui {
 	
 }
 
+@SuppressWarnings("serial")
 class CircPanel extends JPanel implements MouseListener {
 	Color c;
 	int boardIndexI;
@@ -122,25 +124,21 @@ class CircPanel extends JPanel implements MouseListener {
 
 	@Override
 	public void mouseEntered(MouseEvent e) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void mouseExited(MouseEvent e) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void mousePressed(MouseEvent e) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
-		// TODO Auto-generated method stub
 		
 	}
 }

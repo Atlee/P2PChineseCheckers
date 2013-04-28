@@ -45,7 +45,6 @@ public class PracticeStuff {
 			spec = new DESKeySpec(keyBytes);
 			key2 = kf.generateSecret(spec);
 		} catch (NoSuchAlgorithmException | InvalidKeyException | InvalidKeySpecException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			System.exit(1);
 		}

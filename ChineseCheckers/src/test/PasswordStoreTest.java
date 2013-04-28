@@ -21,7 +21,6 @@ public class PasswordStoreTest {
 			System.out.println(pws.authenticate("10user1", "pass1".toCharArray()));
 			System.out.println(!pws.authenticate("user2", "pass3".toCharArray()));
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

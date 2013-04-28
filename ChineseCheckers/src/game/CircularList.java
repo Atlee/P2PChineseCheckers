@@ -33,6 +33,7 @@ public class CircularList<T> {
 		}*/
 	}
 	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	CircularList(List<T> l) {
 		ArrayList<ListNode<T>> temp = new ArrayList<ListNode<T>>();
 		for (T t : l) {
