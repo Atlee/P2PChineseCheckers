@@ -57,9 +57,8 @@ public class MultiThreadedHub {
 		new Thread(new DeadGameReaper(this)).start();
 		
 		// Begin accepting SSL client connections...
-		try {
-				while(true) {
-				
+		while(true) {
+			try {	
 				if(verboseHub) {
 					System.out.println("Online: " + online.listOnline().toString());
 					System.out.println("Ready to accept an SSL client connection...");
@@ -97,6 +96,12 @@ public class MultiThreadedHub {
 					}
 	                handler = new GetGamesHandler(this, client, in);
 	                break;
+				case Constants.LOGOUT:
+					if(verboseHub) {
+						System.out.println("    Connection accepted! Handling a Logout request...");
+					}
+	                handler = new LogoutHandler(this, client, in);
+	                break;
 				default:
 					if(verboseHub) {
 						System.out.println("    Connection accepted! But the client messed up...");
@@ -107,11 +112,10 @@ public class MultiThreadedHub {
 				if (handler != null) {
 					new Thread(handler).start();
 				}
+			} catch (IOException e) {
+				;
 			}
-		} catch (IOException e) {
-			;
 		}
-
 	}
 	
 }

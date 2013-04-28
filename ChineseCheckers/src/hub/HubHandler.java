@@ -33,11 +33,11 @@ public abstract class HubHandler implements Runnable {
 		}
 	}
 	
-	public boolean checkCredentials(String uname) throws IOException {
-		int secret  = in.readInt();
+	public boolean checkCredentials(String uname) throws IOException, ClassNotFoundException {
+		int secret  = (Integer) in.readObject();
 		
 		if (hub.online.check(uname, secret)) {
-			out.writeUTF(Constants.VALID_SECRET);
+			out.writeObject(Constants.VALID_SECRET);
 			hub.online.setActive(uname);
 			return true;
 		} else {

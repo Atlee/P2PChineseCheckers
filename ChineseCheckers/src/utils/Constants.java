@@ -11,6 +11,7 @@ public class Constants {
 	public static final int LOGIN = 1;
 	public static final int HELLO = 2;
 	public static final int GET_GAMES = 3;
+	public static final int LOGOUT = 4;
 	
 	// Hub application constants
 	public static final String HUB_KS_FILENAME = "hub.private";
@@ -39,9 +40,9 @@ public class Constants {
 	public static final String INVALID_SECRET = "INVALID_SECRET";
 	public static final String VALID_SECRET   = "VALID_SECRET";
 	
-	public static final Object LOGOUT = "LOGOUT";
+	public static final Object SIGNOUT = "SIGNOUT";
 	
-	public static int ACK = 0;
+	public static final Integer ACK = 0;
 	
 	public static boolean verifyUsername(String username) {
 		Pattern whitespacePattern = Pattern.compile("\\s");

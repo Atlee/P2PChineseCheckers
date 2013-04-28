@@ -3,7 +3,6 @@ package hub;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import javax.net.ssl.SSLSocket;
@@ -18,19 +17,22 @@ public class GetGamesHandler extends HubHandler {
 	@Override
 	public void run() {
 		try {
-			String uname = in.readUTF();
+			String uname = (String) in.readObject();
 			if (checkCredentials(uname)) {
 				Map<UUID, String> games = hub.games.listGames();
 				//tell client how many game pairs to expect
-				out.writeInt(games.size());
+				if (games != null) {
+					out.writeObject(games.size());
 
-				Set<UUID> keySet = games.keySet();
-				for (UUID id : keySet) {
-					out.writeObject(id);
-					out.writeUTF(games.get(id));
+					for (UUID id : games.keySet()) {
+						out.writeObject(id);
+						out.writeObject(games.get(id));
+					}
+				} else {
+					out.writeObject(0);
 				}
 			}
-		} catch (IOException e) {
+		} catch (IOException | ClassNotFoundException e) {
 			;
 		}
 	}
