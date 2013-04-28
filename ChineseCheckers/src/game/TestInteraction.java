@@ -5,8 +5,9 @@ import java.io.IOException;
 public class TestInteraction implements Interaction {
 
 	@Override
-	public Move waitForOpponent() throws IOException, Exception {
+	public Move waitForOpponent(String pname) throws IOException, Exception {
 		// TODO Auto-generated method stub
+		System.out.println(pname);
 		return null;
 	}
 
