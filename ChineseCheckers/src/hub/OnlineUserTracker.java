@@ -62,6 +62,17 @@ public class OnlineUserTracker {
 		return sessionID.equals(currentID);
 	}
 	
+	/* Return the current session ID of a specified user, or null if that user
+	 * is not online.
+	 */
+	synchronized Integer getSessionID(String uname) {
+		Integer sessionID = null;
+		if(online.contains(uname)) {
+			sessionID = records.get(uname).sessionID;
+		}
+		return sessionID;
+	}
+	
 	/* Return the InetAddress of a specified user, or null if that user is not
 	 * currently online.
 	 */
@@ -123,7 +134,7 @@ public class OnlineUserTracker {
 	}
 	
 	/* Return a map {username -> session ID} for all currently online users. */
-	synchronized Map<String, Integer> listOnlineUsers() {
+	synchronized Map<String, Integer> allOnlineUsers() {
 		Map<String, Integer> online = new HashMap<String, Integer>();
 		for(String uname : this.online) {
 			online.put(uname, records.get(uname).sessionID);

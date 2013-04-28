@@ -2,11 +2,10 @@ package hub;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.security.PublicKey;
-import java.util.List;
-import java.util.UUID;
+import java.util.Set;
 
 import javax.net.ssl.SSLSocket;
+
 
 public class GetGamePlayersHandler extends HubHandler {
 
@@ -20,7 +19,7 @@ public class GetGamePlayersHandler extends HubHandler {
 			String uname = (String) in.readObject();
 			if (checkCredentials(uname)) {
 				Integer id = (Integer) in.readObject();
-				List<String> players = hub.games.getPlayers(id);
+				Set<String> players = hub.games.getPlayers(id).keySet();
 				if (players != null) {
 					out.writeObject(players.size());
 					for (String pname : players) {
