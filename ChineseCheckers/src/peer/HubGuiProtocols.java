@@ -66,31 +66,39 @@ public class HubGuiProtocols {
      * 
      * 
      * @return the socket connection to a peer
+     * @throws ClassNotFoundException 
+     * @throws GeneralSecurityException 
      */
-    /*public Key hostNewGame() throws IOException {
-    	SSLSocket s = createSecureSocket();
-        ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-        ObjectInputStream in   = new ObjectInputStream(s.getInputStream());
-        
-    	NetworkUtils.sendProtocolID(s, Constants.NEW_HOST);
-		out.writeUTF(username);
-		out.writeInt(sessionKey);
+    public static UUID hostNewGame(String gameName, int numPlayers, PublicKey signKey, String uname, int secret) throws IOException, ClassNotFoundException, GeneralSecurityException {
+    	KeyStore ks = KeyStoreUtils.genUserKeyStore(uname, "GetGames");
+		KeyStore ts = KeyStoreUtils.genUserTrustStore(TS_FILE);
+
+		SSLSocket s;
+		ObjectOutputStream out;
+		ObjectInputStream in;
 		
-		String response = in.readUTF();
-    	
-		if (response.equals(Constants.VERIFY_SUCCESS+username)) {
-			try {
-				Key k = (Key) in.readObject();
-				if (k != null) {
-					return k;
-				}
-			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
-			}
+		// Now open an SSL connection to the Hub and login as the user just registered
+		s = NetworkUtils.createSecureSocket(InetAddress.getLocalHost(), Constants.HUB_PORT, ts, ks, "GetGames");
+
+		out = new ObjectOutputStream(s.getOutputStream());
+		
+		out.writeObject(Constants.GET_GAMES);
+		out.writeObject(uname);
+		out.writeObject(secret);
+		
+		//read the hub response to see if the credentials are valid
+		in = new ObjectInputStream(s.getInputStream());
+		String validResponse = (String) in.readObject();
+    	UUID gameID = null;
+		if (validResponse.equals(Constants.VALID_SECRET)) {
+			out.writeObject(gameName);
+			out.writeObject(numPlayers);
+			out.writeObject(signKey);
+			
+			gameID = (UUID) in.readObject();
 		}
-    	
-    	return null;
-    }*/
+		return gameID;
+    }
 
 	public static void joinGame(UUID id, PublicKey signKey, String uname, int sessionKey) throws IOException, GeneralSecurityException {
 		KeyStore ks = KeyStoreUtils.genUserKeyStore(uname, "JOIN");
@@ -240,6 +248,10 @@ public class HubGuiProtocols {
 			}
 		}
 		return players;
+	}
+
+	public static void ready(UUID id, String username, int secret) {
+		
 	}
 
 }

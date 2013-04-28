@@ -20,7 +20,6 @@ public class Constants {
 	public static final String HUB_KS_PASSWORD = "hubpassword";
 	public static final int HUB_PORT = 4321;
 	
-	
 	// Old constants, not sure what they are for - so I won't mess with them
 	
 	public static final int CLIENT_HOST_PORT = 4444;

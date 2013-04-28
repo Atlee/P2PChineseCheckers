@@ -7,6 +7,7 @@ import game.Player;*/
 
 import java.awt.BorderLayout;
 import java.awt.Frame;
+import java.awt.LayoutManager;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -32,6 +33,8 @@ import java.util.UUID;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.ButtonModel;
 import javax.swing.DefaultListModel;
 import javax.swing.Icon;
 import javax.swing.JButton;
@@ -40,6 +43,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
@@ -70,14 +74,13 @@ public class HubGui extends JPanel
     
     private final String username;
     private final int secret;
-    private final KeyPair signKeys;
+    private KeyPair signKeys;
     
     private HashMap<String, UUID> gameNameMap = new HashMap<String, UUID>();
     
     private JButton joinButton;
     private JButton refreshButton;
     private JButton logoutButton;
-    private JTextField newGameName;
  
     public HubGui(String username, int secret) {
         super(new BorderLayout());
@@ -121,10 +124,6 @@ public class HubGui extends JPanel
         logoutButton.setActionCommand(LOGOUT_STRING);
         logoutButton.addActionListener(new LogoutListener());
  
-        newGameName = new JTextField(TEXT_FIELD_DEFAULT, 10);
-        newGameName.addActionListener(hostListener);
-        newGameName.getDocument().addDocumentListener(hostListener);
- 
         //Create a panel that uses BoxLayout.
         JPanel buttonPane = new JPanel();
         buttonPane.setLayout(new BoxLayout(buttonPane,
@@ -134,7 +133,6 @@ public class HubGui extends JPanel
         buttonPane.add(new JSeparator(SwingConstants.VERTICAL));
         buttonPane.add(joinButton);
         buttonPane.add(Box.createHorizontalStrut(5));
-        //buttonPane.add(newGameName);
         buttonPane.add(hostButton);
         buttonPane.add(Box.createHorizontalStrut(5));
         buttonPane.add(new JSeparator(SwingConstants.VERTICAL));
@@ -177,25 +175,14 @@ public class HubGui extends JPanel
             
             try {
 				HubGuiProtocols.joinGame(gameNameMap.get(gameName), signKeys.getPublic(), username, secret);
-
+				
+				new JoinGameGui(gameNameMap.get(gameName), username, secret);
 			} catch (IOException | GeneralSecurityException e1) {
 				Peer.displayWindow("Join Failed", "Error Connecting to Hub");
 			}
             
             
         }
-        
-        /*
-         * 		Socket s = new Socket(pair.first(), Constants.CLIENT_HOST_PORT);
-				//Send the username to the host so he knows who hes playing
-				NetworkUtils.sendEncryptedMessage(s, username.getBytes(), pair.second(), Constants.SHARED_ENCRYPT_ALG);
-				try {
-					Game g = createBasicGame(s, pair.second(), hostname, username);
-				} catch (Exception ex) {
-					ex.printStackTrace();
-					System.exit(0);
-				}
-         */
         
        /* private Game createBasicGame(Socket peer, Key gameKey, String hostname, String username) throws Exception {
         	Player host = new Player(hostname, 0);
@@ -220,6 +207,32 @@ public class HubGui extends JPanel
         	new Peer();
         }
     }
+    
+    class CreateListener implements ActionListener {
+    	JTextField newGameName;
+    	ButtonGroup group;
+    	
+    	CreateListener(JTextField text, ButtonGroup bg) {
+    		newGameName = text;
+    		group = bg;
+    	}
+    	
+        public void actionPerformed(ActionEvent e) {
+        	String gameName = newGameName.getText();
+        	ButtonModel b  = group.getSelection();
+        	JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(((JButton) e.getSource()));
+        	frame.setVisible(false);
+            try {
+            	signKeys = SignUtils.newSignKeyPair();
+	            UUID gameID = HubGuiProtocols.hostNewGame(gameName,Integer.parseInt(b.getActionCommand()), 
+	            		signKeys.getPublic(), username, secret);
+	            new JoinGameGui(gameID, username, secret);
+            } catch (IOException | NumberFormatException | ClassNotFoundException | GeneralSecurityException ex) {
+            	Peer.displayWindow("Host Failed", "Error Connecting to Hub");
+            }
+            frame.dispose();
+        }
+    }
  
     //This listener is shared by the text field and the hire button.
     class HostListener implements ActionListener, DocumentListener {
@@ -232,13 +245,37 @@ public class HubGui extends JPanel
  
         //Required by ActionListener.
         public void actionPerformed(ActionEvent e) {
-           /* try {
-	            Key gameKey = comm.hostNewGame();
-	            updateHostList();
-	            (new Thread(new GameStart(gameKey, username))).start();
-            } catch (IOException ex) {
-            	Peer.displayWindow("Host Failed", "Error Connecting to Hub");
-            } */
+        	//create new window for selecting game options
+        	JFrame options = new JFrame("Options");
+        	JPanel panel = new JPanel();
+            panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
+        	
+        	JTextField newGameName = new JTextField("Game Name");
+        	
+        	JRadioButton b2 = new JRadioButton("2", true); b2.setActionCommand("2");
+        	JRadioButton b3 = new JRadioButton("3", false);b3.setActionCommand("3");
+        	JRadioButton b4 = new JRadioButton("4", false);b4.setActionCommand("4");
+        	JRadioButton b5 = new JRadioButton("5", false);b5.setActionCommand("5");
+        	JRadioButton b6 = new JRadioButton("6", false);b6.setActionCommand("6");
+        	ButtonGroup bg = new ButtonGroup();
+        	bg.add(b2);bg.add(b3);bg.add(b4);bg.add(b5);bg.add(b6);
+        	
+        	JButton create = new JButton("Create");
+        	create.setActionCommand("Create");
+        	create.addActionListener(new CreateListener(newGameName, bg));
+        	
+        	panel.add(newGameName);
+        	panel.add(create);
+        	panel.add(b2);panel.add(b3);
+        	panel.add(b5);panel.add(b4);
+        	panel.add(b6);
+        	
+        	options.getContentPane().add(panel);
+        	
+        	options.pack();
+        	panel.setVisible(true);        
+        	options.getContentPane().setVisible(true);
+        	options.setVisible(true);
         }
         
         //This method tests for string equality. You could certainly

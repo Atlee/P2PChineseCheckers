@@ -9,6 +9,8 @@ import java.util.UUID;
 
 import javax.net.ssl.SSLSocket;
 
+import utils.Constants;
+
 public class HostHandler extends HubHandler {
 
 	public HostHandler(MultiThreadedHub hub, SSLSocket client,
@@ -19,29 +21,16 @@ public class HostHandler extends HubHandler {
 	@Override
 	public void run () {
 		try {
-			String uname      = in.readUTF(); 
+			String uname = (String) in.readObject(); 
 			if (checkCredentials(uname)) {
-				
-				String gameName   = in.readUTF();
-				int numPlayers    = in.readInt();
+				String gameName   = (String) in.readObject();
+				int numPlayers    = (Integer) in.readObject();
 				PublicKey hostKey = (PublicKey) in.readObject();
 				
 				UUID gameID = hub.games.createGame(gameName, numPlayers, uname, hostKey);
 				
-				//blocks and waits for all players to join
-				GameKeys gk = hub.games.playerReady(gameID, uname);
-				
-				//write the game encrypt key
-				out.writeObject(gk.encryptKey);
-				
-				//write the signing keys of each player
-				out.writeInt(gk.signKeys.size());
-				Set<String> keys = gk.signKeys.keySet();
-				for (String player : keys) {
-					out.writeUTF(player);
-					out.writeObject(gk.signKeys.get(player));
-				}
-			}			
+				out.writeObject(gameID);
+			}
 		} catch (IOException | ClassNotFoundException e) {
 			;
 		}		
