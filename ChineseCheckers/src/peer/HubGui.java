@@ -1,5 +1,10 @@
 package peer;
 
+/*import game.Game;
+import game.Interaction;
+import game.NetworkLayer;
+import game.Player;*/
+
 import java.awt.BorderLayout;
 import java.awt.Frame;
 import java.awt.Toolkit;
@@ -12,14 +17,22 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.security.GeneralSecurityException;
 import java.security.Key;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
@@ -31,6 +44,7 @@ import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
@@ -48,16 +62,24 @@ public class HubGui extends JPanel
  
     private static final String HOST_STRING = "Host";
     private static final String JOIN_STRING = "Join";
+	private static final String LOGOUT_STRING = "Logout";
     private static final String REFRESH_STRING = "Refresh";
     private static final String TEXT_FIELD_DEFAULT = "New Game Name";
+    
+    private final String username;
+    private final int secret;
+    
+    private HashMap<String, UUID> gameNameMap = new HashMap<String, UUID>();
+    
     private JButton joinButton;
     private JButton refreshButton;
+    private JButton logoutButton;
     private JTextField newGameName;
-    private Key sharedKey;
  
-    public HubGui(Key sharedKey) {
+    public HubGui(String username, int secret) {
         super(new BorderLayout());
-        this.sharedKey = sharedKey;
+        this.username = username;
+        this.secret   = secret;
         
         //get the list of hsots from the server and update
         //listModel to represent that list
@@ -90,6 +112,10 @@ public class HubGui extends JPanel
         if (size == 0) {
         	joinButton.setEnabled(false);
         }
+        
+        logoutButton = new JButton(LOGOUT_STRING);
+        logoutButton.setActionCommand(LOGOUT_STRING);
+        logoutButton.addActionListener(new LogoutListener());
  
         newGameName = new JTextField(TEXT_FIELD_DEFAULT, 10);
         newGameName.addActionListener(hostListener);
@@ -107,6 +133,8 @@ public class HubGui extends JPanel
         buttonPane.add(Box.createHorizontalStrut(5));
         //buttonPane.add(newGameName);
         buttonPane.add(hostButton);
+        buttonPane.add(Box.createHorizontalStrut(5));
+        buttonPane.add(logoutButton);
         buttonPane.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
  
         add(listScrollPane, BorderLayout.CENTER);
@@ -114,21 +142,19 @@ public class HubGui extends JPanel
     }
     
     private void updateHostList() {
-    	List<String> hosts = null;
     	try {
-    		hosts = HubGuiProtocols.getHostList(sharedKey);
-    	} catch (IOException e) {
-    		System.out.println("Error getting host list from server");
-    		e.printStackTrace();
-    		System.exit(1);
+    		gameNameMap.clear();
+    		Map<UUID, String> games = HubGuiProtocols.getGameList(username, secret);
+    		
+    		listModel.clear(); //clear the current list
+    		for (UUID id : games.keySet()) {
+    			String gameName = games.get(id);
+    			listModel.addElement(gameName);
+    			gameNameMap.put(gameName, id);
+    		}
+    	} catch (IOException | ClassNotFoundException | GeneralSecurityException e) {
+    		Peer.displayWindow("Communication Error", "Error Getting Game List from Hub");
     	}
-    	
-    	listModel.clear();
-        
-        //add all the hosts to the listmodel display
-        for (String hostname : hosts) {
-        	listModel.addElement(hostname);
-        }
     }
     
     class RefreshListener implements ActionListener {
@@ -142,20 +168,49 @@ public class HubGui extends JPanel
             //This method can be called only if
             //there's a valid selection
             //so go ahead and remove whatever's selected.
-            int index = list.getSelectedIndex();
-            String hostname = list.getSelectedValue();
+           /* String hostname = list.getSelectedValue();
             
             try {
-				InetAddress hostAddr = HubGuiProtocols.joinGame(hostname, sharedKey);
-				Socket s = new Socket(hostAddr, Constants.CLIENT_HOST_PORT);
-				Chat c = new Chat(s);
-				c.start();
+				Tuple<InetAddress, Key> pair = HubGuiProtocols.joinGame(gameNameMap.get(hostname));
+				Socket s = new Socket(pair.first(), Constants.CLIENT_HOST_PORT);
+				//Send the username to the host so he knows who hes playing
+				NetworkUtils.sendEncryptedMessage(s, username.getBytes(), pair.second(), Constants.SHARED_ENCRYPT_ALG);
+				try {
+					Game g = createBasicGame(s, pair.second(), hostname, username);
+				} catch (Exception ex) {
+					ex.printStackTrace();
+					System.exit(0);
+				}
+				//c.start();
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
 				System.out.println("unable to get address from hub");
 				e1.printStackTrace();
 				System.exit(1);
-			}
+			}*/
+        }
+        
+       /* private Game createBasicGame(Socket peer, Key gameKey, String hostname, String username) throws Exception {
+        	Player host = new Player(hostname, 0);
+        	Player me = new Player(username, 1);
+        	ArrayList<Player> l = new ArrayList<Player>();
+        	l.add(host); l.add(me);
+        	Interaction i = new NetworkLayer(peer, gameKey);
+        	return new Game(l, me, i);
+        } */
+    }
+    
+    class LogoutListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+        	try {
+        		HubGuiProtocols.logout(username, secret);
+        	} catch(IOException | GeneralSecurityException ex) {
+        		;
+        	}
+        	//get the window
+        	JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(((JButton) e.getSource()));
+        	frame.dispose();
+        	new Peer();
         }
     }
  
@@ -163,7 +218,6 @@ public class HubGui extends JPanel
     class HostListener implements ActionListener, DocumentListener {
         private boolean alreadyEnabled = false;
         private JButton button;
-        private ServerSocket hostSocket = null;
  
         public HostListener(JButton button) {
             this.button = button;
@@ -171,46 +225,15 @@ public class HubGui extends JPanel
  
         //Required by ActionListener.
         public void actionPerformed(ActionEvent e) {
-            String name = newGameName.getText();
- 
-            //User didn't type in a unique name...
-            /*if (name.equals("") || alreadyInList(name)) {
-                Toolkit.getDefaultToolkit().beep();
-                newGameName.requestFocusInWindow();
-                newGameName.selectAll();
-                return;
-            }*/
-            
-            hostSocket = HubGuiProtocols.hostNewGame(sharedKey);
-            updateHostList();
-            //blocks waiting for peer, need this to happen in new thread
-            Socket peer = displayWaitingWindow();
-            Chat c = new Chat(peer);
-            c.start();
+           /* try {
+	            Key gameKey = comm.hostNewGame();
+	            updateHostList();
+	            (new Thread(new GameStart(gameKey, username))).start();
+            } catch (IOException ex) {
+            	Peer.displayWindow("Host Failed", "Error Connecting to Hub");
+            } */
         }
         
-        private Socket displayWaitingWindow() {
-        	JFrame frame = new JFrame("Waiting for opponent");
-    		JLabel label = new JLabel("Waiting for opponent to join", SwingConstants.CENTER);
-    		
-    		//show success/failure window
-    		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    		frame.getContentPane().add(label, BorderLayout.CENTER);			
-    		frame.setSize(300, 100);
-    		frame.setVisible(true);
-    		
-    		Socket peer = null;
-    		try {
-				peer = hostSocket.accept();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				System.exit(1);
-			}
-    		frame.dispose();
-    		return peer;
-        }
- 
         //This method tests for string equality. You could certainly
         //get more sophisticated about the algorithm.  For example,
         //you might want to ignore white space and capitalization.
@@ -265,47 +288,75 @@ public class HubGui extends JPanel
             }
         }
     }
-
-    public static void createAndShowGUI(Key sharedKey) {
-        //Create and set up the window.
-        JFrame frame = new JFrame("ListDemo");
-        frame.addWindowListener(new CloseListener(sharedKey));
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
- 
-        //Create and set up the content pane.
-        System.out.println("Creating HubGUI");
-        JComponent newContentPane = new HubGui(sharedKey);
-        System.out.println("Created HubGUI");
-        newContentPane.setOpaque(true); //content panes must be opaque
-        frame.setContentPane(newContentPane);
- 
-        //Display the window.
-        frame.pack();
-        frame.setVisible(true);
-    } 
-/*    public static void main(String[] args) {
-        //Schedule a job for the event-dispatching thread:
-        //creating and showing this application's GUI.
-        javax.swing.SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                createAndShowGUI();
-            }
-        });
-    }*/
 }
 
-class CloseListener extends WindowAdapter {
+/*class GameStart implements Runnable {
 	
-	Key sharedKey;
+	private Key gameKey;
+	private String hostname;
 	
-	public CloseListener(Key sharedKey) {
-		this.sharedKey = sharedKey;
+	public GameStart(Key gameKey, String hostname) {
+		this.gameKey = gameKey;
+		this.hostname = hostname;
+	}
+
+	@Override
+	public void run() {
+		ServerSocket host = null;
+    	try {
+    		host = new ServerSocket(Constants.CLIENT_HOST_PORT);
+    	} catch (IOException e) {
+    		System.out.println("Could not listen on port " + Constants.CLIENT_HOST_PORT);
+    		e.printStackTrace();
+    		System.exit(1);
+    	}
+    	
+    	Socket peer = displayWaitingWindow(host);
+    	
+    	String peername = null;
+    	try {
+    		peername = new String(NetworkUtils.readEncryptedMessage(peer, gameKey, Constants.SHARED_ENCRYPT_ALG));
+    	} catch (IOException ex) {
+    		ex.printStackTrace();
+    		System.exit(1);
+    	}
+    	
+    	try {
+        	Game g = createBasicGame(peer, hostname, peername);
+        } catch (Exception ex) {
+        	ex.printStackTrace();
+        	System.exit(1);
+        }
 	}
 	
-	public void windowClosing(WindowEvent e) {
-		System.out.println("Sending logout");
-		HubGuiProtocols.logout(sharedKey);
-		Frame frame = (Frame) e.getSource();
+    private Socket displayWaitingWindow(ServerSocket hostSocket) {
+    	JFrame frame = new JFrame("Waiting for opponent");
+		JLabel label = new JLabel("Waiting for opponent to join", SwingConstants.CENTER);
+		
+		//show success/failure window
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.getContentPane().add(label, BorderLayout.CENTER);			
+		frame.setSize(300, 100);
+		frame.setVisible(true);
+		
+		Socket peer = null;
+		try {
+			peer = hostSocket.accept();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			System.exit(1);
+		}
 		frame.dispose();
-	}
-}
+		return peer;
+    }
+    
+    private Game createBasicGame(Socket s, String hostname, String peerName) throws Exception {
+    	Player host = new Player(hostname, 0);
+    	Player peer = new Player(peerName, 1);
+    	ArrayList<Player> l = new ArrayList<Player>();
+    	l.add(host); l.add(peer);
+    	Interaction i = new NetworkLayer(s, gameKey);
+    	return new Game(l, host, i);
+    }	
+}*/
