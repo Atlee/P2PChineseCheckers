@@ -2,7 +2,6 @@ package test;
 
 import java.security.InvalidKeyException;
 import java.security.Key;
-import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
@@ -59,6 +58,7 @@ public class PracticeStuff {
 		
 		try {
 			Cipher c = Cipher.getInstance("DES");
+			c.toString();
 			
 		} catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
 			

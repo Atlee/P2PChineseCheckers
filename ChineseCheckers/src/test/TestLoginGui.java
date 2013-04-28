@@ -5,7 +5,6 @@ import javax.swing.*;
 import java.awt.*;  
 import java.awt.event.*;  
 import java.util.ArrayList;
-import java.util.UUID;
   
 public class TestLoginGui implements Runnable {  
 
@@ -17,6 +16,7 @@ public class TestLoginGui implements Runnable {
       
     public static void main(String[] args){
     	TestLoginGui g = new TestLoginGui();
+    	g.toString();
     }
     
     public TestLoginGui() {
