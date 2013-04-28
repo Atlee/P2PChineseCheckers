@@ -76,6 +76,7 @@ public class HubGui extends JPanel
     private final String username;
     private final int secret;
     private KeyPair signKeys;
+    private JFrame frame;
     
     private HashMap<String, Integer> gameNameMap = new HashMap<String, Integer>();
     
@@ -83,11 +84,12 @@ public class HubGui extends JPanel
     private JButton refreshButton;
     private JButton logoutButton;
  
-    public HubGui(String username, int secret) {
+    public HubGui(JFrame window, String username, int secret) {
         super(new BorderLayout());
         this.username = username;
         this.secret   = secret;
         this.signKeys  = SignUtils.newSignKeyPair();
+        this.frame = window;
         
         //get the list of hsots from the server and update
         //listModel to represent that list
@@ -145,29 +147,35 @@ public class HubGui extends JPanel
         add(buttonPane, BorderLayout.PAGE_END);
     }
     
-    private void updateHostList() {
+    private boolean updateHostList() {
+    	boolean output = false;
     	try {
     		gameNameMap.clear();
     		Map<Integer, String> games = HubGuiProtocols.getGameList(username, secret);
     		
-    		listModel.clear(); //clear the current list
-    		for (Integer id : games.keySet()) {
-    			String gameName = games.get(id);
-    			listModel.addElement(gameName);
-    			gameNameMap.put(gameName, id);
+    		if (games != null) {
+	    		listModel.clear(); //clear the current list
+	    		for (Integer id : games.keySet()) {
+	    			String gameName = games.get(id);
+	    			listModel.addElement(gameName);
+	    			gameNameMap.put(gameName, id);
+	    		}
+	    		output = true;
+    		} else {
+    			output = false;
     		}
     	} catch (IOException | ClassNotFoundException | GeneralSecurityException e) {
     		e.printStackTrace();
     		Peer.displayWindow("Communication Error", "Error Getting Game List from Hub");
     	}
+    	return output;
     }
     
     private void showJoinGameGui(Integer gameID) {
-    	JFrame frame = new JFrame("Game " + gameID + "'s Players");
     	frame.getContentPane().removeAll();
     	frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     	
-    	JComponent newContentPane = new JoinGameGui(gameID, signKeys.getPublic(), username, secret);
+    	JComponent newContentPane = new JoinGameGui(frame, gameID, signKeys.getPublic(), username, secret);
     	newContentPane.setOpaque(true);
     	frame.setContentPane(newContentPane);
     	
@@ -177,7 +185,15 @@ public class HubGui extends JPanel
     
     class RefreshListener implements ActionListener {
     	public void actionPerformed(ActionEvent e) {
-    		updateHostList();
+    		if (updateHostList()) {
+    			;
+    		} else {
+    			JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(((JButton) e.getSource()));
+    			frame.setVisible(false);
+    			frame.dispose();
+    			Peer.displayWindow("Session Expired", "Session Key no longer valid");
+    			new Peer();
+    		}
     	}
     }
  
@@ -189,14 +205,21 @@ public class HubGui extends JPanel
             String gameName = list.getSelectedValue();
             
             try {
-				HubGuiProtocols.joinGame(gameNameMap.get(gameName), signKeys.getPublic(), username, secret);
+            	System.out.println("entering join");
+				boolean success = HubGuiProtocols.joinGame(gameNameMap.get(gameName), signKeys.getPublic(), username, secret);
 				
-				showJoinGameGui(gameNameMap.get(gameName));
-			} catch (IOException | GeneralSecurityException e1) {
+				if (success) {
+					showJoinGameGui(gameNameMap.get(gameName));
+				} else {
+	    			JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(((JButton) e.getSource()));
+	    			frame.setVisible(false);
+	    			frame.dispose();
+	    			Peer.displayWindow("Session Expired", "Session Key no longer valid");
+	    			new Peer();
+				}
+			} catch (IOException | GeneralSecurityException | ClassNotFoundException e1) {
 				Peer.displayWindow("Join Failed", "Error Connecting to Hub");
-			}
-            
-            
+			}           
         }
         
        /* private Game createBasicGame(Socket peer, Key gameKey, String hostname, String username) throws Exception {
@@ -241,7 +264,15 @@ public class HubGui extends JPanel
             	signKeys = SignUtils.newSignKeyPair();
 	            Integer gameID = HubGuiProtocols.hostNewGame(gameName,Integer.parseInt(b.getActionCommand()), 
 	            		signKeys.getPublic(), username, secret);
-	            showJoinGameGui(gameID);
+	            if (gameID != null) {
+	            	showJoinGameGui(gameID);
+	            } else {
+         			JFrame frame2 = (JFrame) SwingUtilities.getWindowAncestor(((JButton) e.getSource()));
+         			frame2.setVisible(false);
+         			frame2.dispose();
+         			Peer.displayWindow("Session Expired", "Session Key no longer valid");
+         			new Peer();
+         		}
             } catch (IOException | NumberFormatException | ClassNotFoundException | GeneralSecurityException ex) {
             	Peer.displayWindow("Host Failed", "Error Connecting to Hub");
             }

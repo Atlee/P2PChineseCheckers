@@ -19,6 +19,7 @@ public class JoinHandler extends HubHandler {
 	public void run() {
 		try {
 			String uname = (String) in.readObject();
+			System.out.println(uname);
 			if (checkCredentials(uname)) {
 				Integer id = (Integer) in.readObject();
 				PublicKey signKey = (PublicKey) in.readObject();

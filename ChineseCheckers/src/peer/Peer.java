@@ -97,7 +97,7 @@ public class Peer  {
     	
     	frame.addWindowListener(new CloseListener());
     	
-    	JComponent newContentPane = new HubGui(username, secret);
+    	JComponent newContentPane = new HubGui(frame, username, secret);
     	newContentPane.setOpaque(true);
     	frame.setContentPane(newContentPane);
     	
