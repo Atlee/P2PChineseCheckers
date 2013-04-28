@@ -57,9 +57,8 @@ public class GameTracker {
 		if(joinable.containsKey(gameID)) {
 			GameRecord record = joinable.get(gameID);
 			if(record.players.size() < record.numPlayers) {
-				record.players.put(playerName, playerSessionID);
-				record.playerKeys.put(playerName, playerKey);
-				record.playerLogs.put(playerName, null);
+				record.players.add(playerName);
+				record.playerRecords.put(playerName, new PlayerRecord(playerName, playerSessionID, playerKey));
 				success = true;
 			}
 		}
@@ -79,10 +78,9 @@ public class GameTracker {
 		} else {
 			return;
 		}
-		record.players.remove(playerName);
 		record.ready.remove(playerName);
-		record.playerKeys.remove(playerName);
-		record.playerLogs.remove(playerName);
+		record.players.remove(playerName);
+		record.playerRecords.remove(playerName);
 		if(record.players.size() < 1) {
 			activeGames.remove(activeGames.indexOf(gameID));
 			joinable.remove(gameID);
@@ -92,12 +90,20 @@ public class GameTracker {
 
 	/* TODO: write comment */
 	synchronized Map<String, Integer> getPlayers(int gameID) {
-		if(joinable.containsKey(gameID)) {
-			return joinable.get(gameID).players;
-		} else if(inProgress.containsKey(gameID)) {
-			return inProgress.get(gameID).players;
+		Map<String, Integer> players = null;
+		if(activeGames.contains(gameID)) {
+			players = new HashMap<String, Integer>();
+			GameRecord record;
+			if(joinable.containsKey(gameID)) {
+				record = joinable.get(gameID);
+			} else {
+				record = inProgress.get(gameID);
+			}
+			for(String uname : record.players) {
+				players.put(uname, record.playerRecords.get(uname).sessionID);
+			}
 		}
-		return null;
+		return players;
 	}
 
 	/* TODO: write comment */
@@ -105,7 +111,7 @@ public class GameTracker {
 		GameKeys keys = null;
 		if(joinable.containsKey(gameID)) {
 			GameRecord record = joinable.get(gameID);
-			if(record.players.containsKey(playerName)) {
+			if(record.players.contains(playerName)) {
 				record.ready.remove(playerName);
 				record.ready.add(playerName);
 				if(record.ready.size() == record.numPlayers) {
@@ -130,18 +136,36 @@ public class GameTracker {
 						} else {
 							record = joinable.get(gameID);
 						}
-						if(!record.players.containsKey(playerName)) {
+						if(!record.players.contains(playerName)) {
 							System.out.println("lolwat 3");
 							return null;
 						}
 					}
 				}
 				Key encryptKey = record.gameEncryptKey;
-				Map<String, PublicKey> signKeys = record.playerKeys;
+				Map<String, PublicKey> signKeys = new HashMap<String, PublicKey>();
+				for(String uname : record.players) {
+					PublicKey key = record.playerRecords.get(uname).signKey;
+					signKeys.put(uname, key);
+				}
 				keys = new GameKeys(encryptKey, signKeys);
 			}
 		}
 		return keys;
+	}
+	
+	/* TODO: write comment */
+	synchronized void isListening(int gameID, String playerName) {
+		if(inProgress.containsKey(gameID)) {
+			
+		}
+	}
+	
+	/* TODO: write comment */
+	synchronized void okayToTalk(int gameID, String playerName) {
+		if(inProgress.containsKey(gameID)) {
+			
+		}
 	}
 
 	/* TODO: write comment */
@@ -149,14 +173,16 @@ public class GameTracker {
 		GameRecord completeRecord = null;
 		if(inProgress.containsKey(gameID)) {
 			GameRecord record = inProgress.get(gameID);
-			if(record.players.containsKey(playerName)) {
-				record.playerLogs.remove(playerName);
-				record.playerLogs.put(playerName, log);
-				if(!record.playerLogs.values().contains(null)) {
-					completeRecord = record;
-					activeGames.remove(gameID);
-					inProgress.remove(gameID);
+			if(record.players.contains(playerName)) {
+				record.playerRecords.get(playerName).log = log;
+				for(String uname : record.players) {
+					if(record.playerRecords.get(uname).log == null) {
+						return null;
+					}				
 				}
+				completeRecord = record;
+				activeGames.remove(gameID);
+				inProgress.remove(gameID);
 			}
 		}
 		return completeRecord;
