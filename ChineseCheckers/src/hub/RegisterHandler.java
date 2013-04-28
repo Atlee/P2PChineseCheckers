@@ -18,8 +18,6 @@ public class RegisterHandler extends HubHandler {
 	@Override
 	public void run() {
 		try {
-			out.writeObject("Hub: Desired username, please?");
-
 			String uname = (String)in.readObject();
 			if (Constants.verifyUsername(uname)) {
 				//if the username is allowed

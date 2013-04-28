@@ -9,8 +9,6 @@ import java.util.UUID;
 
 import javax.net.ssl.SSLSocket;
 
-import utils.Constants;
-
 public class HostHandler extends HubHandler {
 
 	public HostHandler(MultiThreadedHub hub, SSLSocket client,

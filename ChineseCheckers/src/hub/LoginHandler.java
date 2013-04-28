@@ -19,14 +19,13 @@ public class LoginHandler extends HubHandler {
 	public void run() {
 		try {
 			String uname = (String)in.readObject();
+			out.writeInt(Constants.ACK);
 			String password = (String)in.readObject();
-			
-			System.out.println(uname);
-			System.out.println(password);
 			
 			if(hub.pwStore.authenticate(uname, password.toCharArray())) {
 				Integer secret = hub.online.add(uname, client.getInetAddress());
 				out.writeObject(Constants.LOGIN_SUCCESS);
+				in.readInt();
 				out.writeObject(secret);
 			} else {
 				out.writeObject(Constants.LOGIN_FAILURE);
