@@ -23,7 +23,8 @@ public class JoinHandler extends HubHandler {
 			if (checkCredentials(uname)) {
 				Integer id = (Integer) in.readObject();
 				PublicKey signKey = (PublicKey) in.readObject();
-				hub.games.joinGame(id, uname, signKey);
+				Integer sessionID = hub.online.getSessionID(uname);
+				hub.games.joinGame(id, uname, sessionID, signKey);
 				hub.online.setInGame(uname, id);
 			}	
 		} catch (IOException | ClassNotFoundException e) {

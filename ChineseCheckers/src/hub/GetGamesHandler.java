@@ -19,7 +19,7 @@ public class GetGamesHandler extends HubHandler {
 		try {
 			String uname = (String) in.readObject();
 			if (checkCredentials(uname)) {
-				Map<Integer, String> games = hub.games.listOpenGames();
+				Map<Integer, String> games = hub.games.allJoinableGames();
 				//tell client how many game pairs to expect
 				if (games != null) {
 					out.writeObject(games.size());

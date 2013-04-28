@@ -20,21 +20,23 @@ public class GameRecord {
 	final int numPlayers;     // total number of players required to start this game
 	final Key gameEncryptKey; // shared encryption key for this game
 	
-	// The usernames of all players that have joined (and not yet left) this game
-	List<String> players = new ArrayList<String>();
-	// Map: {username -> public key}, contains a mapping for key u iff u in 'players'
+	// Map: {username -> session ID} for all players in this game
+	Map<String, Integer> players = new HashMap<String, Integer>();
+	// Map: {username -> public key}, contains a mapping for key u iff u in players.keySet()
 	Map<String, PublicKey> playerKeys = new HashMap<String, PublicKey>();
-	// Map: {username -> audit log}, contains a mapping for key u iff u in 'players'
+	// Map: {username -> audit log}, contains a mapping for key u iff u in players.keySet()
 	Map<String, String> playerLogs = new HashMap<String, String>();
 	
+	// List of players that have clicked ready
 	List<String> ready = new ArrayList<String>();
 	
-	public GameRecord( int gameID, String gameName, int numPlayers, String hostName, PublicKey hostKey ) {
+	public GameRecord( int gameID, String gameName, int numPlayers, String hostName, 
+			int hostSessionID, PublicKey hostKey ) {
 		this.gameID = gameID;
 		this.gameName = gameName;
 		this.numPlayers = numPlayers;
 		
-		this.players.add(hostName);
+		this.players.put(hostName, hostSessionID);
 		this.playerKeys.put(hostName, hostKey);
 		this.playerLogs.put(hostName, null);
 		
