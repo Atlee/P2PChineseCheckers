@@ -38,6 +38,7 @@ public class HubGuiProtocols {
 		out = new ObjectOutputStream(s.getOutputStream());
 		
 		out.writeObject(Constants.GET_GAMES);
+		
 		out.writeObject(uname);
 		out.writeObject(sessionKey);
 		
@@ -320,9 +321,11 @@ public class HubGuiProtocols {
 		
 		GameInfo gi = null;
 		if (validResponse.equals(Constants.VALID_SECRET)) {
+			System.out.println("Valid secret");
 			out.writeObject(id);
-			
+			System.out.println(id);
 			int len = (Integer) in.readObject();
+			System.out.println(len);
 			if (len > 0) {
 				Key encryptKey = (Key) in.readObject();
 				List<String> players = new ArrayList<String>();
@@ -330,6 +333,7 @@ public class HubGuiProtocols {
 				Map<String, InetAddress> peerAddrs = new HashMap<String, InetAddress>(); 
 				for (int i = 0; i < len; i++) {
 					String pname = (String) in.readObject();
+					System.out.println(pname);
 					players.add(pname);
 					peerKeys.put(pname, (PublicKey) in.readObject());
 					peerAddrs.put(pname, (InetAddress) in.readObject());
