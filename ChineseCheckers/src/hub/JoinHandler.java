@@ -3,6 +3,8 @@ package hub;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.security.PublicKey;
+import java.util.UUID;
 
 import javax.net.ssl.SSLSocket;
 
@@ -16,13 +18,14 @@ public class JoinHandler extends HubHandler {
 	@Override
 	public void run() {
 		try {
-			String uname = in.readUTF();
+			String uname = (String) in.readObject();
 			if (checkCredentials(uname)) {
-				
+				UUID id = (UUID) in.readObject();
+				PublicKey signKey = (PublicKey) in.readObject();
+				hub.games.addPlayer(id, uname, signKey);
 			}	
-		} catch (IOException e) {
+		} catch (IOException | ClassNotFoundException e) {
 			;
 		}
 	}
-
 }
