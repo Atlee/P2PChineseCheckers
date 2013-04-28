@@ -41,6 +41,7 @@ import peer.HubGui.JoinListener;
 import peer.HubGui.LogoutListener;
 import peer.HubGui.RefreshListener;
 import peer.Peer.CloseListener;
+import utils.Constants;
 import utils.NetworkUtils;
 import utils.SignUtils;
 
@@ -210,18 +211,24 @@ public class JoinGameGui extends JPanel implements ListSelectionListener {
 				GameInfo gi = HubGuiProtocols.ready(id, username, secret);
 				if (gi != null) {
 					gi.print();
-					/*HashMap<String, Socket> sockets = new HashMap<String, Socket>();
+					HashMap<String, Socket> sockets = new HashMap<String, Socket>();
+					for (String player : gi.players) {
+						sockets.put(player, new Socket(gi.playerAddrs.get(player), Constants.CLIENT_HOST_PORT));
+					}
 					NetworkLayer l = new NetworkLayer(sockets, gi.encryptKey, signKey, 
 							gi.playerKeys, gi.players);
 					ArrayList<Player> playerObjs = new ArrayList<Player>();
 					Player localPlayer = null;
 					for (int i = 0; i < gi.players.size(); i++) {
-						if (gi.players.get(i) == username) {
+						if (gi.players.get(i).equals(username)) {
+							System.out.println(username + " Found");
 							localPlayer = new Player(username, i);
 						}
 						playerObjs.add(new Player(gi.players.get(i), i));
 					}
-					new Game(playerObjs, localPlayer, l);*/
+					frame.setVisible(false);
+					frame.dispose();
+					new Game(playerObjs, localPlayer, l);
 				} else {
 	    			frame.setVisible(false);
 	    			frame.dispose();

@@ -321,11 +321,8 @@ public class HubGuiProtocols {
 		
 		GameInfo gi = null;
 		if (validResponse.equals(Constants.VALID_SECRET)) {
-			System.out.println("Valid secret");
 			out.writeObject(id);
-			System.out.println(id);
 			int len = (Integer) in.readObject();
-			System.out.println(len);
 			if (len > 0) {
 				Key encryptKey = (Key) in.readObject();
 				List<String> players = new ArrayList<String>();
@@ -333,7 +330,6 @@ public class HubGuiProtocols {
 				Map<String, InetAddress> peerAddrs = new HashMap<String, InetAddress>(); 
 				for (int i = 0; i < len; i++) {
 					String pname = (String) in.readObject();
-					System.out.println(pname);
 					players.add(pname);
 					peerKeys.put(pname, (PublicKey) in.readObject());
 					peerAddrs.put(pname, (InetAddress) in.readObject());
@@ -342,6 +338,36 @@ public class HubGuiProtocols {
 			}
 		}
 		return gi;
+	}
+	
+	public boolean sendLog(Integer id, String uname, int secret, String log) throws IOException, GeneralSecurityException, ClassNotFoundException {
+		KeyStore ks = KeyStoreUtils.genUserKeyStore(uname, "GetGames");
+		KeyStore ts = KeyStoreUtils.genUserTrustStore(TS_FILE);
+
+		SSLSocket s;
+		ObjectOutputStream out;
+		ObjectInputStream in;
+		
+		// Now open an SSL connection to the Hub and login as the user just registered
+		s = NetworkUtils.createSecureSocket(InetAddress.getLocalHost(), Constants.HUB_PORT, ts, ks, "GetGames");
+
+		out = new ObjectOutputStream(s.getOutputStream());
+		
+		out.writeObject(Constants.READY);
+		out.writeObject(uname);
+		out.writeObject(secret);
+		
+		//read the hub response to see if the credentials are valid
+		in = new ObjectInputStream(s.getInputStream());
+		String validResponse = (String) in.readObject();
+		
+		boolean output = false;
+		if (validResponse.equals(Constants.VALID_SECRET)) {
+			out.writeObject(id);
+			out.writeObject(log);
+			output = true;
+		}
+		return output;
 	}
 
 }
