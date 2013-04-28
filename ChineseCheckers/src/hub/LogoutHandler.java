@@ -17,6 +17,13 @@ public class LogoutHandler extends HubHandler {
 		try {
 			String uname = (String) in.readObject();
 			if (checkCredentials(uname)) {
+				Integer gameID = hub.online.getInGame(uname);
+				if(gameID != null) {
+					// try this, in case the game is in the join phase
+					hub.games.leaveGame(gameID, uname);
+					// try this, in case the game is in progress
+					hub.games.forfeit(gameID, uname);
+				}
 				hub.online.remove(uname);
 			}
 		} catch (IOException | ClassNotFoundException ex) {

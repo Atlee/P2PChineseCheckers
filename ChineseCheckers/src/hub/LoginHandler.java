@@ -30,8 +30,7 @@ public class LoginHandler extends HubHandler {
 			}
 			
 			client.close();
-			
-			hub.online.setIdle(uname);
+			hub.online.setConnected(uname, false);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

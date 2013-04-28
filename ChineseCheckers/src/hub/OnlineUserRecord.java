@@ -13,9 +13,9 @@ public class OnlineUserRecord {
 	final InetAddress inetAddr;
 	final int sessionID;
 	
-	boolean active = true; // true iff currently open SSL connection to hub OR inGame != null
+	boolean connected = true; // true iff currently open SSL connection to hub
 	Integer inGame = null; // ID of game this user is currently a player in, if any
-	long lastContact = System.currentTimeMillis(); // approx last time that active == true
+	long lastContact = System.currentTimeMillis(); // approx. last time that connected == true
 	
 	public OnlineUserRecord( String userName, InetAddress inetAddr, int sessionID ) {
 		this.userName = userName;

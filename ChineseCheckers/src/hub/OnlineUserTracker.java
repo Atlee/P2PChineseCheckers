@@ -73,50 +73,46 @@ public class OnlineUserTracker {
 		return inetAddr;
 	}
 	
-	/* Set the status of a specified user to 'active', which means that the user
-	 * currently has an SSL connection open to the hub OR that the user is a player
-	 * listed in some currently active GameRecord (see GameTracker).
-	 * Note: If uname is not currently online, nothing happens.
-	 */
-	synchronized void setActive(String uname) {
-		if(online.contains(uname)) {
-			records.get(uname).active = true;
-		}
-	}
-	
 	/* Indicate that a specified user is currently a player in a game with the
-	 * specified game ID.
+	 * specified game ID. Specifying a null game ID indicates that the user is
+	 * not a player in any game.
 	 * Note: If uname is not currently online, nothing happens.
 	 */
-	synchronized void setInGame(String uname, int gameID) {
+	synchronized void setInGame(String uname, Integer gameID) {
 		if(online.contains(uname)) {
 			records.get(uname).inGame = gameID;
 		}
 	}
 	
-	/* Set the status of a specified user to 'idle', which means that the user does
-	 * NOT currently have an SSL connection open to the hub AND that the user is
-	 * NOT currently listed as a player in any active GameRecord (see GameTracker).
-	 * Note: If uname is not currently online, nothing happens.
-	 * */
-	synchronized void setIdle(String uname) {
+	/* Return the game ID of the game in which a specified user is currently
+	 * playing, or null if the user is not online or not in any game. */
+	synchronized Integer getInGame(String uname) {
+		Integer gameID = null;
 		if(online.contains(uname)) {
-			OnlineUserRecord record = records.get(uname);
-			record.inGame = null;
-			record.active = false;
-			record.lastContact = System.currentTimeMillis();
+			gameID = records.get(uname).inGame;
+		}
+		return gameID;
+	}
+	
+	/* Indicate whether a specified user is currently connected to the hub. 
+	 * Note: If uname is not currently online, nothing happens.
+	 */
+	synchronized void setConnected(String uname, boolean isConnected) {
+		if(online.contains(uname)) {
+			records.get(uname).connected = isConnected;
 		}
 	}
 	
 	/* Reap idle users (i.e. log them out of the system). An idle user is any user
-	 * whose status is inactive and whose time of last contact with the hub was more
-	 * than 30 minutes ago.
+	 * who is not currently a player in any game and whose time of last contact with the
+	 * hub was more than 30 minutes ago.
 	 */
 	synchronized void reapIdleUsers() {
 		List<String> reaped = new ArrayList<String>();
 		for(String uname : online) {
 			OnlineUserRecord record = records.get(uname);
-			if((!record.active) && (record.lastContact + 1800000 < System.currentTimeMillis())) {
+			if((record.inGame == null) && (!record.connected) 
+					&& (record.lastContact + 1800000 < System.currentTimeMillis())) {
 				reaped.add(uname);
 				records.remove(uname);
 			}
