@@ -2,11 +2,12 @@ package hub;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.util.List;
+import java.util.Set;
 
 import javax.net.ssl.SSLSocket;
 
 import utils.Constants;
+
 
 public class ReadyHandler extends HubHandler {
 
@@ -23,7 +24,7 @@ public class ReadyHandler extends HubHandler {
 				
 				//blocks until all players have called
 				GameKeys gk = hub.games.playerReady(gameID, uname);
-				List<String> players = hub.games.getPlayers(gameID);
+				Set<String> players = hub.games.getPlayers(gameID).keySet();
 				if (gk != null && players != null) {
 					out.writeObject(players.size());
 					out.writeObject(gk.encryptKey);

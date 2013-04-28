@@ -27,7 +27,8 @@ public class HostHandler extends HubHandler {
 				int numPlayers    = (Integer) in.readObject();
 				PublicKey hostKey = (PublicKey) in.readObject();
 				
-				Integer gameID = hub.games.createGame(gameName, numPlayers, uname, hostKey);
+				Integer sessionID = hub.online.getSessionID(uname);
+				Integer gameID = hub.games.createGame(gameName, numPlayers, uname, sessionID, hostKey);
 				
 				out.writeObject(gameID);
 				

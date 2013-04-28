@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /* Monitor instantiated by the multi-threaded hub to track status of
@@ -13,7 +14,7 @@ import java.util.Map;
  * @author Emma
  */
 public class GameTracker {
-	
+
 	private int nextID = 0;
 
 	// Invariant: Iff ID x is in 'activeGames', then there is EXACTLY ONE active
@@ -26,12 +27,13 @@ public class GameTracker {
 	private Map<Integer, GameRecord> joinable = new HashMap<Integer, GameRecord>();
 	private Map<Integer, GameRecord> inProgress = new HashMap<Integer, GameRecord>();
 
-	/* Create a new game with the specified name, hosted by user 'hostName' with public
-	 * key 'hostKey'. Return a unique identifier for this game.
+	/* Create a new game with the specified name, hosted by user 'hostName' with session ID
+	 * 'hostSessionID' and public key 'hostKey'. Return a unique identifier for this game.
 	 * Note: numPlayers is currently ignored and always set to 2... xD
 	 */
-	synchronized int createGame(String gameName, int numPlayers, String hostName, PublicKey hostKey) {
-		GameRecord record = new GameRecord(nextID++, gameName, 2, hostName, hostKey);
+	synchronized int createGame(String gameName, int numPlayers, String hostName,
+			int hostSessionID, PublicKey hostKey) {
+		GameRecord record = new GameRecord(nextID++, gameName, 2, hostName, hostSessionID, hostKey);
 		activeGames.add(record.gameID);
 		joinable.put(record.gameID, record);
 		return record.gameID;
@@ -39,20 +41,23 @@ public class GameTracker {
 
 	/* Kill a game (i.e. remove it from the set of active games) at any time. */
 	synchronized void killGame(int gameID) {
-		activeGames.remove(gameID);
+		activeGames.remove(activeGames.indexOf(gameID));
+		// try this, in case the game was in the join phase
 		joinable.remove(gameID);
+		// try this, in case the game was in progress
 		inProgress.remove(gameID);
 	}
 
 	/* Add a player with public key 'playerKey' to the specified game. This will only work
 	 * if the game exists, is currently 'joinable', and is not already full. Return true
 	 * iff the player was successfully added. */
-	synchronized boolean joinGame(int gameID, String playerName, PublicKey playerKey) {
+	synchronized boolean joinGame(int gameID, String playerName, int playerSessionID, 
+			PublicKey playerKey) {
 		boolean success = false;
 		if(joinable.containsKey(gameID)) {
 			GameRecord record = joinable.get(gameID);
 			if(record.players.size() < record.numPlayers) {
-				record.players.add(playerName);
+				record.players.put(playerName, playerSessionID);
 				record.playerKeys.put(playerName, playerKey);
 				record.playerLogs.put(playerName, null);
 				success = true;
@@ -66,35 +71,41 @@ public class GameTracker {
 	 * not actually a player in this game, then do nothing.
 	 */
 	synchronized void leaveGame(int gameID, String playerName) {
+		GameRecord record;
 		if(joinable.containsKey(gameID)) {
-			GameRecord record = joinable.get(gameID);
-			record.players.remove(playerName);
-			record.ready.remove(playerName);
-			record.playerKeys.remove(playerName);
-			record.playerLogs.remove(playerName);
-			if(record.players.size() < 1) {
-				activeGames.remove(activeGames.indexOf(gameID));
-				joinable.remove(gameID);
-			}
+			record = joinable.get(gameID);
+		} else if(inProgress.containsKey(gameID)) {
+			record = inProgress.get(gameID);
+		} else {
+			return;
+		}
+		record.players.remove(playerName);
+		record.ready.remove(playerName);
+		record.playerKeys.remove(playerName);
+		record.playerLogs.remove(playerName);
+		if(record.players.size() < 1) {
+			activeGames.remove(activeGames.indexOf(gameID));
+			joinable.remove(gameID);
 		}
 	}
 
+
 	/* TODO: write comment */
-	synchronized List<String> getPlayers(int gameID) {
-		List<String> players = null;
+	synchronized Map<String, Integer> getPlayers(int gameID) {
+		Map<String, Integer> players = null;
 		if(joinable.containsKey(gameID)) {
 			GameRecord record = joinable.get(gameID);
 			players = record.players;
 		}
 		return players;
 	}
-	
+
 	/* TODO: write comment */
 	synchronized GameKeys playerReady(int gameID, String playerName) {
 		GameKeys keys = null;
 		if(joinable.containsKey(gameID)) {
 			GameRecord record = joinable.get(gameID);
-			if(record.players.contains(playerName)) {
+			if(record.players.containsKey(playerName)) {
 				record.ready.remove(playerName);
 				record.ready.add(playerName);
 				if(record.ready.size() == record.numPlayers) {
@@ -113,7 +124,7 @@ public class GameTracker {
 							return null;
 						}
 						record = joinable.get(gameID);
-						if(!record.players.contains(playerName)) {
+						if(!record.players.containsKey(playerName)) {
 							return null;
 						}
 					}
@@ -131,7 +142,7 @@ public class GameTracker {
 		GameRecord completeRecord = null;
 		if(inProgress.containsKey(gameID)) {
 			GameRecord record = inProgress.get(gameID);
-			if(record.players.contains(playerName)) {
+			if(record.players.containsKey(playerName)) {
 				record.playerLogs.remove(playerName);
 				record.playerLogs.put(playerName, log);
 				if(!record.playerLogs.values().contains(null)) {
@@ -145,13 +156,18 @@ public class GameTracker {
 	}
 
 	/* TODO: write comment */
-	synchronized Map<Integer, String> listOpenGames() {
+	synchronized Map<Integer, String> allJoinableGames() {
 		Map<Integer, String> joinableGames = new HashMap<Integer, String>();
 		for(int id : joinable.keySet()) {
 			GameRecord record = joinable.get(id);
 			joinableGames.put(id, record.gameName);
 		}
 		return joinableGames;
+	}
+	
+	/* TODO: write comment */
+	synchronized Set<Integer> allInProgressGames() {
+	    return inProgress.keySet();
 	}
 
 }
