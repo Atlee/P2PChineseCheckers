@@ -92,12 +92,12 @@ public class GameTracker {
 
 	/* TODO: write comment */
 	synchronized Map<String, Integer> getPlayers(int gameID) {
-		Map<String, Integer> players = null;
 		if(joinable.containsKey(gameID)) {
-			GameRecord record = joinable.get(gameID);
-			players = record.players;
+			return joinable.get(gameID).players;
+		} else if(inProgress.containsKey(gameID)) {
+			return inProgress.get(gameID).players;
 		}
-		return players;
+		return null;
 	}
 
 	/* TODO: write comment */
