@@ -19,6 +19,7 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
 import java.security.Key;
+import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -53,6 +54,7 @@ import javax.swing.event.ListSelectionListener;
 import utils.Constants;
 import utils.EncryptUtils;
 import utils.NetworkUtils;
+import utils.SignUtils;
  
 /* ListDemo.java requires no other files. */
 public class HubGui extends JPanel
@@ -68,6 +70,7 @@ public class HubGui extends JPanel
     
     private final String username;
     private final int secret;
+    private final KeyPair signKeys;
     
     private HashMap<String, UUID> gameNameMap = new HashMap<String, UUID>();
     
@@ -80,6 +83,7 @@ public class HubGui extends JPanel
         super(new BorderLayout());
         this.username = username;
         this.secret   = secret;
+        this.signKeys  = SignUtils.newSignKeyPair();
         
         //get the list of hsots from the server and update
         //listModel to represent that list
@@ -126,13 +130,14 @@ public class HubGui extends JPanel
         buttonPane.setLayout(new BoxLayout(buttonPane,
                                            BoxLayout.LINE_AXIS));
         buttonPane.add(refreshButton);
+        buttonPane.add(Box.createHorizontalStrut(5));
         buttonPane.add(new JSeparator(SwingConstants.VERTICAL));
         buttonPane.add(joinButton);
         buttonPane.add(Box.createHorizontalStrut(5));
-        buttonPane.add(new JSeparator(SwingConstants.VERTICAL));
-        buttonPane.add(Box.createHorizontalStrut(5));
         //buttonPane.add(newGameName);
         buttonPane.add(hostButton);
+        buttonPane.add(Box.createHorizontalStrut(5));
+        buttonPane.add(new JSeparator(SwingConstants.VERTICAL));
         buttonPane.add(Box.createHorizontalStrut(5));
         buttonPane.add(logoutButton);
         buttonPane.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
@@ -168,11 +173,20 @@ public class HubGui extends JPanel
             //This method can be called only if
             //there's a valid selection
             //so go ahead and remove whatever's selected.
-           /* String hostname = list.getSelectedValue();
+            String gameName = list.getSelectedValue();
             
             try {
-				Tuple<InetAddress, Key> pair = HubGuiProtocols.joinGame(gameNameMap.get(hostname));
-				Socket s = new Socket(pair.first(), Constants.CLIENT_HOST_PORT);
+				HubGuiProtocols.joinGame(gameNameMap.get(gameName), signKeys.getPublic(), username, secret);
+
+			} catch (IOException | GeneralSecurityException e1) {
+				Peer.displayWindow("Join Failed", "Error Connecting to Hub");
+			}
+            
+            
+        }
+        
+        /*
+         * 		Socket s = new Socket(pair.first(), Constants.CLIENT_HOST_PORT);
 				//Send the username to the host so he knows who hes playing
 				NetworkUtils.sendEncryptedMessage(s, username.getBytes(), pair.second(), Constants.SHARED_ENCRYPT_ALG);
 				try {
@@ -181,14 +195,7 @@ public class HubGui extends JPanel
 					ex.printStackTrace();
 					System.exit(0);
 				}
-				//c.start();
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				System.out.println("unable to get address from hub");
-				e1.printStackTrace();
-				System.exit(1);
-			}*/
-        }
+         */
         
        /* private Game createBasicGame(Socket peer, Key gameKey, String hostname, String username) throws Exception {
         	Player host = new Player(hostname, 0);
