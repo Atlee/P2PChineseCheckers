@@ -105,6 +105,19 @@ public class GameTracker {
 		}
 		return players;
 	}
+	
+	/* TODO: write comment */
+	synchronized List<String> getPlayerOrder(int gameID) {
+		List<String> playerOrder = null;
+		if(activeGames.contains(gameID)) {
+			if(joinable.containsKey(gameID)) {
+				playerOrder = joinable.get(gameID).players;
+			} else {
+				playerOrder = inProgress.get(gameID).players;
+			}
+		}
+		return playerOrder;
+	}
 
 	/* TODO: write comment */
 	synchronized GameKeys playerReady(int gameID, String playerName) {
