@@ -35,6 +35,7 @@ import javax.swing.event.ListSelectionListener;
 import utils.Constants;
 
 
+@SuppressWarnings("serial")
 public class JoinGameGui extends JPanel implements ListSelectionListener {
 
 	private JList<String> list;

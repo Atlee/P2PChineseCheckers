@@ -6,28 +6,13 @@ import game.NetworkLayer;
 import game.Player;*/
 
 import java.awt.BorderLayout;
-import java.awt.Frame;
-import java.awt.LayoutManager;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
-import java.security.Key;
 import java.security.KeyPair;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -35,11 +20,9 @@ import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.ButtonModel;
 import javax.swing.DefaultListModel;
-import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -54,14 +37,11 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import peer.Peer.CloseListener;
-
-import utils.Constants;
-import utils.EncryptUtils;
-import utils.NetworkUtils;
 import utils.SignUtils;
  
+
 /* ListDemo.java requires no other files. */
+@SuppressWarnings("serial")
 public class HubGui extends JPanel
                       implements ListSelectionListener {
     private JList<String> list;
@@ -71,7 +51,6 @@ public class HubGui extends JPanel
     private static final String JOIN_STRING = "Join";
 	private static final String LOGOUT_STRING = "Logout";
     private static final String REFRESH_STRING = "Refresh";
-    private static final String TEXT_FIELD_DEFAULT = "New Game Name";
     
     private final String username;
     private final int secret;
@@ -433,7 +412,6 @@ public class HubGui extends JPanel
 		try {
 			peer = hostSocket.accept();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			System.exit(1);
 		}
