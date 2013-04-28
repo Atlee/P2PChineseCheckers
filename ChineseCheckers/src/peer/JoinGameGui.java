@@ -203,7 +203,7 @@ public class JoinGameGui extends JPanel implements ListSelectionListener {
     		try {
 				GameInfo gi = HubGuiProtocols.ready(id, username, secret);
 				if (gi != null) {
-					System.out.println("Game Start!");					
+					System.out.println("Game Start!");
 				} else {
 	    			frame.setVisible(false);
 	    			frame.dispose();

@@ -225,6 +225,8 @@ public class HubGuiProtocols {
 
 		out = new ObjectOutputStream(s.getOutputStream());
 		
+		out.writeObject(Constants.LOGOUT);
+		
 		out.writeObject(uname);
 		out.writeObject(sessionKey);
 	}
