@@ -41,7 +41,7 @@ public abstract class HubHandler implements Runnable {
 			hub.online.setConnected(uname, true);
 			return true;
 		} else {
-			out.writeUTF(Constants.INVALID_SECRET);
+			out.writeObject(Constants.INVALID_SECRET);
 			return false;
 		}
 	}

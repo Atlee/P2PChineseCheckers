@@ -131,6 +131,12 @@ public class MultiThreadedHub {
 					}
 					handler = new ReadyHandler(this, client, in);
 					break;
+				case Constants.LOG:
+					if (verboseHub) {
+						System.out.println("    Connection accepted! Handling a Ready request...");
+					}
+					handler = new ReadyHandler(this, client, in);
+					break;
 				default:
 					if(verboseHub) {
 						System.out.println("    Connection accepted! But the client messed up...");

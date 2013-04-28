@@ -18,6 +18,7 @@ import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.Icon;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -34,6 +35,7 @@ import peer.HubGui.HostListener;
 import peer.HubGui.JoinListener;
 import peer.HubGui.LogoutListener;
 import peer.HubGui.RefreshListener;
+import peer.Peer.CloseListener;
 import utils.SignUtils;
 
 public class JoinGameGui extends JPanel implements ListSelectionListener {
@@ -50,13 +52,15 @@ public class JoinGameGui extends JPanel implements ListSelectionListener {
     private final Integer id;
     private final PublicKey signKey;
     private boolean ready = false;
+    private JFrame frame;
     
     private JButton readyButton;
     private JButton refreshButton;
     private JButton leaveButton;
  
-    public JoinGameGui(Integer id, PublicKey signKey, String username, int secret) {
+    public JoinGameGui(JFrame frame, Integer id, PublicKey signKey, String username, int secret) {
         super(new BorderLayout());
+        this.frame = frame;
         this.username = username;
         this.secret   = secret;
         this.id = id;
@@ -109,17 +113,21 @@ public class JoinGameGui extends JPanel implements ListSelectionListener {
 		
 	}
 	
-	private void updatePlayerList() {
+	private boolean updatePlayerList() {
+		boolean output = false;
 		try {
     		List<String> players = HubGuiProtocols.getPlayerList(id, username, secret);
-    		
-    		listModel.clear();
-    		for (String pname : players) {
-    			listModel.addElement(pname);
+    		if (players != null) {
+	    		listModel.clear();
+	    		for (String pname : players) {
+	    			listModel.addElement(pname);
+	    		}
+	    		output = true;
     		}
     	} catch (IOException | ClassNotFoundException | GeneralSecurityException e) {
     		Peer.displayWindow("Communication Error", "Error Getting Player List from Hub");
     	}
+		return output;
 	}
 	
 	synchronized void setReady(boolean t) {
@@ -132,7 +140,15 @@ public class JoinGameGui extends JPanel implements ListSelectionListener {
 	
     class RefreshListener implements ActionListener {
     	public void actionPerformed(ActionEvent e) {
-    		updatePlayerList();
+    		if (updatePlayerList()) {
+    			;
+    		} else {
+    			JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(((JButton) e.getSource()));
+    			frame.setVisible(false);
+    			frame.dispose();
+    			Peer.displayWindow("Session Expired", "Session Key no longer valid");
+    			new Peer();
+    		}
     	}
     }
     
@@ -141,7 +157,8 @@ public class JoinGameGui extends JPanel implements ListSelectionListener {
 		@Override
 		public void actionPerformed(ActionEvent arg0) {
 			setReady(true);
-			new Thread(new ReadyThread()).start();
+			readyButton.setEnabled(false);
+			new Thread(new ReadyThread((JFrame) SwingUtilities.getWindowAncestor(((JButton) arg0.getSource())))).start();
 		}
     }
     
@@ -151,24 +168,48 @@ public class JoinGameGui extends JPanel implements ListSelectionListener {
 			setReady(false);
 			
 			try {
-				HubGuiProtocols.leaveGame(id, username, secret);
+				if (HubGuiProtocols.leaveGame(id, username, secret)) {
+					frame.getContentPane().removeAll();
+			    	
+			    	JComponent newContentPane = new HubGui(frame, username, secret);
+			    	newContentPane.setOpaque(true);
+			    	frame.setContentPane(newContentPane);
+			    	
+			    	frame.pack();
+			    	frame.setVisible(true);
+				}  else {
+	    			JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(((JButton) arg0.getSource()));
+	    			frame.setVisible(false);
+	    			frame.dispose();
+	    			Peer.displayWindow("Session Expired", "Session Key no longer valid");
+	    			new Peer();
+	    		}
 			} catch (ClassNotFoundException | GeneralSecurityException
 					| IOException e) {
 				;
 			}
-			
-			JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(((JButton) arg0.getSource()));
-			frame.dispose();
 		}
     }
     
     class ReadyThread implements Runnable {
+    	JFrame frame;
+    	
+    	ReadyThread(JFrame f) {
+    		this.frame = f;
+    	}
     	
     	@Override
     	public void run() {
     		try {
 				GameInfo gi = HubGuiProtocols.ready(id, username, secret);
-				System.out.println("Game Start!");
+				if (gi != null) {
+					System.out.println("Game Start!");					
+				} else {
+	    			frame.setVisible(false);
+	    			frame.dispose();
+	    			Peer.displayWindow("Session Expired", "Session Key no longer valid");
+	    			new Peer();
+	    		}
 			} catch (ClassNotFoundException | GeneralSecurityException
 					| IOException e) {
 				Peer.displayWindow("Ready Error", "Error communicating with the hub");
