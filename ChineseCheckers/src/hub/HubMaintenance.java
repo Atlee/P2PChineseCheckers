@@ -13,7 +13,6 @@ public class HubMaintenance implements Runnable {
 		while(true) {
 			try {
 				Thread.sleep(300000); // sleep for 5 minutes
-				hub.games.reapDeadGames();
 			} catch (InterruptedException e) {
 				continue;
 			}

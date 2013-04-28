@@ -32,6 +32,7 @@ public class GameTracker {
 	 */
 	synchronized int createGame(String gameName, int numPlayers, String hostName, PublicKey hostKey) {
 		GameRecord record = new GameRecord(nextID++, gameName, 2, hostName, hostKey);
+		activeGames.add(record.gameID);
 		joinable.put(record.gameID, record);
 		return record.gameID;
 	}
@@ -76,6 +77,16 @@ public class GameTracker {
 		}
 	}
 
+	/* TODO: write comment */
+	synchronized List<String> getPlayers(int gameID) {
+		List<String> players = null;
+		if(joinable.containsKey(gameID)) {
+			GameRecord record = joinable.get(gameID);
+			players = record.players;
+		}
+		return players;
+	}
+	
 	/* TODO: write comment */
 	synchronized GameKeys playerReady(int gameID, String playerName) {
 		GameKeys keys = null;
@@ -124,6 +135,8 @@ public class GameTracker {
 				record.playerLogs.put(playerName, log);
 				if(!record.playerLogs.values().contains(null)) {
 					completeRecord = record;
+					activeGames.remove(gameID);
+					inProgress.remove(gameID);
 				}
 			}
 		}
@@ -131,28 +144,13 @@ public class GameTracker {
 	}
 
 	/* TODO: write comment */
-	synchronized Map<Integer, String> listGames() {
+	synchronized Map<Integer, String> listOpenGames() {
 		Map<Integer, String> joinableGames = new HashMap<Integer, String>();
 		for(int id : joinable.keySet()) {
 			GameRecord record = joinable.get(id);
 			joinableGames.put(id, record.gameName);
 		}
 		return joinableGames;
-	}
-
-	/* TODO: write comment */
-	synchronized List<String> getPlayers(int gameID) {
-		List<String> players = null;
-		if(joinable.containsKey(gameID)) {
-			GameRecord record = joinable.get(gameID);
-			players = record.players;
-		}
-		return players;
-	}
-
-	/* TODO: write comment */
-	synchronized void reapDeadGames() {
-		//TODO: implement me!
 	}
 
 }
