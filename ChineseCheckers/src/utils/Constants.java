@@ -10,6 +10,7 @@ public class Constants {
 	public static final int REGISTER = 0;
 	public static final int LOGIN = 1;
 	public static final int HELLO = 2;
+	public static final int GET_GAMES = 3;
 	
 	// Hub application constants
 	public static final String HUB_KS_FILENAME = "hub.private";
@@ -38,6 +39,10 @@ public class Constants {
 	public static final String INVALID_SECRET = "INVALID_SECRET";
 	public static final String VALID_SECRET   = "VALID_SECRET";
 	
+	public static final Object LOGOUT = "LOGOUT";
+	
+	public static int ACK = 0;
+	
 	public static boolean verifyUsername(String username) {
 		Pattern whitespacePattern = Pattern.compile("\\s");
 		Matcher whitespaceMatcher = whitespacePattern.matcher(username);
@@ -48,7 +53,6 @@ public class Constants {
 		if (whitespaceMatcher.find()) {
 			return false;
 		}
-		System.out.println(username.length());
 		if (username.length() >= 30) {
 			return false;
 		}

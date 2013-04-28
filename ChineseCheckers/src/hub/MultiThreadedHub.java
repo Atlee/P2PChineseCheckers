@@ -1,6 +1,7 @@
 package hub;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.security.KeyStore;
 
@@ -56,44 +57,59 @@ public class MultiThreadedHub {
 		new Thread(new DeadGameReaper(this)).start();
 		
 		// Begin accepting SSL client connections...
-		while(true) {
-			
-			if(verboseHub) {
-				System.out.println("Online: " + online.listOnline().toString());
-				System.out.println("Ready to accept an SSL client connection...");
-			}
-			
-			SSLSocket client = (SSLSocket)ss.accept();
-			ObjectInputStream in = new ObjectInputStream(client.getInputStream());
-			
-			Integer serviceRequest = (Integer)in.readObject();
-			
-			HubHandler handler;
-			if(serviceRequest.equals(Constants.REGISTER)) {
+		try {
+				while(true) {
+				
 				if(verboseHub) {
-					System.out.println("    Connection accepted! Handling a REGISTER request...");
+					System.out.println("Online: " + online.listOnline().toString());
+					System.out.println("Ready to accept an SSL client connection...");
 				}
-				handler = new RegisterHandler(this, client, in);
-			} else if(serviceRequest.equals(Constants.LOGIN)) {
-				if(verboseHub) {
-					System.out.println("    Connection accepted! Handling a LOGIN request...");
+				
+				SSLSocket client = (SSLSocket)ss.accept();
+				ObjectInputStream in = new ObjectInputStream(client.getInputStream());
+				
+				Integer serviceRequest = (Integer)in.readObject();
+				
+				HubHandler handler = null;
+				
+				switch(serviceRequest) {
+				case Constants.REGISTER: 
+					if(verboseHub) {
+						System.out.println("    Connection accepted! Handling a REGISTER request...");
+					}
+					handler = new RegisterHandler(this, client, in);
+					break;
+				case Constants.LOGIN:
+					if(verboseHub) {
+						System.out.println("    Connection accepted! Handling a LOGIN request...");
+					}
+	                handler = new LoginHandler(this, client, in);
+	                break;
+				case Constants.HELLO: 
+					if(verboseHub) {
+						System.out.println("    Connection accepted! Handling a HELLO request...");
+					}
+	                handler = new HelloHandler(this, client, in);
+	                break;
+				case Constants.GET_GAMES:
+					if(verboseHub) {
+						System.out.println("    Connection accepted! Handling a GET_GAMES request...");
+					}
+	                handler = new GetGamesHandler(this, client, in);
+	                break;
+				default:
+					if(verboseHub) {
+						System.out.println("    Connection accepted! But the client messed up...");
+					}
+					client.close();
 				}
-                handler = new LoginHandler(this, client, in);			
-			} else if(serviceRequest.equals(Constants.HELLO)) {
-				if(verboseHub) {
-					System.out.println("    Connection accepted! Handling a HELLO request...");
-				}
-                handler = new HelloHandler(this, client, in);
-			} else {
-				if(verboseHub) {
-					System.out.println("    Connection accepted! But the client messed up...");
-				}
-				client.close();
-				continue;
-			}
 
-			new Thread(handler).start();
-			
+				if (handler != null) {
+					new Thread(handler).start();
+				}
+			}
+		} catch (IOException e) {
+			;
 		}
 
 	}
