@@ -78,9 +78,11 @@ public class OnlineUserTracker {
 	 * listed as a player in some active GameRecord (see GameTracker).
 	 * Note: If uname is not currently online, nothing happens.
 	 */
-	synchronized void setActive(String uname) {
+	synchronized void setActive(String uname, Integer gameID) {
 		if(online.contains(uname)) {
-			records.get(uname).active = true;
+			OnlineUserRecord record = records.get(uname);
+			record.active = true;
+			record.inGame = gameID;
 		}
 	}
 	
@@ -92,8 +94,9 @@ public class OnlineUserTracker {
 	synchronized void setIdle(String uname) {
 		if(online.contains(uname)) {
 			OnlineUserRecord record = records.get(uname);
-			record.lastContact = System.currentTimeMillis();
+			record.inGame = null;
 			record.active = false;
+			record.lastContact = System.currentTimeMillis();
 		}
 	}
 	

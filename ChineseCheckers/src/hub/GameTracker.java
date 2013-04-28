@@ -71,7 +71,7 @@ public class GameTracker {
 			record.playerKeys.remove(playerName);
 			record.playerLogs.remove(playerName);
 			if(record.players.size() < 1) {
-				activeGames.remove(gameID);
+				activeGames.remove(activeGames.indexOf(gameID));
 				joinable.remove(gameID);
 			}
 		}
