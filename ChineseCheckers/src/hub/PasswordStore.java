@@ -8,8 +8,6 @@ import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
@@ -85,7 +83,6 @@ public class PasswordStore {
 			f = SecretKeyFactory.getInstance(ENCRYPTION_ALG);
 			cipherText = f.generateSecret(spec).getEncoded();
 		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return cipherText;
@@ -207,7 +204,6 @@ public class PasswordStore {
 		try {
 			random = SecureRandom.getInstance(SECURE_RANDOM_ALG);
 		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		

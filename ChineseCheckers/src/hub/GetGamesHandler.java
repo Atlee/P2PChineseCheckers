@@ -3,9 +3,9 @@ package hub;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.Map;
-import java.util.UUID;
 
 import javax.net.ssl.SSLSocket;
+
 
 public class GetGamesHandler extends HubHandler {
 
