@@ -10,7 +10,6 @@ import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
 
 import javax.net.ssl.SSLSocket;
 
@@ -22,7 +21,7 @@ import utils.NetworkUtils;
 public class HubGuiProtocols {	
 	private static final String TS_FILE = "hub.public";
 	
-	public static HashMap<UUID, String> getGameList(String uname, int sessionKey) 
+	public static HashMap<Integer, String> getGameList(String uname, int sessionKey) 
 			throws IOException, GeneralSecurityException, ClassNotFoundException {
 		KeyStore ks = KeyStoreUtils.genUserKeyStore(uname, "GetGames");
 		KeyStore ts = KeyStoreUtils.genUserTrustStore(TS_FILE);
@@ -44,7 +43,7 @@ public class HubGuiProtocols {
 		in = new ObjectInputStream(s.getInputStream());
 		String validResponse = (String) in.readObject();
 		
-		HashMap<UUID, String> games = null;
+		HashMap<Integer, String> games = null;
 		if (validResponse.equals(Constants.VALID_SECRET)) {
 			games = getGames(in);
 		}
@@ -52,11 +51,11 @@ public class HubGuiProtocols {
 		return games;
 	}
 	
-    private static HashMap<UUID, String> getGames(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    private static HashMap<Integer, String> getGames(ObjectInputStream in) throws IOException, ClassNotFoundException {
 		int numGames = (Integer) in.readObject();
-		HashMap<UUID, String> games = new HashMap<UUID, String>();
+		HashMap<Integer, String> games = new HashMap<Integer, String>();
     	for (int i = 0; i < numGames; i++) {
-    		UUID id = (UUID) in.readObject();
+    		Integer id = (Integer) in.readObject();
     		games.put(id, (String) in.readObject());
     	}
     	return games;
@@ -69,7 +68,7 @@ public class HubGuiProtocols {
      * @throws ClassNotFoundException 
      * @throws GeneralSecurityException 
      */
-    public static UUID hostNewGame(String gameName, int numPlayers, PublicKey signKey, String uname, int secret) throws IOException, ClassNotFoundException, GeneralSecurityException {
+    public static Integer hostNewGame(String gameName, int numPlayers, PublicKey signKey, String uname, int secret) throws IOException, ClassNotFoundException, GeneralSecurityException {
     	KeyStore ks = KeyStoreUtils.genUserKeyStore(uname, "GetGames");
 		KeyStore ts = KeyStoreUtils.genUserTrustStore(TS_FILE);
 
@@ -89,18 +88,18 @@ public class HubGuiProtocols {
 		//read the hub response to see if the credentials are valid
 		in = new ObjectInputStream(s.getInputStream());
 		String validResponse = (String) in.readObject();
-    	UUID gameID = null;
+    	Integer gameID = null;
 		if (validResponse.equals(Constants.VALID_SECRET)) {
 			out.writeObject(gameName);
 			out.writeObject(numPlayers);
 			out.writeObject(signKey);
 			
-			gameID = (UUID) in.readObject();
+			gameID = (Integer) in.readObject();
 		}
 		return gameID;
     }
 
-	public static void joinGame(UUID id, PublicKey signKey, String uname, int sessionKey) throws IOException, GeneralSecurityException {
+	public static void joinGame(Integer id, PublicKey signKey, String uname, int sessionKey) throws IOException, GeneralSecurityException {
 		KeyStore ks = KeyStoreUtils.genUserKeyStore(uname, "JOIN");
 		KeyStore ts = KeyStoreUtils.genUserTrustStore(TS_FILE);
 
@@ -217,7 +216,7 @@ public class HubGuiProtocols {
 		out.writeObject(sessionKey);
 	}
 
-	public static List<String> getPlayerList(UUID id, String username,
+	public static List<String> getPlayerList(Integer id, String username,
 			int secret) throws GeneralSecurityException, IOException, ClassNotFoundException {
 		KeyStore ks = KeyStoreUtils.genUserKeyStore(username, "GetGames");
 		KeyStore ts = KeyStoreUtils.genUserTrustStore(TS_FILE);
@@ -250,7 +249,7 @@ public class HubGuiProtocols {
 		return players;
 	}
 
-	public static void ready(UUID id, String username, int secret) {
+	public static void ready(Integer id, String username, int secret) {
 		
 	}
 

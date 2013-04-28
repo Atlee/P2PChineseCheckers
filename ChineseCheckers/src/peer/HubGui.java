@@ -28,7 +28,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -76,7 +75,7 @@ public class HubGui extends JPanel
     private final int secret;
     private KeyPair signKeys;
     
-    private HashMap<String, UUID> gameNameMap = new HashMap<String, UUID>();
+    private HashMap<String, Integer> gameNameMap = new HashMap<String, Integer>();
     
     private JButton joinButton;
     private JButton refreshButton;
@@ -147,10 +146,10 @@ public class HubGui extends JPanel
     private void updateHostList() {
     	try {
     		gameNameMap.clear();
-    		Map<UUID, String> games = HubGuiProtocols.getGameList(username, secret);
+    		Map<Integer, String> games = HubGuiProtocols.getGameList(username, secret);
     		
     		listModel.clear(); //clear the current list
-    		for (UUID id : games.keySet()) {
+    		for (Integer id : games.keySet()) {
     			String gameName = games.get(id);
     			listModel.addElement(gameName);
     			gameNameMap.put(gameName, id);
@@ -176,7 +175,7 @@ public class HubGui extends JPanel
             try {
 				HubGuiProtocols.joinGame(gameNameMap.get(gameName), signKeys.getPublic(), username, secret);
 				
-				new JoinGameGui(gameNameMap.get(gameName), username, secret);
+				new JoinGameGui(gameNameMap.get(gameName), signKeys.getPublic(), username, secret);
 			} catch (IOException | GeneralSecurityException e1) {
 				Peer.displayWindow("Join Failed", "Error Connecting to Hub");
 			}
@@ -224,9 +223,9 @@ public class HubGui extends JPanel
         	frame.setVisible(false);
             try {
             	signKeys = SignUtils.newSignKeyPair();
-	            UUID gameID = HubGuiProtocols.hostNewGame(gameName,Integer.parseInt(b.getActionCommand()), 
+	            Integer gameID = HubGuiProtocols.hostNewGame(gameName,Integer.parseInt(b.getActionCommand()), 
 	            		signKeys.getPublic(), username, secret);
-	            new JoinGameGui(gameID, username, secret);
+	            new JoinGameGui(gameID, signKeys.getPublic(), username, secret);
             } catch (IOException | NumberFormatException | ClassNotFoundException | GeneralSecurityException ex) {
             	Peer.displayWindow("Host Failed", "Error Connecting to Hub");
             }

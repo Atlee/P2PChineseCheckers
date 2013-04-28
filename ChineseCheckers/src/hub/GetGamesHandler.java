@@ -19,12 +19,12 @@ public class GetGamesHandler extends HubHandler {
 		try {
 			String uname = (String) in.readObject();
 			if (checkCredentials(uname)) {
-				Map<UUID, String> games = hub.games.listGames();
+				Map<Integer, String> games = hub.games.listGames();
 				//tell client how many game pairs to expect
 				if (games != null) {
 					out.writeObject(games.size());
 
-					for (UUID id : games.keySet()) {
+					for (Integer id : games.keySet()) {
 						out.writeObject(id);
 						out.writeObject(games.get(id));
 					}

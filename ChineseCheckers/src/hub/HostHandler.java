@@ -27,7 +27,7 @@ public class HostHandler extends HubHandler {
 				int numPlayers    = (Integer) in.readObject();
 				PublicKey hostKey = (PublicKey) in.readObject();
 				
-				UUID gameID = hub.games.createGame(gameName, numPlayers, uname, hostKey);
+				Integer gameID = hub.games.createGame(gameName, numPlayers, uname, hostKey);
 				
 				out.writeObject(gameID);
 			}

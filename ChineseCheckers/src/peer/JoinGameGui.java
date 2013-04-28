@@ -6,11 +6,11 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -41,38 +41,31 @@ public class JoinGameGui extends JPanel implements ListSelectionListener {
 	private JList<String> list;
     private DefaultListModel<String> listModel;
  
-    private static final String HOST_STRING = "Host";
     private static final String JOIN_STRING = "Join";
-	private static final String LOGOUT_STRING = "Logout";
     private static final String REFRESH_STRING = "Refresh";
-    private static final String TEXT_FIELD_DEFAULT = "New Game Name";
 	private static final String LEAVE_STRING = "Leave";
     
     private final String username;
     private final int secret;
-    private final UUID id;
-    private final KeyPair signKeys;
+    private final Integer id;
+    private final PublicKey signKey;
     private boolean ready = false;
-    
-    private List<String> playerNames = new ArrayList<String>();
     
     private JButton readyButton;
     private JButton refreshButton;
     private JButton leaveButton;
  
-    public JoinGameGui(UUID id, String username, int secret) {
+    public JoinGameGui(Integer id, PublicKey signKey, String username, int secret) {
         super(new BorderLayout());
         this.username = username;
         this.secret   = secret;
-        this.signKeys  = SignUtils.newSignKeyPair();
         this.id = id;
+        this.signKey = signKey;
         
         //get the list of hsots from the server and update
         //listModel to represent that list
         listModel = new DefaultListModel<String>();
         updatePlayerList();
-        
-        int size = listModel.getSize();
         
         //Create the list and put it in a scroll pane.
         list = new JList<String>(listModel);

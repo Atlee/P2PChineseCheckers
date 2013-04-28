@@ -19,7 +19,7 @@ public class GetGamePlayersHandler extends HubHandler {
 		try {
 			String uname = (String) in.readObject();
 			if (checkCredentials(uname)) {
-				UUID id = (UUID) in.readObject();
+				Integer id = (Integer) in.readObject();
 				List<String> players = hub.games.getPlayers(id);
 				out.writeObject(players.size());
 				for (String pname : players) {

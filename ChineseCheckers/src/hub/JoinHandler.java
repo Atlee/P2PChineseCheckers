@@ -20,7 +20,7 @@ public class JoinHandler extends HubHandler {
 		try {
 			String uname = (String) in.readObject();
 			if (checkCredentials(uname)) {
-				UUID id = (UUID) in.readObject();
+				Integer id = (Integer) in.readObject();
 				PublicKey signKey = (PublicKey) in.readObject();
 				hub.games.addPlayer(id, uname, signKey);
 			}	
