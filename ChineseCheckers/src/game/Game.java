@@ -28,8 +28,7 @@ public class Game implements Runnable{
 		board = new Board(this);
 		localPlayer = _localPlayer;
 		communication = _communication;
-		gui = new GameGui(_players);
-		gui.update(board);
+		gui = new GameGui(_players, board);
 		
 		//test
 		points.add(new Point(0,0));
@@ -63,7 +62,7 @@ public class Game implements Runnable{
 					//}
 				}
 				updateBoard(m);
-				gui.update(board);
+				gui.update();
 				
 				rotationIndex++;
 			}
@@ -76,50 +75,6 @@ public class Game implements Runnable{
 			e.printStackTrace();
 		}
 	}
-	
-	/*private Move getMove() {
-		//test
-		if (rotationIndex == 0) {
-			ArrayList<Point> p = new ArrayList<Point>();
-			p.add(new Point(3, 4));
-			p.add(new Point(4, 4));
-			Move m = new Move(players.get(0), p);
-			return m;
-		}
-		
-		if (rotationIndex == players.size()) {
-			ArrayList<Point> p = new ArrayList<Point>();
-			p.add(new Point(1, 5));
-			p.add(new Point(3, 4));
-			p.add(new Point(5, 3));
-			Move m = new Move(players.get(0), p);
-		
-			return m;
-		}
-		
-		if (rotationIndex == 2 * players.size()) {
-			ArrayList<Point> p = new ArrayList<Point>();
-			p.add(new Point(2, 6));
-			p.add(new Point(4, 5));
-			p.add(new Point(4, 3));
-			p.add(new Point(6, 4));
-			Move m = new Move(players.get(0), p);
-			
-			return m;
-		}
-		
-		if (rotationIndex == 3* players.size()) {
-			ArrayList<Point> p = new ArrayList<Point>();
-			p.add(new Point(2, 5));
-			p.add(new Point(4, 6));
-			Move m = new Move(players.get(0), p);
-			
-			return m;
-		}
-		else {
-			while(true);
-		}
-	}*/
 	
 	private Move getMove() {
 		Player currentPlayer = players.get(rotationIndex % players.size());

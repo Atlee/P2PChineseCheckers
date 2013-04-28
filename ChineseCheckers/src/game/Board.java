@@ -8,7 +8,7 @@ public class Board {
 	public static final Player empty = new Player("empty", -1);
 	
 	//valid places in the 2d array for pegs to exist
-	private static final boolean[][] board = { 
+	static final boolean[][] board = { 
 		{ false, false, false, false, false, false, true, false, false, false, false, false, false }, // 0
 
 			{ false, false, false, false, false,  true, true, false, false, false, false, false, false }, // 1

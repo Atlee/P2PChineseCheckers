@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.Socket;
 import java.security.Key;
 import java.security.KeyPair;
+import java.security.PublicKey;
+import java.util.Map;
 
 import utils.Constants;
 import utils.EncryptUtils;
@@ -17,6 +19,7 @@ public class NetworkLayer implements Interaction {
 	AuditLog log;
 	Key gameKey;
 	KeyPair signKeys;
+	Map<String, PublicKey> verifyKeys;
 	
 	public NetworkLayer(Socket s, Key gameKey) {
 		opponent = s;
@@ -25,11 +28,12 @@ public class NetworkLayer implements Interaction {
 		signKeys = null;
 	}
 	
-	public NetworkLayer(Socket s, Key gameKey, KeyPair signKeys) {
+	public NetworkLayer(Socket s, Key gameKey, KeyPair localSignKeys, Map<String, PublicKey> verifyKeys) {
 		opponent = s;
 		log = new AuditLog();
 		this.gameKey = gameKey;
 		this.signKeys = signKeys;
+		this.verifyKeys = verifyKeys;
 	}
 	
 	@Override
