@@ -69,6 +69,9 @@ public class GameTracker {
 			record.players.remove(playerName);
 			record.playerKeys.remove(playerName);
 			record.playerLogs.remove(playerName);
+			if(record.players.size() < 1) {
+				joinable.remove(gameID);
+			}
 		}
 	}
 
