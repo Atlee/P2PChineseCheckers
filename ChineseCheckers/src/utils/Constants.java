@@ -14,6 +14,9 @@ public class Constants {
 	public static final int LOGOUT = 4;
 	public static final int JOIN_GAME = 5;
 	public static final int GET_GAME_PLAYERS = 6;
+	public static final int HOST_GAME = 7;
+	public static final int LEAVE = 8;
+	public static final int READY = 9;
 	
 	// Hub application constants
 	public static final String HUB_KS_FILENAME = "hub.private";

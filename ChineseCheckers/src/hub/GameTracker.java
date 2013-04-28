@@ -33,6 +33,7 @@ public class GameTracker {
 	 */
 	synchronized int createGame(String gameName, int numPlayers, String hostName, PublicKey hostKey) {
 		GameRecord record = new GameRecord(nextID++, gameName, 2, hostName, hostKey);
+		joinable.put(record.gameID, record);
 		return record.gameID;
 	}
 

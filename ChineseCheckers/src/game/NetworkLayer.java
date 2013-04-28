@@ -3,8 +3,7 @@ package game;
 import java.io.IOException;
 import java.net.Socket;
 import java.security.Key;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.security.KeyPair;
 
 import utils.Constants;
 import utils.EncryptUtils;
@@ -17,23 +16,20 @@ public class NetworkLayer implements Interaction {
 	Socket hub;
 	AuditLog log;
 	Key gameKey;
-	PublicKey verifyKey;
-	PrivateKey signKey;
+	KeyPair signKeys;
 	
 	public NetworkLayer(Socket s, Key gameKey) {
 		opponent = s;
 		log = new AuditLog();
 		this.gameKey = gameKey;
-		verifyKey = null;
-		signKey = null;
+		signKeys = null;
 	}
 	
-	public NetworkLayer(Socket s, Key gameKey, PrivateKey signKey, PublicKey verifyKey) {
+	public NetworkLayer(Socket s, Key gameKey, KeyPair signKeys) {
 		opponent = s;
 		log = new AuditLog();
 		this.gameKey = gameKey;
-		this.verifyKey = verifyKey;
-		this.signKey = signKey;
+		this.signKeys = signKeys;
 	}
 	
 	@Override

@@ -238,16 +238,6 @@ public class NetworkUtils {
 		return key;
 	}
 	
-	public static void sendUUID(Socket s, UUID id) {
-		try {
-			ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-			out.writeObject(id);
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
-	}
-	
 	//move to general utils file?
 	public static byte[] charsToBytes(char[] c) {
 		byte[] output = new byte[c.length];

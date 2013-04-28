@@ -54,6 +54,8 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import peer.Peer.CloseListener;
+
 import utils.Constants;
 import utils.EncryptUtils;
 import utils.NetworkUtils;
@@ -155,8 +157,22 @@ public class HubGui extends JPanel
     			gameNameMap.put(gameName, id);
     		}
     	} catch (IOException | ClassNotFoundException | GeneralSecurityException e) {
+    		e.printStackTrace();
     		Peer.displayWindow("Communication Error", "Error Getting Game List from Hub");
     	}
+    }
+    
+    private void showJoinGameGui(Integer gameID) {
+    	JFrame frame = new JFrame("Game " + gameID + "'s Players");
+    	frame.getContentPane().removeAll();
+    	frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    	
+    	JComponent newContentPane = new JoinGameGui(gameID, signKeys.getPublic(), username, secret);
+    	newContentPane.setOpaque(true);
+    	frame.setContentPane(newContentPane);
+    	
+    	frame.pack();
+    	frame.setVisible(true);
     }
     
     class RefreshListener implements ActionListener {
@@ -175,7 +191,7 @@ public class HubGui extends JPanel
             try {
 				HubGuiProtocols.joinGame(gameNameMap.get(gameName), signKeys.getPublic(), username, secret);
 				
-				new JoinGameGui(gameNameMap.get(gameName), signKeys.getPublic(), username, secret);
+				showJoinGameGui(gameNameMap.get(gameName));
 			} catch (IOException | GeneralSecurityException e1) {
 				Peer.displayWindow("Join Failed", "Error Connecting to Hub");
 			}
@@ -225,7 +241,7 @@ public class HubGui extends JPanel
             	signKeys = SignUtils.newSignKeyPair();
 	            Integer gameID = HubGuiProtocols.hostNewGame(gameName,Integer.parseInt(b.getActionCommand()), 
 	            		signKeys.getPublic(), username, secret);
-	            new JoinGameGui(gameID, signKeys.getPublic(), username, secret);
+	            showJoinGameGui(gameID);
             } catch (IOException | NumberFormatException | ClassNotFoundException | GeneralSecurityException ex) {
             	Peer.displayWindow("Host Failed", "Error Connecting to Hub");
             }

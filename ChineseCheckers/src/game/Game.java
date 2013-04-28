@@ -16,6 +16,7 @@ public class Game implements Runnable{
 	private int rotationIndex = 0;
 	private Player localPlayer;
 	private Interaction communication;
+	private GameGui gui;
 	private Scanner scn = new Scanner(System.in);
 	
 	//test
@@ -27,6 +28,8 @@ public class Game implements Runnable{
 		board = new Board(this);
 		localPlayer = _localPlayer;
 		communication = _communication;
+		gui = new GameGui(_players);
+		gui.update(board);
 		
 		//test
 		points.add(new Point(0,0));
@@ -55,11 +58,12 @@ public class Game implements Runnable{
 					communication.shareMove(m);
 				} else {
 					m = communication.waitForOpponent();
-					if (!Rules.checkMove(players.get(rotationIndex % players.size()), board, m)) {
-						System.out.println("Cheater Detected");
-					}
+					//if (!Rules.checkMove(players.get(rotationIndex % players.size()), board, m)) {
+						//System.out.println("Cheater Detected");
+					//}
 				}
 				updateBoard(m);
+				gui.update(board);
 				
 				rotationIndex++;
 			}

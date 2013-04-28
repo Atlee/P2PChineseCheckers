@@ -102,6 +102,30 @@ public class MultiThreadedHub {
 					}
 	                handler = new LogoutHandler(this, client, in);
 	                break;
+				case Constants.GET_GAME_PLAYERS:
+					if(verboseHub) {
+						System.out.println("    Connection accepted! Handling a GetPlayers request...");
+					}
+	                handler = new GetGamePlayersHandler(this, client, in);
+	                break;
+				case Constants.HOST_GAME:
+					if (verboseHub) {
+						System.out.println("    Connection accepted! Handling a HOST_GAME request...");
+					}
+					handler = new HostHandler(this, client, in);
+					break;
+				case Constants.JOIN_GAME:
+					if (verboseHub) {
+						System.out.println("    Connection accepted! Handling a JOIN_GAME request...");
+					}
+					handler = new JoinHandler(this, client, in);
+					break;
+				case Constants.LEAVE:
+					if (verboseHub) {
+						System.out.println("    Connection accepted! Handling a LEAVE request...");
+					}
+					handler = new LeaveHandler(this, client, in);
+					break;
 				default:
 					if(verboseHub) {
 						System.out.println("    Connection accepted! But the client messed up...");

@@ -21,9 +21,13 @@ public class GetGamePlayersHandler extends HubHandler {
 			if (checkCredentials(uname)) {
 				Integer id = (Integer) in.readObject();
 				List<String> players = hub.games.getPlayers(id);
-				out.writeObject(players.size());
-				for (String pname : players) {
-					out.writeObject(pname);
+				if (players != null) {
+					out.writeObject(players.size());
+					for (String pname : players) {
+						out.writeObject(pname);
+					}
+				} else {
+					out.writeObject(0);
 				}
 			}
 		} catch (IOException | ClassNotFoundException e) {

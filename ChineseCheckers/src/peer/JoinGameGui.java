@@ -41,7 +41,7 @@ public class JoinGameGui extends JPanel implements ListSelectionListener {
 	private JList<String> list;
     private DefaultListModel<String> listModel;
  
-    private static final String JOIN_STRING = "Join";
+    private static final String READY_STRING = "Ready";
     private static final String REFRESH_STRING = "Refresh";
 	private static final String LEAVE_STRING = "Leave";
     
@@ -80,8 +80,8 @@ public class JoinGameGui extends JPanel implements ListSelectionListener {
         refreshButton.addActionListener(new RefreshListener());
         refreshButton.setSize(10, 10);
  
-        readyButton = new JButton(JOIN_STRING);
-        readyButton.setActionCommand(JOIN_STRING);
+        readyButton = new JButton(READY_STRING);
+        readyButton.setActionCommand(READY_STRING);
         readyButton.addActionListener(new ReadyListener());
         
         leaveButton = new JButton(LEAVE_STRING);
@@ -150,6 +150,13 @@ public class JoinGameGui extends JPanel implements ListSelectionListener {
 		public void actionPerformed(ActionEvent arg0) {
 			setReady(false);
 			
+			try {
+				HubGuiProtocols.leaveGame(id, username, secret);
+			} catch (ClassNotFoundException | GeneralSecurityException
+					| IOException e) {
+				;
+			}
+			
 			JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(((JButton) arg0.getSource()));
 			frame.dispose();
 		}
@@ -159,7 +166,12 @@ public class JoinGameGui extends JPanel implements ListSelectionListener {
     	
     	@Override
     	public void run() {
-    		HubGuiProtocols.ready(id, username, secret);
+    		try {
+				HubGuiProtocols.ready(id, username, secret);
+			} catch (ClassNotFoundException | GeneralSecurityException
+					| IOException e) {
+				Peer.displayWindow("Ready Error", "Error communicating with the hub");
+			}
     		if (stillReady()) {
     			
     		}

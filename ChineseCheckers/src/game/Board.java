@@ -82,7 +82,7 @@ public class Board {
 	};
 	
 	
-	private Player[][] state = new Player[17][13];
+	Player[][] state = new Player[17][13];
 	
 	private final Game game;
 	
