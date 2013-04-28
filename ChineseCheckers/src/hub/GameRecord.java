@@ -28,6 +28,8 @@ public class GameRecord {
 	// List of players that have clicked ready
 	List<String> ready = new ArrayList<String>();
 	
+	int listeningCount = 0;
+	
 	public GameRecord( int gameID, String gameName, int numPlayers, String hostName, 
 			int hostSessionID, PublicKey hostKey ) {
 		this.gameID = gameID;
@@ -47,6 +49,7 @@ class PlayerRecord {
 	final int sessionID;
 	final PublicKey signKey;
 	
+	boolean isListening;
 	String log = null;
 	
 	public PlayerRecord( String username, int sessionID, PublicKey signKey ) {

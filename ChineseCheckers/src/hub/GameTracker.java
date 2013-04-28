@@ -157,14 +157,28 @@ public class GameTracker {
 	/* TODO: write comment */
 	synchronized void isListening(int gameID, String playerName) {
 		if(inProgress.containsKey(gameID)) {
-			
+			GameRecord record = inProgress.get(gameID);
+			if((record.players.get(0) != playerName)
+					&& (record.players.contains(playerName))) {
+				record.playerRecords.get(playerName).isListening = true;
+				if(++record.listeningCount == (record.players.size()-1)) {
+					notifyAll();
+				}
+			}
 		}
 	}
 	
 	/* TODO: write comment */
 	synchronized void okayToTalk(int gameID, String playerName) {
 		if(inProgress.containsKey(gameID)) {
-			
+			GameRecord record = inProgress.get(gameID);
+			while(record.listeningCount < (record.players.size()-1)) {
+				try {
+					wait();
+				} catch (InterruptedException e) {
+					continue;
+				}
+			}
 		}
 	}
 
