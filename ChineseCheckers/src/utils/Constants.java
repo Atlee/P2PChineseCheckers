@@ -45,6 +45,8 @@ public class Constants {
 	public static final String INVALID_SECRET = "INVALID_SECRET";
 	public static final String VALID_SECRET   = "VALID_SECRET";
 	
+	public static final Object CREATE_SOCKET = "CREATE_SOCKET";
+	
 	public static final Object SIGNOUT = "SIGNOUT";
 	
 	public static final Integer ACK = 0;

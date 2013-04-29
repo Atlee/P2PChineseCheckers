@@ -23,7 +23,6 @@ public class NetworkLayer implements Interaction {
 	Map<String, PublicKey> verifyKeys;
 	
 	public NetworkLayer(Key gameKey, KeyPair localSignKeys, Map<String, PublicKey> verifyKeys, List<String> players) {
-		opponents = null; // FIXME
 		log = new AuditLog();
 		this.gameKey = gameKey;
 		this.signKeys = localSignKeys;

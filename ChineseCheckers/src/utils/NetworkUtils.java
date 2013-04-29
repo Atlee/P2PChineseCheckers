@@ -179,6 +179,7 @@ public class NetworkUtils {
 		DataOutputStream out = new DataOutputStream(s.getOutputStream());
 		out.writeInt(message.length);
 		out.write(message);
+		out.flush();
 	}
 
 	public static byte[] readSignedMessage(Socket s, PublicKey key) {

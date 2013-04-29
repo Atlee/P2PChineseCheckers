@@ -8,6 +8,7 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
@@ -156,7 +157,7 @@ public class JoinGameGui extends JPanel implements ListSelectionListener {
 		public void actionPerformed(ActionEvent arg0) {
 			setReady(true);
 			readyButton.setEnabled(false);
-			new Thread(new ReadyThread((JFrame) SwingUtilities.getWindowAncestor(((JButton) arg0.getSource())))).start();
+			new Thread(new TwoPlayerReadyThread((JFrame) SwingUtilities.getWindowAncestor(((JButton) arg0.getSource())))).start();
 		}
     }
     
@@ -189,6 +190,61 @@ public class JoinGameGui extends JPanel implements ListSelectionListener {
 		}
     }
     
+    class TwoPlayerReadyThread implements Runnable {
+    	JFrame frame;
+    	
+    	TwoPlayerReadyThread(JFrame f) {
+    		this.frame = f;
+    	}
+    	
+    	@Override
+    	public void run() {
+    		try {
+				GameInfo gi = HubGuiProtocols.ready(id, username, secret);
+				if (gi != null && stillReady()) {
+					gi.print();
+					PublicKey verify = null;
+					//find opponent's key and inetaddr
+					Socket s = null;
+					if (username.equals(gi.players.get(0))) {
+						ServerSocket ss = new ServerSocket(Constants.CLIENT_HOST_PORT);
+						s = ss.accept();
+					} else {
+						s = new Socket(gi.playerAddrs.get(gi.players.get(0)), Constants.CLIENT_HOST_PORT);
+					}
+					
+					//create comm layer
+					TwoPlayerLayer l = new TwoPlayerLayer(s, gi.encryptKey, signKey.getPrivate(), verify);
+					ArrayList<Player> playerObjs = new ArrayList<Player>();
+					Player localPlayer = null;
+					//find local index
+					for (int i = 0; i < gi.players.size(); i++) {
+						if (gi.players.get(i).equals(username)) {
+							localPlayer = new Player(username, i);
+						}
+						playerObjs.add(new Player(gi.players.get(i), i));
+					}
+					frame.setVisible(false);
+					frame.dispose();
+					new Game(playerObjs, localPlayer, l);
+				} else {
+	    			frame.setVisible(false);
+	    			frame.dispose();
+	    			Peer.displayWindow("Session Expired", "Session Key no longer valid");
+	    			new Peer();
+	    		}
+			} catch (ClassNotFoundException | GeneralSecurityException
+					| IOException e) {
+				e.printStackTrace();
+				Peer.displayWindow("Ready Error", "Error communicating with the hub");
+			} catch (Exception e) {
+				e.printStackTrace();
+				Peer.displayWindow("Runtime Error", "Exception while playing the game");
+			}
+    	}
+    	
+    }
+    
     class ReadyThread implements Runnable {
     	JFrame frame;
     	
@@ -206,12 +262,11 @@ public class JoinGameGui extends JPanel implements ListSelectionListener {
 					for (String player : gi.players) {
 						sockets.put(player, new Socket(gi.playerAddrs.get(player), Constants.CLIENT_HOST_PORT));
 					}
-					NetworkLayer l = new NetworkLayer(gi.encryptKey, signKey, gi.playerKeys, gi.players);
+					NetworkLayer l = null;
 					ArrayList<Player> playerObjs = new ArrayList<Player>();
 					Player localPlayer = null;
 					for (int i = 0; i < gi.players.size(); i++) {
 						if (gi.players.get(i).equals(username)) {
-							System.out.println(username + " Found");
 							localPlayer = new Player(username, i);
 						}
 						playerObjs.add(new Player(gi.players.get(i), i));

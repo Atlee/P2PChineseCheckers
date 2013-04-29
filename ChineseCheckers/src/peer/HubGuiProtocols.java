@@ -1,9 +1,14 @@
 package peer;
 
+import game.GameListener;
+import game.Move;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.KeyStore;
@@ -16,6 +21,7 @@ import java.util.Map;
 import javax.net.ssl.SSLSocket;
 
 import utils.Constants;
+import utils.EncryptUtils;
 import utils.KeyStoreUtils;
 import utils.NetworkUtils;
 //import utils.Tuple;
@@ -116,13 +122,10 @@ public class HubGuiProtocols {
 		out = new ObjectOutputStream(s.getOutputStream());
 		
 		out.writeObject(Constants.JOIN_GAME);
-		System.out.println("Wrote JOin");
 
 		boolean output = false;
 		out.writeObject(uname);
-		System.out.println("Wrote name");
 		out.writeObject(sessionKey);
-		System.out.println("Wrote key");
 		
 		in  = new ObjectInputStream(s.getInputStream());
 		String verify = (String) in.readObject();
@@ -286,9 +289,7 @@ public class HubGuiProtocols {
 		out.writeObject(secret);
 		
 		//read the hub response to see if the credentials are valid
-		System.out.println("Before stream");
 		in = new ObjectInputStream(s.getInputStream());
-		System.out.println("Before read");
 		String validResponse = (String) in.readObject();
 		boolean output = false;
 		
@@ -333,15 +334,28 @@ public class HubGuiProtocols {
 					String pname = (String) in.readObject();
 					players.add(pname);
 					peerKeys.put(pname, (PublicKey) in.readObject());
-					peerAddrs.put(pname, (InetAddress) in.readObject());
+					int len2 = (Integer) in.readObject();
+					byte[] addrBytes = new byte[len2];
+					in.read(addrBytes);
+					InetAddress addr = InetAddress.getByAddress(addrBytes);
+					peerAddrs.put(pname, addr);
 				}
+				
+				/*
+				if (username.equals(players.get(0))) {
+					String ready = (String) in.readObject();
+				} else {
+					new Thread(new GameListener(gi.encryptKey, gi.playerKeys, gi.players));
+					out.writeObject(Constants.CREATE_SOCKET);
+				}*/
+				
 				gi = new GameInfo(id, encryptKey, peerKeys, peerAddrs, players);
 			}
 		}
 		return gi;
 	}
 	
-	public boolean sendLog(Integer id, String uname, int secret, String log) throws IOException, GeneralSecurityException, ClassNotFoundException {
+	public static boolean sendLog(Integer id, String uname, int secret, String log) throws IOException, GeneralSecurityException, ClassNotFoundException {
 		KeyStore ks = KeyStoreUtils.genUserKeyStore(uname, "GetGames");
 		KeyStore ts = KeyStoreUtils.genUserTrustStore(TS_FILE);
 
