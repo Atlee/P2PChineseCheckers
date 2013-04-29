@@ -13,14 +13,14 @@ import java.util.HashMap;
  * @author Emma
  */
 public class OnlineUserTracker {
-	
+
 	private SecureRandom sRand = new SecureRandom();
-	
+
 	// All users that are currently online
 	private List<String> online = new ArrayList<String>();
 	// Map: {username -> OnlineUserRecord}, contains a mapping for key u iff u in 'online'
 	private Map<String, OnlineUserRecord> records = new HashMap<String, OnlineUserRecord>();
-	
+
 	private Map<String, Integer> greyList = new HashMap<String, Integer>();
 	private List<String> blackList = new ArrayList<String>();
 
@@ -28,7 +28,7 @@ public class OnlineUserTracker {
 		// do initialization overhead now
 		sRand.nextInt();
 	}
-	
+
 	/* Add a username to the list of currently online users and return a fresh
 	 * random session ID for that user, or null iff that user has been blacklisted.
 	 * Obviously, the hub should only call this after it has authenticated a user's
@@ -47,7 +47,7 @@ public class OnlineUserTracker {
 		records.put(uname, new OnlineUserRecord(uname, inetAddr, sessionID));
 		return sessionID;
 	}
-	
+
 	/* Remove a username from the list of currently online users and invalidate
 	 * the current session ID for that user (i.e. log him out of the system).
 	 * Note: If uname is not currently online, nothing happens.
@@ -56,16 +56,24 @@ public class OnlineUserTracker {
 		online.remove(uname);
 		records.remove(uname);
 	}
-	
+
 	/* TODO: write comment */
 	synchronized void greyList(String uname) {
-		if(greyList.containsKey(uname)) {
-			greyList.put(uname, greyList.get(uname)+1);
-		} else {
-			greyList.put(uname, 1);
+		if(!blackList.contains(uname)) {
+			if(greyList.containsKey(uname)) {
+				int count = greyList.get(uname)+1;
+				if(count < 10) {
+					greyList.put(uname, greyList.get(uname)+1);
+				} else {
+					greyList.remove(uname);
+					blackList.add(uname);
+				}
+			} else {
+				greyList.put(uname, 1);
+			}
 		}
 	}
-	
+
 	/* Check whether the given ID matches the current, valid session ID for a 
 	 * specified specified user. Return true iff that user is online and there is 
 	 * a session ID match.
@@ -77,7 +85,7 @@ public class OnlineUserTracker {
 		}
 		return sessionID.equals(currentID);
 	}
-	
+
 	/* Return the current session ID of a specified user, or null if that user
 	 * is not online.
 	 */
@@ -88,7 +96,7 @@ public class OnlineUserTracker {
 		}
 		return sessionID;
 	}
-	
+
 	/* Return the InetAddress of a specified user, or null if that user is not
 	 * currently online.
 	 */
@@ -99,7 +107,7 @@ public class OnlineUserTracker {
 		}
 		return inetAddr;
 	}
-	
+
 	/* Indicate that a specified user is currently a player in a game with the
 	 * specified game ID. Specifying a null game ID indicates that the user is
 	 * not a player in any game.
@@ -110,7 +118,7 @@ public class OnlineUserTracker {
 			records.get(uname).inGame = gameID;
 		}
 	}
-	
+
 	/* Return the game ID of the game in which a specified user is currently
 	 * playing, or null if the user is not online or not in any game. */
 	synchronized Integer getInGame(String uname) {
@@ -120,7 +128,7 @@ public class OnlineUserTracker {
 		}
 		return gameID;
 	}
-	
+
 	/* Indicate whether a specified user is currently connected to the hub. 
 	 * Note: If uname is not currently online, nothing happens.
 	 */
@@ -129,7 +137,7 @@ public class OnlineUserTracker {
 			records.get(uname).connected = isConnected;
 		}
 	}
-	
+
 	/* Reap idle users (i.e. log them out of the system). An idle user is any user
 	 * who is not currently a player in any game and whose time of last contact with the
 	 * hub was more than 30 minutes ago.
@@ -148,7 +156,7 @@ public class OnlineUserTracker {
 			online.remove(uname);
 		}
 	}
-	
+
 	/* Return a map {username -> session ID} for all currently online users. */
 	synchronized Map<String, Integer> allOnlineUsers() {
 		Map<String, Integer> online = new HashMap<String, Integer>();
