@@ -76,11 +76,13 @@ public class Peer  {
             char[] password = passwordTxt.getPassword();
             try {
             	secret = HubGuiProtocols.login(username, new String(password)); 
-            	if (secret != -1) {
+            	if (secret != -1 && secret != -2) {
             		JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(((JButton) e.getSource()));
             		displayHub(frame);
-            	} else {
+            	} else if (secret == -1) {
             		displayWindow("Login Unsuccessful", "Authentication Failed");
+            	} else {
+            		displayWindow("Account Blacklisted", "DO NOT SPAM");
             	}
             } catch (IOException | GeneralSecurityException | ClassNotFoundException ex) {
             	System.out.println("Exception during login");

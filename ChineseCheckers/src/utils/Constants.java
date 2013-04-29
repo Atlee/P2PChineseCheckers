@@ -34,11 +34,12 @@ public class Constants {
 	
 	public static final String REGISTRATION_SUCCESS = "SUCCESS";
 	public static final String REGISTRATION_FAILURE = "FAILURE";
-	public static final Object REGISTRATION_PASSWORD = "PASSWORD";
+	public static final String REGISTRATION_PASSWORD = "PASSWORD";
 	public static final String REGISTRATION_IN_USE = "IN_USE";
 	
 	public static final String LOGIN_SUCCESS = "SUCCESS_LOGIN";
 	public static final String LOGIN_FAILURE = "FAILURE_LOGIN";
+	public static final String LOGIN_BLACKLIST = "BLACKLIST";
 	
 	public static final String INVALID_SECRET = "INVALID_SECRET";
 	public static final String VALID_SECRET   = "VALID_SECRET";
