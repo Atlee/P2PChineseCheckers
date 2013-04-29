@@ -35,10 +35,10 @@ public class LogHandler extends HubHandler {
 		String winner = null;
 		boolean valid = true;
 		for (String player : gr.playerRecords.keySet()) {
-			String log1 = gr.playerRecords.get(player).log;
+			String log1winner = getWinner(gr.playerRecords.get(player).log);
 			if (prev != null) {
-				String log2 = gr.playerRecords.get(prev).log;
-				if (!log1.equals(log2)) {
+				String log2winner = getWinner(gr.playerRecords.get(prev).log);
+				if (!log1winner.equals(log2winner)) {
 					//if the logs of 2 consecuritve players do not match then 
 					//invalidate this game
 					valid = false;
@@ -65,7 +65,7 @@ public class LogHandler extends HubHandler {
 	private String getWinner(String log) {
 		String[] split1 = log.split("\n");
 		if (split1.length > 0) {
-			split1 = split1[0].split(":");
+			split1 = split1[0].split("\t");
 			if (split1.length > 1) {
 				return split1[1];
 			}

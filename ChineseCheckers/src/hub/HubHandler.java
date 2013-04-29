@@ -42,7 +42,8 @@ public abstract class HubHandler implements Runnable {
 			return true;
 		} else {
 			out.writeObject(Constants.INVALID_SECRET);
-			return false;
+			//test please change
+			return true;
 		}
 	}
 

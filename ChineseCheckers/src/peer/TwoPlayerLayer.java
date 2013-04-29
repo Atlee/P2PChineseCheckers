@@ -2,6 +2,7 @@ package peer;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -23,12 +24,19 @@ public class TwoPlayerLayer implements Interaction {
 	private PrivateKey signKey;
 	private PublicKey verifyKey;
 	private AuditLog log = new AuditLog();
+	private String uname;
+	private int secret;
+	private Integer gameID;
 
-	TwoPlayerLayer(Socket s, Key encryptKey, PrivateKey signKey, PublicKey verifyKey) {
+	TwoPlayerLayer(Socket s, Integer gameID, Key encryptKey, PrivateKey signKey, PublicKey verifyKey,
+			String uname, int secret) {
 		this.s = s;
 		this.encryptKey = encryptKey;
 		this.signKey = signKey;
 		this.verifyKey = verifyKey;
+		this.gameID = gameID;
+		this.uname = uname;
+		this.secret = secret;
 	}
 
 	@Override
@@ -67,8 +75,12 @@ public class TwoPlayerLayer implements Interaction {
 
 	@Override
 	public void endGame(Player host, Player winner) {
-		// TODO Auto-generated method stub
-
+		try {
+			HubGuiProtocols.sendLog(gameID, uname, secret, log.getLog());
+		} catch (ClassNotFoundException | IOException
+				| GeneralSecurityException e) {
+			Peer.displayWindow("Communication Error", "Error sending log to the hub");
+		}
 	}
 	
 	public void sendSignEncryptMessage(Socket s, byte[] message, Key encryptKey, String encryptAlg) throws IOException {

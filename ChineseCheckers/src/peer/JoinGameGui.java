@@ -12,6 +12,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -214,7 +215,8 @@ public class JoinGameGui extends JPanel implements ListSelectionListener {
 					}
 					
 					//create comm layer
-					TwoPlayerLayer l = new TwoPlayerLayer(s, gi.encryptKey, signKey.getPrivate(), verify);
+					TwoPlayerLayer l = new TwoPlayerLayer(s, gi.gameID, gi.encryptKey, 
+							signKey.getPrivate(), verify, username, secret);
 					ArrayList<Player> playerObjs = new ArrayList<Player>();
 					Player localPlayer = null;
 					//find local index
