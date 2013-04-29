@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.net.SocketException;
 
-public class Game implements Runnable{
+public class Game implements Runnable {
 	//order of players in these lists are important
 	//These lists should be coming from the hub, therefore everyone will
 	//receive the same order list
@@ -61,7 +61,7 @@ public class Game implements Runnable{
 					//}
 				}
 				updateBoard(m);
-				gui.update();
+				gui.update(false);
 				
 				rotationIndex++;
 			}
@@ -98,7 +98,7 @@ public class Game implements Runnable{
 		Point from = new Point(x, y);
 		Move m = new Move(currentPlayer, from);
 		while (true) {
-			System.out.println("Please inter point you would like to move to (only 1 jump) as: row (from the top), index" +
+			System.out.println("Please enter point you would like to move to (only 1 jump) as: row (from the top), index" +
 					"or -1 to end.");
 			x = scn.nextInt();
 			if (x == -1) {
