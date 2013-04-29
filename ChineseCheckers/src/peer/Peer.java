@@ -79,8 +79,10 @@ public class Peer  {
             	if (secret != -1) {
             		JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(((JButton) e.getSource()));
             		displayHub(frame);
-            	} else {
+            	} else if (secret == -1) {
             		displayWindow("Login Unsuccessful", "Authentication Failed");
+            	} else {
+            		
             	}
             } catch (IOException | GeneralSecurityException | ClassNotFoundException ex) {
             	System.out.println("Exception during login");

@@ -164,6 +164,8 @@ public class HubGuiProtocols {
 
 		if(loginStatus.equals(Constants.LOGIN_SUCCESS)) {
 			sessionSecret = (Integer)in.readObject();
+		} else if (loginStatus.equals(Constants.LOGIN_BLACKLIST)) {
+			sessionSecret = -2;
 		}
 		return sessionSecret;
 	}

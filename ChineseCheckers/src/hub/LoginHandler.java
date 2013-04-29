@@ -24,7 +24,7 @@ public class LoginHandler extends HubHandler {
 			if(hub.pwStore.authenticate(uname, password.toCharArray())) {
 				Integer secret = hub.online.add(uname, client.getInetAddress());
 				if (secret == null) {
-					out.writeObject(Constants.LOGIN_FAILURE);
+					out.writeObject(Constants.LOGIN_BLACKLIST);
 				} else {
 					out.writeObject(Constants.LOGIN_SUCCESS);
 					out.writeObject(secret);
