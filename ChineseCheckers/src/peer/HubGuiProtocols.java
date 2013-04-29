@@ -161,6 +161,7 @@ public class HubGuiProtocols {
 		out.writeObject(password);
 
 		String loginStatus = (String)in.readObject();
+		System.out.println(loginStatus);
 
 		if(loginStatus.equals(Constants.LOGIN_SUCCESS)) {
 			sessionSecret = (Integer)in.readObject();
