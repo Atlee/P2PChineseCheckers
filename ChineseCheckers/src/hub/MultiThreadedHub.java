@@ -27,7 +27,7 @@ public class MultiThreadedHub {
 	StatisticsStore statStore = new StatisticsStore();
 
 	public static void main(String[] args) throws Exception {
-		MultiThreadedHub hub = new MultiThreadedHub(Constants.HUB_KS_FILENAME, Constants.HUB_KS_PASSWORD);
+		MultiThreadedHub hub = new MultiThreadedHub(HubConstants.HUB_KS_FILENAME, HubConstants.HUB_KS_PASSWORD);
 		hub.openHub();
 	}
 
