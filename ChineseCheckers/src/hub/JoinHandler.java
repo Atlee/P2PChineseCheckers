@@ -1,12 +1,11 @@
 package hub;
 
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.security.PublicKey;
-import java.util.UUID;
 
 import javax.net.ssl.SSLSocket;
+
 
 public class JoinHandler extends HubHandler {
 

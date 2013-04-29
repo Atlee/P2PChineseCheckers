@@ -148,7 +148,6 @@ public class Peer  {
 			} catch (IOException | GeneralSecurityException ex) {
 				displayWindow("Registration Unsuccessful", "Exception during registration");
 			} catch (ClassNotFoundException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
     	}

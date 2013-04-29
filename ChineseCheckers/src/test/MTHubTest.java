@@ -100,10 +100,10 @@ public class MTHubTest {
 			out.writeObject(Constants.HELLO);
 
 			in = new ObjectInputStream(s.getInputStream());
-			String ack = (String)in.readObject();
+			//String ack = (String)in.readObject();
 			out.writeObject(uname);
 
-			ack = (String)in.readObject();
+			//ack = (String)in.readObject();
 			out.writeObject(sessionSecret);
 
 			String greeting = (String)in.readObject();

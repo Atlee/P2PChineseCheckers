@@ -22,13 +22,6 @@ public class NetworkLayer implements Interaction {
 	KeyPair signKeys;
 	Map<String, PublicKey> verifyKeys;
 	
-	/*public NetworkLayer(Socket s, Key gameKey) {
-		opponent = s;
-		log = new AuditLog();
-		this.gameKey = gameKey;
-		signKeys = null;
-	}*/
-	
 	public NetworkLayer(Key gameKey, KeyPair localSignKeys, Map<String, PublicKey> verifyKeys, List<String> players) {
 		log = new AuditLog();
 		this.gameKey = gameKey;

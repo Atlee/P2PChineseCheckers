@@ -210,6 +210,7 @@ public class HubGuiProtocols {
 		return output;
 	}
 	
+	@SuppressWarnings("unused")
 	private static SSLSocket getSSLSocket(String uname, String pw) throws GeneralSecurityException, IOException {		
 		KeyStore ks = KeyStoreUtils.genUserKeyStore(uname, pw);
 		KeyStore ts = KeyStoreUtils.genUserTrustStore(TS_FILE);

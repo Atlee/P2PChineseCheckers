@@ -1,11 +1,6 @@
 package test;
 
-import java.io.DataInputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.util.Arrays;
 
 import hub.PasswordStore;
 
@@ -26,7 +21,6 @@ public class PasswordStoreTest {
 			System.out.println(pws.authenticate("10user1", "pass1".toCharArray()));
 			System.out.println(!pws.authenticate("user2", "pass3".toCharArray()));
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

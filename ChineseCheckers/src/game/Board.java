@@ -86,18 +86,6 @@ public class Board {
 	
 	private final Game game;
 	
-	private Board() throws Exception {
-		this.game = null;
-		for (int i = 0; i < middle.length; i++) {
-			for (int j = 0; j < middle[0].length; j++) {
-				if (board[i][j]) {
-					state[i][j] = empty;
-				}
-			}
-		}
-		this.fillEdges();
-	}
-	
 	public Board(Game g) throws Exception {
 		this.game = g;
 		for (int i = 0; i < middle.length; i++) {
