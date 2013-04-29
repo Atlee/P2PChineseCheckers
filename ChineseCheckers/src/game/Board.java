@@ -4,7 +4,7 @@ import java.awt.Point;
 
 public class Board {
 	
-	//create a placeholder Player to differentiate between a emtpy peg and a invalid peg
+	//create a placeholder Player to differentiate between a empty peg and a invalid peg
 	public static final Player empty = new Player("empty", -1);
 	
 	//valid places in the 2d array for pegs to exist

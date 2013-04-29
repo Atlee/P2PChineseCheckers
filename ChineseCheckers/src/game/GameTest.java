@@ -4,9 +4,6 @@ import java.util.ArrayList;
 
 public class GameTest {
 
-	/**
-	 * @param args
-	 */
 	public static void main(String[] args) throws Exception {
 		Player local = new Player("player0", 0);
 		ArrayList<Player> l = new ArrayList<Player>();
@@ -15,8 +12,8 @@ public class GameTest {
 		
 		Interaction i = new TestInteraction();
 		
+		@SuppressWarnings("unused")
 		Game g = new Game(l, local, i);
-		g.toString();
 	}
 
 }
