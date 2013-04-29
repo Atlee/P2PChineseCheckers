@@ -20,6 +20,9 @@ public class OnlineUserTracker {
 	private List<String> online = new ArrayList<String>();
 	// Map: {username -> OnlineUserRecord}, contains a mapping for key u iff u in 'online'
 	private Map<String, OnlineUserRecord> records = new HashMap<String, OnlineUserRecord>();
+	
+	private Map<String, Integer> greyList = new HashMap<String, Integer>();
+	private List<String> blackList = new ArrayList<String>();
 
 	public OnlineUserTracker() {
 		// do initialization overhead now
@@ -27,10 +30,14 @@ public class OnlineUserTracker {
 	}
 	
 	/* Add a username to the list of currently online users and return a fresh
-	 * random session ID for that user. Obviously, the hub should only call this after
-	 * it has authenticated a user's login credentials!
+	 * random session ID for that user, or null iff that user has been blacklisted.
+	 * Obviously, the hub should only call this after it has authenticated a user's
+	 * login credentials!
 	 */
 	synchronized Integer add(String uname, InetAddress inetAddr) {
+		if(blackList.contains(uname)) {
+			return null;
+		}
 		if(online.contains(uname)) {
 			records.remove(uname);
 		} else {
@@ -48,6 +55,15 @@ public class OnlineUserTracker {
 	synchronized void remove(String uname) {
 		online.remove(uname);
 		records.remove(uname);
+	}
+	
+	/* TODO: write comment */
+	synchronized void greyList(String uname) {
+		if(greyList.containsKey(uname)) {
+			greyList.put(uname, greyList.get(uname)+1);
+		} else {
+			greyList.put(uname, 1);
+		}
 	}
 	
 	/* Check whether the given ID matches the current, valid session ID for a 
