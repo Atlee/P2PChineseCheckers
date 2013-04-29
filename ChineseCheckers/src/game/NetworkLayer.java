@@ -30,7 +30,6 @@ public class NetworkLayer implements Interaction {
 	}*/
 	
 	public NetworkLayer(Key gameKey, KeyPair localSignKeys, Map<String, PublicKey> verifyKeys, List<String> players) {
-		opponents = s;
 		log = new AuditLog();
 		this.gameKey = gameKey;
 		this.signKeys = localSignKeys;
