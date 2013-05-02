@@ -75,6 +75,7 @@ public class TwoPlayerLayer implements Interaction {
 
 	@Override
 	public void endGame(Player host, Player winner) {
+		log.prepend("winner:"+ winner.getUsername());
 		try {
 			HubGuiProtocols.sendLog(gameID, uname, secret, log.getLog());
 		} catch (ClassNotFoundException | IOException
